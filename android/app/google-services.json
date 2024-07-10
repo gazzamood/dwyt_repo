@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "553532335905",
+    "project_id": "dwytest",
+    "storage_bucket": "dwytest.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:553532335905:android:d6db3941c0106f3dad0060",
+        "android_client_info": {
+          "package_name": "com.example.dwyt_test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDg_gHxvzTdHxC68mFaooRyoHET_xEErEk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:553532335905:android:2b4a5eb64f1735a0ad0060",
+        "android_client_info": {
+          "package_name": "me.gazza.dwyt_test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDg_gHxvzTdHxC68mFaooRyoHET_xEErEk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
