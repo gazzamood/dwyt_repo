@@ -29,7 +29,7 @@ class NotificaPage extends StatelessWidget {
 }
 
 class NotificheDaLeggereTab extends StatelessWidget {
-  const NotificheDaLeggereTab({Key? key}) : super(key: key);
+  const NotificheDaLeggereTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +48,7 @@ class NotificheDaLeggereTab extends StatelessWidget {
 }
 
 class NotificheLetteTab extends StatelessWidget {
-  const NotificheLetteTab({Key? key}) : super(key: key);
+  const NotificheLetteTab({super.key});
 
   @override
   Widget build(BuildContext context) {
