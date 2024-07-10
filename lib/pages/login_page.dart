@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'login_accedi_page.dart';
+import 'login_registrati_page.dart';
+
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
@@ -10,22 +13,54 @@ class LoginPage extends StatelessWidget {
         title: const Text('Login / Registrazione'),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            ElevatedButton(
-              onPressed: () {
-                // Implementa la logica di login qui
-              },
-              child: const Text('Accedi'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                // Implementa la logica di registrazione qui
-              },
-              child: const Text('Registrati'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginAccediPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 26.0),
+                  ),
+                  child: const Text(
+                    'Accedi',
+                    style: TextStyle(fontSize: 24.0),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16.0), // Adds spacing between the buttons
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginRegistratiPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 26.0),
+                  ),
+                  child: const Text(
+                    'Registrati',
+                    style: TextStyle(fontSize: 24.0),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
