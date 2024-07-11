@@ -1,25 +1,27 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:location/location.dart';
+import 'package:location/location.dart' as loc;
+import 'package:geocoding/geocoding.dart';
 
 class AllertaPage extends StatefulWidget {
   const AllertaPage({super.key});
 
   @override
-  _AllertaPageState createState() => _AllertaPageState();
+  State<AllertaPage> createState() => _AllertaPageState();
 }
 
 class _AllertaPageState extends State<AllertaPage> {
   final TextEditingController _messageController = TextEditingController();
-  LocationData? _currentLocation;
+  loc.LocationData? _currentLocation;
   String? _locationMessage;
 
   Future<void> _getLocation() async {
-    final Location location = Location();
+    final loc.Location location = loc.Location();
 
     bool serviceEnabled;
-    PermissionStatus permissionGranted;
+    loc.PermissionStatus permissionGranted;
 
-    // Check if location services are enabled
     serviceEnabled = await location.serviceEnabled();
     if (!serviceEnabled) {
       serviceEnabled = await location.requestService();
@@ -28,21 +30,133 @@ class _AllertaPageState extends State<AllertaPage> {
       }
     }
 
-    // Check for location permissions
     permissionGranted = await location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
+    if (permissionGranted == loc.PermissionStatus.denied) {
       permissionGranted = await location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
+      if (permissionGranted != loc.PermissionStatus.granted) {
         return;
       }
     }
 
-    // Get the current location
     final locationData = await location.getLocation();
-    setState(() {
-      _currentLocation = locationData;
-      _locationMessage = 'Lat: ${locationData.latitude}, Lon: ${locationData.longitude}';
-    });
+    _currentLocation = locationData;
+
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      locationData.latitude!,
+      locationData.longitude!,
+    );
+
+    if (placemarks.isNotEmpty) {
+      Placemark place = placemarks.first;
+      setState(() {
+        _locationMessage = '${place.street}, ${place.locality}, ${place.postalCode}, ${place.country}';
+      });
+    } else {
+      setState(() {
+        _locationMessage = 'Lat: ${locationData.latitude}, Lon: ${locationData.longitude}';
+      });
+    }
+  }
+
+  Future<void> _sendAlert() async {
+    final message = _messageController.text;
+    final location = _currentLocation;
+
+    if (message.isEmpty) {
+      // Mostra un popup di errore se il messaggio è vuoto
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Errore'),
+            content: const Text('Il messaggio di allerta non può essere vuoto.'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    Map<String, dynamic> alertData = {
+      'message': message,
+      'timestamp': FieldValue.serverTimestamp(),
+      'userId': FirebaseAuth.instance.currentUser!.uid,
+    };
+
+    if (location != null) {
+      // Includi la posizione nel documento da inviare
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        location.latitude!,
+        location.longitude!,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+        String address = '${place.street}, ${place.locality}, ${place.postalCode}, ${place.country}';
+        alertData['location'] = {
+          'latitude': location.latitude,
+          'longitude': location.longitude,
+          'address': address,
+        };
+      } else {
+        // Se non è disponibile un indirizzo, includi solo le coordinate
+        alertData['location'] = {
+          'latitude': location.latitude,
+          'longitude': location.longitude,
+        };
+      }
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection('alerts').add(alertData);
+      // Mostra un popup di conferma
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Successo'),
+            content: const Text('Il messaggio di allerta è stato inviato con successo.'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      // Resetta il campo di testo dopo aver inviato l'allerta
+      _messageController.clear();
+    } catch (e) {
+      print('Errore durante l\'invio dell\'allerta: $e');
+      // Mostra un popup di errore
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Errore'),
+            content: const Text('C\'è stato un errore durante l\'invio dell\'allerta.'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   @override
@@ -55,12 +169,25 @@ class _AllertaPageState extends State<AllertaPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: <Widget>[
-            TextField(
-              controller: _messageController,
-              decoration: const InputDecoration(
-                labelText: 'Messaggio di allerta',
-                border: OutlineInputBorder(),
-              ),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: const InputDecoration(
+                      labelText: 'Messaggio di allerta',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.clear),
+                  onPressed: () {
+                    // Pulisce il campo di testo
+                    _messageController.clear();
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 16.0),
             ElevatedButton(
@@ -73,43 +200,16 @@ class _AllertaPageState extends State<AllertaPage> {
                 style: TextStyle(fontSize: 18.0),
               ),
             ),
-            const SizedBox(height: 16.0),
-            if (_locationMessage != null || _messageController.text.isNotEmpty)
-              Card(
-                elevation: 4.0,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Riepilogo:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16.0,
-                        ),
-                      ),
-                      const SizedBox(height: 8.0),
-                      if (_messageController.text.isNotEmpty)
-                        Text('Messaggio: ${_messageController.text}'),
-                      if (_locationMessage != null)
-                        Text('Posizione: $_locationMessage'),
-                    ],
-                  ),
-                ),
+            if (_locationMessage != null) ...[
+              const SizedBox(height: 16.0),
+              Text(
+                'Posizione: $_locationMessage',
+                style: const TextStyle(fontSize: 16.0),
               ),
+            ],
             const SizedBox(height: 16.0),
             ElevatedButton(
-              onPressed: () {
-                final message = _messageController.text;
-                final location = _currentLocation;
-                String fullMessage = message;
-                if (location != null) {
-                  fullMessage = '$message\nPosizione: $_locationMessage';
-                }
-                // Implementa la logica per inviare il messaggio qui
-                print('Messaggio: $fullMessage');
-              },
+              onPressed: _sendAlert,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
               ),

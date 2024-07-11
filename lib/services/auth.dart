@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class Auth{
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -21,5 +23,15 @@ class Auth{
 
   Future<void> signOut() async{
     await _firebaseAuth.signOut();
+  }
+
+  Future<void> _saveFCMToken() async {
+    String? token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.uid)
+          .set({'fcmToken': token}, SetOptions(merge: true));
+    }
   }
 }
