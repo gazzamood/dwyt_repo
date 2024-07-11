@@ -1,7 +1,55 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class LoginAccediPage extends StatelessWidget {
+import '../services/auth.dart';
+import 'home_page.dart';
+
+class LoginAccediPage extends StatefulWidget {
   const LoginAccediPage({super.key});
+
+  @override
+  State<LoginAccediPage> createState() => _LoginAccediPageState();
+}
+
+class _LoginAccediPageState extends State<LoginAccediPage> {
+
+  final TextEditingController _email = TextEditingController();
+  final TextEditingController _password = TextEditingController();
+
+
+  Future<void> signIn() async {
+    try {
+      await Auth().signInWithEmailAndPassword(email: _email.text, password: _password.text);
+      // Naviga alla homepage se il login ha successo
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } on FirebaseAuthException catch (error) {
+      _showErrorDialog(error.message);
+    }
+  }
+
+  void _showErrorDialog(String? message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Errore di accesso'),
+          content: Text(message ?? 'Errore sconosciuto'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -14,16 +62,18 @@ class LoginAccediPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const TextField(
-              decoration: InputDecoration(
+             TextField(
+              controller: _email,
+              decoration: const InputDecoration(
                 labelText: 'Email',
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16.0),
-            const TextField(
-              decoration: InputDecoration(
+             TextField(
+              controller: _password,
+              decoration: const InputDecoration(
                 labelText: 'Password',
                 border: OutlineInputBorder(),
               ),
@@ -32,7 +82,7 @@ class LoginAccediPage extends StatelessWidget {
             const SizedBox(height: 16.0),
             ElevatedButton(
               onPressed: () {
-                // Implementa la logica di login qui
+                signIn();
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),

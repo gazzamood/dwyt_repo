@@ -11,11 +11,11 @@ void main() async{
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
-  MyApp({super.key});
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -34,9 +34,9 @@ class _MyAppState extends State<MyApp> {
       stream: Auth().authStateChanges,
       builder: (context, snapshot){
         if(snapshot.hasData){
-          return HomePage();
+          return const HomePage();
         }else{
-          return LoginPage();
+          return const LoginPage();
         }
       }
     )

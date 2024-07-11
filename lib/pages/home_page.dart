@@ -5,8 +5,15 @@ import 'package:dwyt_test/pages/login_page.dart';
 import 'package:dwyt_test/pages/notifica_page.dart';
 import 'package:flutter/material.dart';
 
+import '../services/auth.dart';
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  Future<void> signOut() async {
+      await Auth().signOut();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +23,10 @@ class HomePage extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.blue,
         leading: IconButton(
-          icon: const Icon(Icons.account_circle),
-          onPressed: () {
-            Navigator.push(
+          icon: const Icon(Icons.logout),
+          onPressed: () async {
+            await signOut();
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const LoginPage()),
             );
