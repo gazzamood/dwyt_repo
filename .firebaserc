@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "dwt": "dwytest",
+    "default": "dwytest"
+  },
+  "targets": {},
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
+}
