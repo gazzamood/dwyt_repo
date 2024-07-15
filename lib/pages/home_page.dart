@@ -1,24 +1,60 @@
-import 'package:dwyt_test/pages/allerta_page.dart';
-import 'package:dwyt_test/pages/attivita_page.dart';
-import 'package:dwyt_test/pages/informativa_page.dart';
-import 'package:dwyt_test/pages/login_page.dart';
-import 'package:dwyt_test/pages/notifica_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../services/auth.dart';
+import 'allerta_page.dart';
+import 'attivita_page.dart';
+import 'informativa_page.dart';
+import 'login_page.dart';
+import 'notifica_page.dart';
+import 'profilo_page.dart'; // Importa la pagina ProfiloPage
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late User? user;
+  String menuTitle = 'Nessun utente'; // Titolo di default
+
+  @override
+  void initState() {
+    super.initState();
+    user = FirebaseAuth.instance.currentUser;
+    updateMenuTitle();
+  }
 
   Future<void> signOut() async {
     await Auth().signOut();
   }
 
+  void updateMenuTitle() {
+    if (user != null) {
+      // Recupera dati dell'utente da Firestore
+      FirebaseFirestore.instance.collection('users').doc(user!.uid).get().then((DocumentSnapshot doc) {
+        if (doc.exists) {
+          Map<String, dynamic>? userData = doc.data() as Map<String, dynamic>?;
+
+          if (userData != null && userData.containsKey('Nome attività')) {
+            setState(() {
+              menuTitle = userData['Nome attività'];
+            });
+          } else {
+            setState(() {
+              menuTitle = user!.email ?? 'Nessun utente';
+            });
+          }
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    User? user = FirebaseAuth.instance.currentUser;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('DWYT APP'),
@@ -33,6 +69,11 @@ class HomePage extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (context) => const LoginPage()),
               );
+            } else if (value == 'profilo') { // Aggiungi gestione per la voce Profilo
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfiloPage()),
+              );
             }
           },
           itemBuilder: (BuildContext context) {
@@ -40,9 +81,13 @@ class HomePage extends StatelessWidget {
               PopupMenuItem<String>(
                 value: 'email',
                 enabled: false,
-                child: Text(user?.email ?? 'Nessun utente'),
+                child: Text(menuTitle),
               ),
               const PopupMenuDivider(),
+              const PopupMenuItem<String>(
+                value: 'profilo', // Voce del menu per il profilo
+                child: Text('Profilo'),
+              ),
               const PopupMenuItem<String>(
                 value: 'logout',
                 child: Text('Logout'),

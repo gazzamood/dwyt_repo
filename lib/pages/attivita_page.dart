@@ -22,7 +22,7 @@ class AttivitaPage extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const AttivitaPushPage()),
+                    MaterialPageRoute(builder: (context) =>  AttivitaPushPage()),
                   );
                 },
                 style: ElevatedButton.styleFrom(

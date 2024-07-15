@@ -9,6 +9,7 @@ class NotificaPage extends StatefulWidget {
 
   @override
   State<NotificaPage> createState() => NotificaPageState();
+
 }
 
 class NotificaPageState extends State<NotificaPage> {
