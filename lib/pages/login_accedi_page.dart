@@ -1,3 +1,4 @@
+import 'package:dwyt_test/pages/login_registrati_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -62,7 +63,7 @@ class _LoginAccediPageState extends State<LoginAccediPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-             TextField(
+            TextField(
               controller: _email,
               decoration: const InputDecoration(
                 labelText: 'Email',
@@ -71,7 +72,7 @@ class _LoginAccediPageState extends State<LoginAccediPage> {
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16.0),
-             TextField(
+            TextField(
               controller: _password,
               decoration: const InputDecoration(
                 labelText: 'Password',
@@ -99,6 +100,19 @@ class _LoginAccediPageState extends State<LoginAccediPage> {
               },
               child: const Text(
                 'Recupera password',
+                style: TextStyle(decoration: TextDecoration.underline),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginRegistratiPage()),
+                );
+              },
+              child: const Text(
+                'Non hai un account? Registrati',
                 style: TextStyle(decoration: TextDecoration.underline),
               ),
             ),

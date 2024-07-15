@@ -47,7 +47,7 @@ class AttivitaPage extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const AttivitaPushPage()), //cambia con cerca attività
+                    MaterialPageRoute(builder: (context) => const CercaAttivitaPage()),
                   );
                 },
                 style: ElevatedButton.styleFrom(

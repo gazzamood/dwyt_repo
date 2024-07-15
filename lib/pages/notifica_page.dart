@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +14,7 @@ class NotificaPage extends StatefulWidget {
 class NotificaPageState extends State<NotificaPage> {
   List<String> notificheDaLeggere = []; // Stato per le notifiche da leggere
   List<String> notificheLette = []; // Stato per le notifiche lette
+  String userId = FirebaseAuth.instance.currentUser!.uid; // ID dell'utente corrente
 
   @override
   void initState() {
@@ -25,34 +27,74 @@ class NotificaPageState extends State<NotificaPage> {
   }
 
   Future<void> loadAlertMessages() async {
-    // Recupera i dati dalla collezione "alerts"
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('alerts').get();
-    List<String> alerts = querySnapshot.docs.map((doc) => doc['message'] as String).toList();
+    // Recupera i dati dalla collezione "notifications"
+    QuerySnapshot querySnapshot =
+    await FirebaseFirestore.instance.collection('notifications').get();
 
-    // Recupera le notifiche lette da SharedPreferences
+    List<Map<String, dynamic>> notifications = querySnapshot.docs
+        .map((doc) => doc.data() as Map<String, dynamic>)
+        .toList();
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> savedNotificheLette = prefs.getStringList('notificheLette') ?? [];
+    List<String> savedNotificheLette =
+        prefs.getStringList('notificheLette') ?? [];
 
     setState(() {
       notificheLette = savedNotificheLette;
-      notificheDaLeggere = alerts.where((alert) => !notificheLette.contains(alert)).toList();
+      notificheDaLeggere = notifications
+          .where((notification) =>
+      !notificheLette.contains(notification['message']) &&
+          !(notification['readBy'] ?? []).contains(userId))
+          .map((notification) => notification['message'] as String)
+          .toList();
     });
   }
 
-  // Funzione per spostare una notifica dalla sezione "Da leggere" a "Lette"
+
   void spostaNotificaLetta(int index) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String notifica = notificheDaLeggere[index];
+
+    // Aggiorna Firebase per aggiungere l'ID dell'utente a readBy
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('message', isEqualTo: notifica)
+        .get();
+    DocumentSnapshot notificationDoc = querySnapshot.docs.first;
+
+    List<dynamic> readBy = notificationDoc['readBy'];
+    readBy.add(userId);
+
+    await notificationDoc.reference.update({'readBy': readBy});
+
+    // Aggiungi l'ID della notifica letta nell'elenco dell'utente corrente in Firestore
+    await FirebaseFirestore.instance.collection('users').doc(userId).update({
+      'notificheLette': FieldValue.arrayUnion([notificationDoc.id])
+    });
+
     setState(() {
-      String notifica = notificheDaLeggere.removeAt(index);
+      notificheDaLeggere.removeAt(index);
       notificheLette.add(notifica);
-      prefs.setStringList('notificheLette', notificheLette);
     });
   }
+
+  void deleteNotification(int index) async {
+    String notifica = notificheLette[index];
+
+    // Rimuovi l'ID della notifica letta dall'elenco dell'utente corrente in Firestore
+    await FirebaseFirestore.instance.collection('users').doc(userId).update({
+      'notificheLette': FieldValue.arrayRemove([notifica])
+    });
+
+    setState(() {
+      notificheLette.removeAt(index);
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2, // Numero di tab (due in questo caso)
+      length: 2,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Notifiche'),
@@ -67,9 +109,12 @@ class NotificaPageState extends State<NotificaPage> {
           children: [
             NotificheDaLeggereTab(
               notifiche: notificheDaLeggere,
-              onNotificaLetta: spostaNotificaLetta, // Passaggio della funzione di callback
-            ), // Passaggio delle notifiche
-            NotificheLetteTab(notifiche: notificheLette),
+              onNotificaLetta: spostaNotificaLetta,
+            ),
+            NotificheLetteTab(
+              notifiche: notificheLette,
+              onDelete: deleteNotification, // Passa la funzione per eliminare la notifica
+            ),
           ],
         ),
       ),
@@ -106,21 +151,40 @@ class NotificheDaLeggereTab extends StatelessWidget {
 
 class NotificheLetteTab extends StatelessWidget {
   final List<String> notifiche; // Parametro notifiche lette
+  final Function(int) onDelete; // Callback per eliminare una notifica
 
-  const NotificheLetteTab({Key? key, required this.notifiche}) : super(key: key);
+  const NotificheLetteTab({Key? key, required this.notifiche, required this.onDelete}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
       itemCount: notifiche.length,
       itemBuilder: (context, index) {
-        return ListTile(
-          title: Text(notifiche[index]),
-          onTap: () {
-            // Implementa l'azione quando l'utente preme su una notifica letta
+        return Dismissible(
+          key: Key(notifiche[index]), // Chiave univoca per ogni elemento
+          direction: DismissDirection.endToStart, // Direzione di eliminazione (da destra a sinistra)
+          background: Container(
+            alignment: Alignment.centerRight,
+            color: Colors.red,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
+              child: Icon(Icons.delete, color: Colors.white),
+            ),
+          ),
+          onDismissed: (direction) {
+            // Rimuovi la notifica dalla lista
+            onDelete(index);
           },
+          child: ListTile(
+            title: Text(notifiche[index]),
+            onTap: () {
+              // Implementa l'azione quando l'utente preme su una notifica letta
+            },
+          ),
         );
       },
     );
   }
 }
+
+

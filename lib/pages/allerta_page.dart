@@ -5,7 +5,7 @@ import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 
 class AllertaPage extends StatefulWidget {
-  const AllertaPage({super.key});
+  const AllertaPage({Key? key}) : super(key: key);
 
   @override
   State<AllertaPage> createState() => _AllertaPageState();
@@ -88,6 +88,7 @@ class _AllertaPageState extends State<AllertaPage> {
       'message': message,
       'timestamp': FieldValue.serverTimestamp(),
       'userId': FirebaseAuth.instance.currentUser!.uid,
+      'readBy': [], // Array vuoto per tracciare gli utenti che hanno letto la notifica
     };
 
     if (location != null) {
@@ -115,7 +116,9 @@ class _AllertaPageState extends State<AllertaPage> {
     }
 
     try {
-      await FirebaseFirestore.instance.collection('alerts').add(alertData);
+      // Aggiungi i dati dell'allerta alla collezione 'notifications'
+      DocumentReference alertRef = await FirebaseFirestore.instance.collection('notifications').add(alertData);
+
       // Mostra un popup di conferma
       showDialog(
         context: context,
@@ -134,8 +137,15 @@ class _AllertaPageState extends State<AllertaPage> {
           );
         },
       );
+
       // Resetta il campo di testo dopo aver inviato l'allerta
       _messageController.clear();
+
+      // Aggiungi il campo readBy per tracciare l'utente corrente
+      await alertRef.update({
+        'readBy': FieldValue.arrayUnion([FirebaseAuth.instance.currentUser!.uid]),
+      });
+
     } catch (e) {
       print('Errore durante l\'invio dell\'allerta: $e');
       // Mostra un popup di errore

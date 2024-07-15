@@ -1,11 +1,12 @@
-import 'package:dwyt_test/services/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../services/auth.dart';
 import 'home_page.dart';
 
 class LoginRegistratiPage extends StatefulWidget {
-  const LoginRegistratiPage({super.key});
+  const LoginRegistratiPage({Key? key}) : super(key: key);
 
   @override
   State<LoginRegistratiPage> createState() => _LoginRegistratiPageState();
@@ -24,13 +25,35 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
   Future<void> createUser() async {
     if (_formKey.currentState!.validate()) {
       try {
-        await Auth().createUserWithEmailAndPassword(email: _email.text, password: _password.text);
-        // Se la registrazione ha successo, reindirizza alla home page
+        // 1. Registra l'utente con Firebase Authentication
+        UserCredential userCredential = await Auth().createUserWithEmailAndPassword(
+          email: _email.text,
+          password: _password.text,
+        );
+
+        // 2. Ottieni l'ID del nuovo utente
+        String userId = userCredential.user!.uid;
+
+        // 3. Aggiungi l'utente a Firestore nella collezione 'users'
+        await FirebaseFirestore.instance.collection('users').doc(userId).set({
+          'userId': userId,
+          'nome': _nome.text,
+          'cognome': _cognome.text,
+          'dataNascita': _datanascita.text,
+          'email': _email.text,
+          'createdAt': Timestamp.now(),
+          // Altri campi personalizzati dell'utente se necessario
+        });
+
+        // 4. Se la registrazione ha successo, reindirizza alla home page
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
         );
-      } on FirebaseAuthException catch (error) {}
+      } catch (error) {
+        print('Errore durante la registrazione: $error');
+        // Gestisci eventuali errori durante la registrazione
+      }
     }
   }
 
