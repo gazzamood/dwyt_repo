@@ -76,8 +76,8 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('Ora inizio: ${activity['ora_inizio']}'),
-              Text('Ora fine: ${activity['ora_fine']}'),
+              Text('Ora inizio: ${activity['oraInizio']}'),
+              Text('Ora fine: ${activity['oraFine']}'),
             ],
           ),
           actions: <Widget>[

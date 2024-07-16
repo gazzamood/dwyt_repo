@@ -35,9 +35,9 @@ class _HomePageState extends State<HomePage> {
   void updateMenuTitle() {
     if (user != null) {
       // Recupera dati dell'utente da Firestore
-      FirebaseFirestore.instance.collection('users').doc(user!.uid).get().then((DocumentSnapshot doc) {
-        if (doc.exists) {
-          Map<String, dynamic>? userData = doc.data() as Map<String, dynamic>?;
+      FirebaseFirestore.instance.collection('users').doc(user!.uid).get().then((DocumentSnapshot userDoc) {
+        if (userDoc.exists) {
+          Map<String, dynamic>? userData = userDoc.data() as Map<String, dynamic>?;
 
           if (userData != null && userData.containsKey('Nome attività')) {
             setState(() {
@@ -48,6 +48,20 @@ class _HomePageState extends State<HomePage> {
               menuTitle = user!.email ?? 'Nessun utente';
             });
           }
+        } else {
+          // Check if the user is an activity
+          FirebaseFirestore.instance.collection('attivita').where('userId', isEqualTo: user!.uid).get().then((QuerySnapshot activityQuery) {
+            if (activityQuery.docs.isNotEmpty) {
+              Map<String, dynamic> activityData = activityQuery.docs.first.data() as Map<String, dynamic>;
+              setState(() {
+                menuTitle = activityData['nome'];
+              });
+            } else {
+              setState(() {
+                menuTitle = user!.email ?? 'Nessun utente';
+              });
+            }
+          });
         }
       });
     }
