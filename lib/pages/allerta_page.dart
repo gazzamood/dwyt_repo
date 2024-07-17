@@ -5,71 +5,80 @@ import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 
 class AllertaPage extends StatefulWidget {
-  const AllertaPage({Key? key}) : super(key: key);
+  const AllertaPage({super.key});
 
   @override
   State<AllertaPage> createState() => _AllertaPageState();
 }
 
 class _AllertaPageState extends State<AllertaPage> {
+  final TextEditingController _titleController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
   loc.LocationData? _currentLocation;
   String? _locationMessage;
+  bool _isAlert = true; // Variabile di stato per il tipo di messaggio (true = allerta, false = info)
 
   Future<void> _getLocation() async {
     final loc.Location location = loc.Location();
 
-    bool serviceEnabled;
-    loc.PermissionStatus permissionGranted;
+    bool _serviceEnabled;
+    loc.PermissionStatus _permissionGranted;
+    loc.LocationData _locationData;
 
-    serviceEnabled = await location.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
-      if (!serviceEnabled) {
+    // Verifica se il servizio di localizzazione è abilitato
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
         return;
       }
     }
 
-    permissionGranted = await location.hasPermission();
-    if (permissionGranted == loc.PermissionStatus.denied) {
-      permissionGranted = await location.requestPermission();
-      if (permissionGranted != loc.PermissionStatus.granted) {
+    // Verifica se i permessi di localizzazione sono concessi
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == loc.PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != loc.PermissionStatus.granted) {
         return;
       }
     }
 
-    final locationData = await location.getLocation();
-    _currentLocation = locationData;
+    // Ottieni la posizione attuale
+    _locationData = await location.getLocation();
 
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-      locationData.latitude!,
-      locationData.longitude!,
-    );
-
-    if (placemarks.isNotEmpty) {
-      Placemark place = placemarks.first;
+    // Ottieni l'indirizzo dalla posizione (opzionale)
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        _locationData.latitude!,
+        _locationData.longitude!,
+      );
+      Placemark place = placemarks[0];
       setState(() {
-        _locationMessage = '${place.street}, ${place.locality}, ${place.postalCode}, ${place.country}';
+        _currentLocation = _locationData;
+        _locationMessage = '${place.locality}, ${place.postalCode}, ${place.country}';
       });
-    } else {
+    } catch (e) {
       setState(() {
-        _locationMessage = 'Lat: ${locationData.latitude}, Lon: ${locationData.longitude}';
+        _currentLocation = _locationData;
+        _locationMessage = 'Lat: ${_locationData.latitude}, Lon: ${_locationData.longitude}';
       });
     }
   }
 
   Future<void> _sendAlert() async {
+    final title = _titleController.text;
     final message = _messageController.text;
     final location = _currentLocation;
+    final senderId = FirebaseAuth.instance.currentUser!.uid;
 
-    if (message.isEmpty) {
-      // Mostra un popup di errore se il messaggio è vuoto
+    if (title.isEmpty || message.isEmpty) {
+      // Mostra un popup di errore se il titolo o il messaggio è vuoto
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Errore'),
-            content: const Text('Il messaggio di allerta non può essere vuoto.'),
+            content: const Text('Il titolo e il messaggio di allerta non possono essere vuoti.'),
             actions: <Widget>[
               TextButton(
                 child: const Text('OK'),
@@ -85,34 +94,19 @@ class _AllertaPageState extends State<AllertaPage> {
     }
 
     Map<String, dynamic> alertData = {
+      'title': title,
       'message': message,
       'timestamp': FieldValue.serverTimestamp(),
-      'userId': FirebaseAuth.instance.currentUser!.uid,
+      'senderId': senderId,
       'readBy': [], // Array vuoto per tracciare gli utenti che hanno letto la notifica
+      'type': _isAlert ? 'allerta' : 'info', // Aggiunta del campo type
     };
 
     if (location != null) {
-      // Includi la posizione nel documento da inviare
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        location.latitude!,
-        location.longitude!,
-      );
-
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks.first;
-        String address = '${place.street}, ${place.locality}, ${place.postalCode}, ${place.country}';
-        alertData['location'] = {
-          'latitude': location.latitude,
-          'longitude': location.longitude,
-          'address': address,
-        };
-      } else {
-        // Se non è disponibile un indirizzo, includi solo le coordinate
-        alertData['location'] = {
-          'latitude': location.latitude,
-          'longitude': location.longitude,
-        };
-      }
+      alertData['location'] = {
+        'latitude': location.latitude,
+        'longitude': location.longitude,
+      };
     }
 
     try {
@@ -138,12 +132,17 @@ class _AllertaPageState extends State<AllertaPage> {
         },
       );
 
-      // Resetta il campo di testo dopo aver inviato l'allerta
+      // Resetta i campi di testo dopo aver inviato l'allerta
+      _titleController.clear();
       _messageController.clear();
+      setState(() {
+        _currentLocation = null;
+        _locationMessage = null;
+      });
 
       // Aggiungi il campo readBy per tracciare l'utente corrente
       await alertRef.update({
-        'readBy': FieldValue.arrayUnion([FirebaseAuth.instance.currentUser!.uid]),
+        'readBy': FieldValue.arrayUnion([senderId]),
       });
 
     } catch (e) {
@@ -175,60 +174,116 @@ class _AllertaPageState extends State<AllertaPage> {
       appBar: AppBar(
         title: const Text('Allerta'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: const InputDecoration(
-                      labelText: 'Messaggio di allerta',
-                      border: OutlineInputBorder(),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _isAlert = true;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+                      backgroundColor: _isAlert ? Colors.blue : Colors.grey,
+                    ),
+                    child: const Text(
+                      'Allerta',
+                      style: TextStyle(fontSize: 18.0),
                     ),
                   ),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _isAlert = false;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+                      backgroundColor: !_isAlert ? Colors.blue : Colors.grey,
+                    ),
+                    child: const Text(
+                      'Informativa',
+                      style: TextStyle(fontSize: 18.0),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16.0),
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Titolo dell\'allerta',
+                  border: OutlineInputBorder(),
                 ),
-                IconButton(
-                  icon: Icon(Icons.clear),
-                  onPressed: () {
-                    // Pulisce il campo di testo
-                    _messageController.clear();
-                  },
+              ),
+              const SizedBox(height: 16.0),
+              TextField(
+                controller: _messageController,
+                decoration: const InputDecoration(
+                  labelText: 'Messaggio di allerta',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: _getLocation,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                ),
+                child: const Text(
+                  'Allega posizione attuale',
+                  style: TextStyle(fontSize: 18.0),
+                ),
+              ),
+              if (_locationMessage != null) ...[
+                const SizedBox(height: 16.0),
+                Text(
+                  'Posizione: $_locationMessage',
+                  style: const TextStyle(fontSize: 16.0),
                 ),
               ],
-            ),
-            const SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: _getLocation,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  ElevatedButton(
+                    onPressed: () {
+                      _titleController.clear();
+                      _messageController.clear();
+                      setState(() {
+                        _currentLocation = null;
+                        _locationMessage = null;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.all(16.0),
+                    ),
+                    child: const Text(
+                      'Annulla',
+                      style: TextStyle(fontSize: 16.0),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: _sendAlert,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+                    ),
+                    child: const Text(
+                      'Invia',
+                      style: TextStyle(fontSize: 18.0),
+                    ),
+                  ),
+                ],
               ),
-              child: const Text(
-                'Allega posizione attuale',
-                style: TextStyle(fontSize: 18.0),
-              ),
-            ),
-            if (_locationMessage != null) ...[
-              const SizedBox(height: 16.0),
-              Text(
-                'Posizione: $_locationMessage',
-                style: const TextStyle(fontSize: 16.0),
-              ),
+              const SizedBox(height: 16.0), // Aggiungi spazio finale per separazione dal fondo
             ],
-            const SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: _sendAlert,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-              ),
-              child: const Text(
-                'Invia',
-                style: TextStyle(fontSize: 18.0),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

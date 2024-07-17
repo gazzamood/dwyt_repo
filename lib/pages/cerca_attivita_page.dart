@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CercaAttivitaPage extends StatefulWidget {
-  const CercaAttivitaPage({Key? key}) : super(key: key);
+  const CercaAttivitaPage({super.key});
 
   @override
   State<CercaAttivitaPage> createState() => _CercaAttivitaPageState();
@@ -16,7 +16,7 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    _activitiesStream = FirebaseFirestore.instance.collection('attivita').snapshots();
+    _activitiesStream = FirebaseFirestore.instance.collection('activities').snapshots();
   }
 
   @override
@@ -32,7 +32,7 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
         controller: _searchController,
         decoration: InputDecoration(
           hintText: 'Cerca attività...',
-          border: OutlineInputBorder(),
+          border: const OutlineInputBorder(),
           suffixIcon: IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -55,8 +55,8 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
         itemBuilder: (context, index) {
           var activity = snapshot.docs[index];
           return ListTile(
-            title: Text(activity['nome']),
-            subtitle: Text(activity['tipologia']),
+            title: Text(activity['name']),
+            subtitle: Text(activity['type']),
             onTap: () {
               _showActivityDetails(activity);
             },
@@ -71,13 +71,14 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(activity['nome']),
+          title: Text(activity['name']),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('Ora inizio: ${activity['oraInizio']}'),
-              Text('Ora fine: ${activity['oraFine']}'),
+              Text('Ora inizio: ${activity['startTime']}'),
+              Text('Ora fine: ${activity['endTime']}'),
+              Text('Location: ${activity['location']}'),
             ],
           ),
           actions: <Widget>[
@@ -110,7 +111,7 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
               }
 
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator());
               }
 
               return _buildActivityList(snapshot.data!);

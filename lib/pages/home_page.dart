@@ -141,7 +141,7 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.all(16.0),
                 ),
                 child: const Text(
-                  'Allerta',
+                  'Allerta/Informativa',
                   style: TextStyle(fontSize: 24.0),
                 ),
               ),
@@ -165,7 +165,7 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.all(16.0),
                 ),
                 child: const Text(
-                  'Informativa',
+                  '??',
                   style: TextStyle(fontSize: 24.0),
                 ),
               ),
