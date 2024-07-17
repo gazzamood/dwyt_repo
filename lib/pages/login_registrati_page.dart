@@ -6,7 +6,7 @@ import '../services/auth.dart';
 import 'home_page.dart';
 
 class LoginRegistratiPage extends StatefulWidget {
-  const LoginRegistratiPage({Key? key}) : super(key: key);
+  const LoginRegistratiPage({super.key});
 
   @override
   State<LoginRegistratiPage> createState() => _LoginRegistratiPageState();
@@ -59,23 +59,28 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
           // Register user in Firestore
           await FirebaseFirestore.instance.collection('users').doc(userId).set({
             'userId': userId,
-            'nome': _nome.text,
-            'cognome': _cognome.text,
-            'dataNascita': _datanascita.text,
+            'name': _nome.text,
+            'surname': _cognome.text,
+            'birthdate': _datanascita.text,
             'email': _email.text,
-            'createdAt': Timestamp.now(),
+            'registrationDate': Timestamp.now(),
+            'subscriptions': [],
+            'notifications': [],
           });
         } else {
           // Register activity in Firestore
-          await FirebaseFirestore.instance.collection('attivita').add({
-            'userId': userId,
-            'nome': _nomeAttivita.text,
-            'tipologia': _tipologia.text,
-            'oraInizio': _oraInizio.text,
-            'oraFine': _oraFine.text,
+          await FirebaseFirestore.instance.collection('activities').doc(userId).set({
+            'activityId': userId,
+            'name': _nomeAttivita.text,
+            'type': _tipologia.text,
+            'startTime': _oraInizio.text,
+            'endTime': _oraFine.text,
             'location': _location.text,
-            'createdAt': Timestamp.now(),
+            'creationDate': Timestamp.now(),
+            'subscribers': [],
+            'notifications': [],
           });
+
         }
 
         // Navigate to the home page
