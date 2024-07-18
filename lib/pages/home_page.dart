@@ -11,7 +11,7 @@ import 'notifica_page.dart';
 import 'profilo_page.dart'; // Importa la pagina ProfiloPage
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
