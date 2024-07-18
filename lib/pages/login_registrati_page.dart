@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:location/location.dart' as loc;
 
 import '../services/auth.dart';
 import 'home_page.dart';
@@ -27,7 +29,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
   final TextEditingController _tipologia = TextEditingController();
   final TextEditingController _oraInizio = TextEditingController();
   final TextEditingController _oraFine = TextEditingController();
-  final TextEditingController _location = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
 
   bool _isUtente = true; // To select between user or activity registration
 
@@ -68,6 +70,9 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'notifications': [],
           });
         } else {
+          // Geocode the address
+          List<Location> locations = await locationFromAddress(_addressController.text);
+          Location location = locations.first;
           // Register activity in Firestore
           await FirebaseFirestore.instance.collection('activities').doc(userId).set({
             'activityId': userId,
@@ -75,7 +80,9 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'type': _tipologia.text,
             'startTime': _oraInizio.text,
             'endTime': _oraFine.text,
-            'location': _location.text,
+            'address': _addressController.text,
+            'latitude': location.latitude,
+            'longitude': location.longitude,
             'creationDate': Timestamp.now(),
             'subscribers': [],
             'notifications': [],
@@ -324,7 +331,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
         ),
         const SizedBox(height: 16.0),
         TextFormField(
-          controller: _location,
+          controller: _addressController,
           decoration: const InputDecoration(
             labelText: 'Location',
             border: OutlineInputBorder(),
