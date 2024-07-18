@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/push_notification.dart';
 
 class NotificaPage extends StatefulWidget {
-  const NotificaPage({Key? key}) : super(key: key);
+  const NotificaPage({super.key});
 
   @override
   State<NotificaPage> createState() => NotificaPageState();
@@ -110,29 +110,6 @@ class NotificaPageState extends State<NotificaPage>
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifiche'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Allerta'),
-            Tab(text: 'Info'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          buildNotificationsList(alertNotifications),
-          buildNotificationsList(infoNotifications),
-        ],
-      ),
-    );
-  }
-
   Widget buildNotificationsList(List<Map<String, dynamic>> notifications) {
     return ListView.builder(
       itemCount: notifications.length,
@@ -186,5 +163,28 @@ class NotificaPageState extends State<NotificaPage>
         }
       }
     });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Notifiche'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Allerta'),
+            Tab(text: 'Info'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          buildNotificationsList(alertNotifications),
+          buildNotificationsList(infoNotifications),
+        ],
+      ),
+    );
   }
 }
