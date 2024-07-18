@@ -168,11 +168,63 @@ class _AllertaPageState extends State<AllertaPage> {
     }
   }
 
+  final List<String> _predefineTitledMessages = [
+    'Title predefinito 1',
+    'Title predefinito 2',
+    'Title predefinito 3',
+  ];
+
+  void _setTitleMessage(String title) {
+    setState(() {
+      _titleController.text = title;
+    });
+  }
+
+  final List<String> _predefinedMessages = [
+    'Messaggio predefinito 1',
+    'Messaggio predefinito 2',
+    'Messaggio predefinito 3',
+  ];
+
+  void _setMessage(String message) {
+    setState(() {
+      _messageController.text = message;
+    });
+  }
+
+  Future<void> _setHelpGenericMessage() async {
+    setState(() {
+      _titleController.text = 'Aiuto';
+      _messageController.text = 'Aiuto';
+      _isAlert = true;
+    });
+    await _getLocation();
+  }
+
+  Future<void> _setHelpSaluteMessage() async {
+    setState(() {
+      _titleController.text = 'Richiesta emergenza sanitaria';
+      _messageController.text = 'Richiesta emergenza sanitaria';
+      _isAlert = true;
+    });
+    await _getLocation();
+  }
+
+  Future<void> _setHelpSicurezzaMessage() async {
+    setState(() {
+      _titleController.text = 'Allerta di sicurezza pubblica';
+      _messageController.text = 'Allerta di sicurezza pubblica';
+      _isAlert = true;
+    });
+    await _getLocation();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Allerta'),
+        title: const Text('Push'),
+        backgroundColor: Colors.blue,
       ),
       body: Center(
         child: Padding(
@@ -218,29 +270,78 @@ class _AllertaPageState extends State<AllertaPage> {
               const SizedBox(height: 16.0),
               TextField(
                 controller: _titleController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Titolo dell\'allerta',
                   border: OutlineInputBorder(),
+                  suffixIcon: PopupMenuButton<String>(
+                    icon: const Icon(Icons.arrow_drop_down),
+                    onSelected: (String value) {
+                      _setTitleMessage(value);
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return _predefineTitledMessages.map<PopupMenuItem<String>>((String value) {
+                        return PopupMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList();
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 16.0),
               TextField(
                 controller: _messageController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Messaggio di allerta',
                   border: OutlineInputBorder(),
+                  suffixIcon: PopupMenuButton<String>(
+                    icon: const Icon(Icons.arrow_drop_down),
+                    onSelected: (String value) {
+                      _setMessage(value);
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return _predefinedMessages.map<PopupMenuItem<String>>((String value) {
+                        return PopupMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList();
+                    },
+                  ),
                 ),
               ),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: _getLocation,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                ),
-                child: const Text(
-                  'Allega posizione attuale',
-                  style: TextStyle(fontSize: 18.0),
-                ),
+              const SizedBox(height: 26.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  ElevatedButton(
+                    onPressed: _getLocation,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    ),
+                    child: const Text(
+                      'Allega posizione',
+                      style: TextStyle(fontSize: 18.0),
+                    ),
+                  ),
+                  const SizedBox(width: 16.0),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _currentLocation = null;
+                        _locationMessage = null;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    ),
+                    child: const Text(
+                      'Rimuovi posizione',
+                      style: TextStyle(fontSize: 18.0),
+                    ),
+                  ),
+                ],
               ),
               if (_locationMessage != null) ...[
                 const SizedBox(height: 16.0),
@@ -249,33 +350,37 @@ class _AllertaPageState extends State<AllertaPage> {
                   style: const TextStyle(fontSize: 16.0),
                 ),
               ],
+              const SizedBox(height: 26.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
                   ElevatedButton(
-                    onPressed: () {
-                      _titleController.clear();
-                      _messageController.clear();
-                      setState(() {
-                        _currentLocation = null;
-                        _locationMessage = null;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(16.0),
-                    ),
-                    child: const Text(
-                      'Annulla',
-                      style: TextStyle(fontSize: 16.0),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: _sendAlert,
+                    onPressed: _setHelpGenericMessage,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
                     ),
                     child: const Text(
-                      'Invia',
+                      'Help',
+                      style: TextStyle(fontSize: 18.0),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: _setHelpSaluteMessage,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+                    ),
+                    child: const Text(
+                      'Sanità',
+                      style: TextStyle(fontSize: 18.0),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: _setHelpSicurezzaMessage,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+                    ),
+                    child: const Text(
+                      'Sicurezza',
                       style: TextStyle(fontSize: 18.0),
                     ),
                   ),
@@ -285,6 +390,34 @@ class _AllertaPageState extends State<AllertaPage> {
             ],
           ),
         ),
+      ),
+      floatingActionButton:
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          ElevatedButton(
+            onPressed: () {
+              _titleController.clear();
+              _messageController.clear();
+              setState(() {
+                _currentLocation = null;
+                _locationMessage = null;
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.all(16.0),
+            ),
+            child: const Text(
+              'Annulla',
+              style: TextStyle(fontSize: 16.0),
+            ),
+          ),
+          const SizedBox(width: 16.0),
+          FloatingActionButton(
+            onPressed: _sendAlert,
+            child: const Icon(Icons.send),
+          ),
+        ],
       ),
     );
   }
