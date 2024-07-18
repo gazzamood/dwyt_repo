@@ -45,13 +45,38 @@ class NotificaPageState extends State<NotificaPage>
   Future<void> loadNotifications() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     notificheLette = prefs.getStringList('notificheLette') ?? [];
+    Timestamp registrationDate;
 
+    // Check if the logged-in entity is a user or an activity
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .get();
+    if (userDoc.exists) {
+      registrationDate = userDoc['registrationDate'];
+    } else {
+      DocumentSnapshot activityDoc = await FirebaseFirestore.instance
+          .collection('activities')
+          .doc(userId)
+          .get();
+      if (activityDoc.exists) {
+        registrationDate = activityDoc['creationDate'];
+      } else {
+        // Handle the case where neither user nor activity is found
+        // For example, setState with an error message
+        setState(() {
+          // Update state to reflect error or empty notifications
+        });
+        return;
+      }
+    }
     QuerySnapshot alertSnapshot = await FirebaseFirestore.instance
         .collection('notifications')
         .where('type', isEqualTo: 'allerta')
         .get();
     alertNotifications = alertSnapshot.docs
         .where((doc) => doc['senderId'] != userId) // Filtra le notifiche create dall'utente loggato
+        .where((doc) => doc['timestamp'].compareTo(registrationDate) > 0) // Compare with registration date
         .map((doc) => {
       'id': doc.id,
       'title': doc['title'],
@@ -68,6 +93,7 @@ class NotificaPageState extends State<NotificaPage>
         .get();
     infoNotifications = infoSnapshot.docs
         .where((doc) => doc['senderId'] != userId) // Filtra le notifiche create dall'utente loggato
+        .where((doc) => doc['timestamp'].compareTo(registrationDate) > 0) // Compare with registration date
         .map((doc) => {
       'id': doc.id,
       'title': doc['title'],
@@ -77,6 +103,10 @@ class NotificaPageState extends State<NotificaPage>
       'senderId': doc['senderId'],
     })
         .toList();
+
+    // Ordina le notifiche in base al timestamp
+    alertNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
+    infoNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
 
     setState(() {});
   }
