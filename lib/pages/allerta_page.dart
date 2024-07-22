@@ -78,7 +78,7 @@ class _AllertaPageState extends State<AllertaPage> {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Errore'),
-            content: const Text('Il titolo e il messaggio di allerta non possono essere vuoti.'),
+            content: const Text('Il titolo e il messaggio non possono essere vuoti.'),
             actions: <Widget>[
               TextButton(
                 child: const Text('OK'),

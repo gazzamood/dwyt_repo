@@ -24,12 +24,14 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
   final TextEditingController _nome = TextEditingController();
   final TextEditingController _cognome = TextEditingController();
   final TextEditingController _datanascita = TextEditingController();
+  final TextEditingController _addressUser = TextEditingController();
+
 
   final TextEditingController _nomeAttivita = TextEditingController();
   final TextEditingController _tipologia = TextEditingController();
   final TextEditingController _oraInizio = TextEditingController();
   final TextEditingController _oraFine = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _addressActivity = TextEditingController();
 
   bool _isUtente = true; // To select between user or activity registration
 
@@ -58,6 +60,9 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
         String userId = userCredential.user!.uid;
 
         if (_isUtente) {
+          // Geocode the address
+          List<Location> locations = await locationFromAddress(_addressUser.text);
+          Location location = locations.first;
           // Register user in Firestore
           await FirebaseFirestore.instance.collection('users').doc(userId).set({
             'userId': userId,
@@ -65,13 +70,16 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'surname': _cognome.text,
             'birthdate': _datanascita.text,
             'email': _email.text,
+            'addressUser': _addressUser.text,
+            'latitude': location.latitude,
+            'longitude': location.longitude,
             'registrationDate': Timestamp.now(),
             'subscriptions': [],
             'notifications': [],
           });
         } else {
           // Geocode the address
-          List<Location> locations = await locationFromAddress(_addressController.text);
+          List<Location> locations = await locationFromAddress(_addressActivity.text);
           Location location = locations.first;
           // Register activity in Firestore
           await FirebaseFirestore.instance.collection('activities').doc(userId).set({
@@ -80,7 +88,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'type': _tipologia.text,
             'startTime': _oraInizio.text,
             'endTime': _oraFine.text,
-            'address': _addressController.text,
+            'addressActivity': _addressActivity.text,
             'latitude': location.latitude,
             'longitude': location.longitude,
             'creationDate': Timestamp.now(),
@@ -265,6 +273,20 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             return null;
           },
         ),
+        const SizedBox(height: 16.0),
+        TextFormField(
+          controller: _addressUser,
+          decoration: const InputDecoration(
+            labelText: 'Address',
+            border: OutlineInputBorder(),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Inserisci la location dell\'user';
+            }
+            return null;
+          },
+        )
       ],
     );
   }
@@ -331,9 +353,9 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
         ),
         const SizedBox(height: 16.0),
         TextFormField(
-          controller: _addressController,
+          controller: _addressActivity,
           decoration: const InputDecoration(
-            labelText: 'Location',
+            labelText: 'Address',
             border: OutlineInputBorder(),
           ),
           validator: (value) {

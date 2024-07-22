@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../services/auth.dart';
+import '../services/check_permission.dart';
 import 'allerta_page.dart';
 import 'attivita_page.dart';
 import 'informativa_page.dart';
@@ -26,6 +28,8 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     user = FirebaseAuth.instance.currentUser;
     updateMenuTitle();
+
+    _checkPermission();
   }
 
   Future<void> signOut() async {
@@ -64,6 +68,33 @@ class _HomePageState extends State<HomePage> {
           });
         }
       });
+    }
+  }
+
+  Future<void> _checkPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse && permission != LocationPermission.always) {
+        // Handle the case where the user denied the permission
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Permission Denied'),
+              content: const Text('Location permission is needed to provide better services.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
     }
   }
 
@@ -140,11 +171,21 @@ class _HomePageState extends State<HomePage> {
                   ),
                   padding: const EdgeInsets.all(16.0),
                 ),
-                child: const Text(
-                  'Allerta/Informativa',
-                  style: TextStyle(fontSize: 24.0),
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Notifiche Push',
+                      style: TextStyle(fontSize: 34.0),
+                    ),
+                    Text(
+                      'Allerta-Info',
+                      style: TextStyle(fontSize: 20.0),
+                    ),
+                  ],
                 ),
-              ),
+              )
+
             ),
           ),
           Expanded(
@@ -155,7 +196,7 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const InformativaPage()),
+                    MaterialPageRoute(builder: (context) => const MapSample()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -165,8 +206,8 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.all(16.0),
                 ),
                 child: const Text(
-                  '??',
-                  style: TextStyle(fontSize: 24.0),
+                  'Maps',
+                  style: TextStyle(fontSize: 34.0),
                 ),
               ),
             ),
@@ -190,7 +231,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: const Text(
                   'Attività',
-                  style: TextStyle(fontSize: 24.0),
+                  style: TextStyle(fontSize: 34.0),
                 ),
               ),
             ),
