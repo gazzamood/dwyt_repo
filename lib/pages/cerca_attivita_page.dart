@@ -78,7 +78,7 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
             children: <Widget>[
               Text('Ora inizio: ${activity['startTime']}'),
               Text('Ora fine: ${activity['endTime']}'),
-              Text('Location: ${activity['address']}'),
+              Text('Location: ${activity['addressActivity']}'),
             ],
           ),
           actions: <Widget>[
