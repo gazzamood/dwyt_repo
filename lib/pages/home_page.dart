@@ -29,7 +29,7 @@ class _HomePageState extends State<HomePage> {
     user = FirebaseAuth.instance.currentUser;
     updateMenuTitle();
 
-    _checkPermission();
+    //_checkPermission();
   }
 
   Future<void> signOut() async {
@@ -196,7 +196,7 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const MapSample()),
+                    MaterialPageRoute(builder: (context) => const NotificaPage()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -206,7 +206,7 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.all(16.0),
                 ),
                 child: const Text(
-                  'Maps',
+                  'Centro Notifiche',
                   style: TextStyle(fontSize: 34.0),
                 ),
               ),
