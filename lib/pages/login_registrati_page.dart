@@ -25,12 +25,13 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
   final TextEditingController _cognome = TextEditingController();
   final TextEditingController _datanascita = TextEditingController();
   final TextEditingController _addressUser = TextEditingController();
-
+  final TextEditingController _phoneNumber = TextEditingController(); // Added
 
   final TextEditingController _nomeAttivita = TextEditingController();
   final TextEditingController _tipologia = TextEditingController();
-  final TextEditingController _oraInizio = TextEditingController();
-  final TextEditingController _oraFine = TextEditingController();
+  final TextEditingController _description = TextEditingController();
+  final TextEditingController _orariApertura = TextEditingController();
+  final TextEditingController _contatti = TextEditingController();
   final TextEditingController _addressActivity = TextEditingController();
 
   bool _isUtente = true; // To select between user or activity registration
@@ -71,11 +72,12 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'birthdate': _datanascita.text,
             'email': _email.text,
             'addressUser': _addressUser.text,
+            'phoneNumber': _phoneNumber.text,
             'latitude': location.latitude,
             'longitude': location.longitude,
             'registrationDate': Timestamp.now(),
             'subscriptions': [],
-            'notifications': [],
+            'notificationsId': [],
           });
         } else {
           // Geocode the address
@@ -86,16 +88,17 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'activityId': userId,
             'name': _nomeAttivita.text,
             'type': _tipologia.text,
-            'startTime': _oraInizio.text,
-            'endTime': _oraFine.text,
+            'description': _description.text,
+            'openingHours': _orariApertura.text,
+            'contacts': _contatti.text,
             'addressActivity': _addressActivity.text,
             'latitude': location.latitude,
             'longitude': location.longitude,
             'creationDate': Timestamp.now(),
             'subscribers': [],
-            'notifications': [],
+            'notificationsId': [], // Changed from 'notifications' to 'notificationsId'
+            'email': _email.text, // Added email field
           });
-
         }
 
         // Navigate to the home page
@@ -286,7 +289,22 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             }
             return null;
           },
-        )
+        ),
+        const SizedBox(height: 16.0),
+        TextFormField(
+          controller: _phoneNumber, // Added field
+          decoration: const InputDecoration(
+            labelText: 'Numero di Telefono',
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: TextInputType.phone,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Inserisci il numero di telefono';
+            }
+            return null;
+          },
+        ),
       ],
     );
   }
@@ -323,30 +341,44 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
         ),
         const SizedBox(height: 16.0),
         TextFormField(
-          controller: _oraInizio,
+          controller: _description,
           decoration: const InputDecoration(
-            labelText: 'Ora di Inizio',
+            labelText: 'Descrizione',
             border: OutlineInputBorder(),
           ),
-          keyboardType: TextInputType.datetime,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Inserisci l\'ora di inizio dell\'attività';
+              return 'Inserisci una descrizione dell\'attività';
             }
             return null;
           },
         ),
         const SizedBox(height: 16.0),
         TextFormField(
-          controller: _oraFine,
+          controller: _orariApertura,
           decoration: const InputDecoration(
-            labelText: 'Ora di Fine',
+            labelText: 'Orari di Apertura',
             border: OutlineInputBorder(),
           ),
-          keyboardType: TextInputType.datetime,
+          keyboardType: TextInputType.text,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Inserisci l\'ora di fine dell\'attività';
+              return 'Inserisci gli orari di apertura dell\'attività';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16.0),
+        TextFormField(
+          controller: _contatti,
+          decoration: const InputDecoration(
+            labelText: 'Contatti',
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: TextInputType.phone,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Inserisci il numero di telefono';
             }
             return null;
           },
