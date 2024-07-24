@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'details_acttivity_page.dart';
+import 'map_page.dart';  // Ensure the import is correct
 
 class CercaAttivitaPage extends StatefulWidget {
   const CercaAttivitaPage({super.key});
@@ -53,44 +55,35 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
       child: ListView.builder(
         itemCount: snapshot.docs.length,
         itemBuilder: (context, index) {
-          var activity = snapshot.docs[index];
+          var doc = snapshot.docs[index];
+          final activity = Activity.fromFirestore(doc);  // Convert to Activity
           return ListTile(
-            title: Text(activity['name']),
-            subtitle: Text(activity['type']),
+            title: Text(activity.name),
+            subtitle: Text(activity.type),
+            trailing: IconButton(
+              icon: const Icon(Icons.map),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MapPage(
+                      initialActivity: activity,
+                    ),
+                  ),
+                );
+              },
+            ),
             onTap: () {
-              _showActivityDetails(activity);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DetailsActivityPage(activity: activity),
+                ),
+              );
             },
           );
         },
       ),
-    );
-  }
-
-  void _showActivityDetails(DocumentSnapshot activity) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(activity['name']),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text('Ora inizio: ${activity['startTime']}'),
-              Text('Ora fine: ${activity['endTime']}'),
-              Text('Location: ${activity['address']}'),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Chiudi'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 
