@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'attivita_push_page.dart'; // Assumi che queste siano le pagine effettive che hai creato
+import 'map_page.dart'; // Assumi che queste siano le pagine effettive che hai creato
 import 'cerca_attivita_page.dart';
 
 class AttivitaPage extends StatelessWidget {
@@ -22,7 +22,7 @@ class AttivitaPage extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) =>  const AttivitaPushPage()),
+                    MaterialPageRoute(builder: (context) =>  const MapPage()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
