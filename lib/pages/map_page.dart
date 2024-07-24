@@ -1,7 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
+
+// Define a class to hold activity information
+class Activity {
+  final String name;
+  final double latitude;
+  final double longitude;
+
+  Activity({required this.name, required this.latitude, required this.longitude});
+}
 
 class MapPage extends StatefulWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -13,22 +21,20 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   final Completer<GoogleMapController> _controller = Completer<GoogleMapController>();
 
-  static const CameraPosition _kGooglePlex = CameraPosition(
-    target: LatLng(37.42796133580664, -122.085749655962),
-    zoom: 14.4746,
-  );
-
-  static const CameraPosition _kCasa = CameraPosition(
-    target: LatLng(41.796980946841416, 12.661297325291317),
+  static const CameraPosition _kInitialPosition = CameraPosition(
+    target: LatLng(41.796980946841416, 12.661297325291317), // Default position
     zoom: 15.4746,
   );
 
-  static const CameraPosition _kLake = CameraPosition(
-    bearing: 192.8334901395799,
-    target: LatLng(37.43296265331129, -122.08832357078792),
-    tilt: 59.440717697143555,
-    zoom: 19.151926040649414,
-  );
+  // List of activities (replace this with your data fetching logic)
+  final List<Activity> _activities = [
+    Activity(name: 'Activity 1', latitude: 41.796980, longitude: 12.661297),
+    Activity(name: 'Activity 2', latitude: 41.796980, longitude: 12.661297),
+    // Add more activities here
+  ];
+
+  // Set to store markers
+  final Set<Marker> _markers = {};
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +52,11 @@ class _MapPageState extends State<MapPage> {
         children: [
           GoogleMap(
             mapType: MapType.hybrid,
-            initialCameraPosition: _kCasa,
+            initialCameraPosition: _kInitialPosition,
+            markers: _markers, // Provide the set of markers
             onMapCreated: (GoogleMapController controller) {
               _controller.complete(controller);
+              _addMarkers(); // Add markers when the map is created
             },
           ),
           Positioned(
@@ -82,6 +90,11 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> _goToTheLake() async {
     final GoogleMapController controller = await _controller.future;
+    // Define the camera position for the lake (you can adjust this)
+    const CameraPosition _kLake = CameraPosition(
+      target: LatLng(37.43296265331129, -122.08832357078792),
+      zoom: 19.151926040649414,
+    );
     await controller.animateCamera(CameraUpdate.newCameraPosition(_kLake));
   }
 
@@ -93,5 +106,24 @@ class _MapPageState extends State<MapPage> {
   Future<void> _zoomOut() async {
     final GoogleMapController controller = await _controller.future;
     controller.animateCamera(CameraUpdate.zoomOut());
+  }
+
+  // Function to add markers to the map
+  Future<void> _addMarkers() async {
+    setState(() {
+      _markers.clear(); // Clear existing markers if any
+
+      for (var activity in _activities) {
+        final marker = Marker(
+          markerId: MarkerId(activity.name),
+          position: LatLng(activity.latitude, activity.longitude),
+          infoWindow: InfoWindow(
+            title: activity.name,
+          ),
+        );
+
+        _markers.add(marker);
+      }
+    });
   }
 }
