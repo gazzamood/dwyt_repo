@@ -3,18 +3,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfiloPage extends StatefulWidget {
-  const ProfiloPage({Key? key}) : super(key: key);
+  const ProfiloPage({super.key});
 
   @override
-  _ProfiloPageState createState() => _ProfiloPageState();
+  State<ProfiloPage> createState() => _ProfiloPageState();
 }
 
 class _ProfiloPageState extends State<ProfiloPage> {
-  late User? _user;
-  late String _imageUrl = '';
-  late String _email = '';
-  late String _dataDiNascita = '';
-  late String _indirizzo = '';
+  User? _user;
+  String _imageUrl = '';
+  String _name = '';
+  String _surname = '';
+  String _birthdate = '';
+  String _addressUser = '';
+  String _phoneNumber = '';
 
   @override
   void initState() {
@@ -36,10 +38,12 @@ class _ProfiloPageState extends State<ProfiloPage> {
           .get();
 
       setState(() {
-        _imageUrl = userSnapshot['profileImageUrl'] ?? '';
-        _email = userSnapshot['email'] ?? '';
-        _dataDiNascita = userSnapshot['dataDiNascita'] ?? '';
-        _indirizzo = userSnapshot['indirizzo'] ?? '';
+        //_imageUrl = userSnapshot['profileImageUrl'] ?? '';
+        _name = userSnapshot['name'] ?? '';
+        _surname = userSnapshot['surname'] ?? '';
+        _birthdate = userSnapshot['birthdate'] ?? '';
+        _addressUser = userSnapshot['addressUser'] ?? '';
+        _phoneNumber = userSnapshot['phoneNumber'] ?? '';
       });
     }
   }
@@ -48,7 +52,7 @@ class _ProfiloPageState extends State<ProfiloPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profilo'),
+        title: const Text('Profilo'),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -67,68 +71,68 @@ class _ProfiloPageState extends State<ProfiloPage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(width: 2, color: Colors.grey),
-                      image: DecorationImage(
+                      /*image: DecorationImage(
                         image: _imageUrl.isNotEmpty
                             ? NetworkImage(_imageUrl)
-                            : AssetImage('assets/images/profile_image.jpg') as ImageProvider,
+                            : const AssetImage('assets/images/profile_image.jpg') as ImageProvider,
                         fit: BoxFit.cover,
-                      ),
+                      ),*/
                     ),
                   ),
-                  SizedBox(width: 16.0),
-                  // Informazioni del profilo: nome, cognome, punti fedeltà
+                  const SizedBox(width: 16.0),
+                  // Informazioni del profilo: nome, cognome, email, punti fedeltà
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _user?.displayName ?? 'Nome Utente',
-                        style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+                        '$_name $_surname',
+                        style: const TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(height: 8.0),
-                      Text(
-                        _user?.email ?? 'Email',
-                        style: TextStyle(fontSize: 20.0),
-                      ),
-                      SizedBox(height: 8.0),
-                      Text(
+                      const SizedBox(height: 8.0),
+                      const Text(
                         'Punti Fedeltà', // Scritta "Punti Fedeltà"
-                        style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(height: 4.0),
-                      Text(
+                      const SizedBox(height: 4.0),
+                      const Text(
                         '100', // Valore dei punti fedeltà (esempio)
-                        style: TextStyle(fontSize: 18.0),
+                        style: TextStyle(fontSize: 25.0),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            Divider(),
+            const Divider(),
             // Altre informazioni del profilo
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Altre informazioni del profilo',
                     style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 12.0),
+                  const SizedBox(height: 8.0),
                   Text(
-                    'Email: $_email', // Email dell'utente
-                    style: TextStyle(fontSize: 18.0),
+                    'Email: ${_user?.email ?? 'N/A'}',
+                    style: const TextStyle(fontSize: 20.0),
                   ),
-                  SizedBox(height: 12.0),
+                  const SizedBox(height: 12.0),
                   Text(
-                    'Data di nascita: $_dataDiNascita', // Data di nascita dell'utente
-                    style: TextStyle(fontSize: 18.0),
+                    'Data di nascita: $_birthdate',
+                    style: const TextStyle(fontSize: 18.0),
                   ),
-                  SizedBox(height: 12.0),
+                  const SizedBox(height: 12.0),
                   Text(
-                    'Indirizzo: $_indirizzo', // Indirizzo dell'utente
-                    style: TextStyle(fontSize: 18.0),
+                    'Indirizzo: $_addressUser',
+                    style: const TextStyle(fontSize: 18.0),
+                  ),
+                  const SizedBox(height: 12.0),
+                  Text(
+                    'Numero di telefono: $_phoneNumber',
+                    style: const TextStyle(fontSize: 18.0),
                   ),
                 ],
               ),

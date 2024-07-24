@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'details_acttivity_page.dart';
 
 class Activity {
   final String id;
@@ -61,6 +62,7 @@ class _MapPageState extends State<MapPage> {
   );
 
   final Set<Marker> _markers = {};
+  Activity? _selectedActivity;
 
   @override
   void initState() {
@@ -86,6 +88,9 @@ class _MapPageState extends State<MapPage> {
           position: LatLng(activity.latitude, activity.longitude),
           infoWindow: InfoWindow(
             title: activity.name,
+            onTap: () {
+              _onMarkerTapped(activity);
+            },
           ),
         );
         _markers.add(marker);
@@ -97,6 +102,12 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
+  void _onMarkerTapped(Activity activity) {
+    setState(() {
+      _selectedActivity = activity;
+    });
+  }
+
   Future<void> _moveToActivity(Activity activity) async {
     final GoogleMapController controller = await _controller.future;
     final CameraPosition cameraPosition = CameraPosition(
@@ -104,6 +115,12 @@ class _MapPageState extends State<MapPage> {
       zoom: 15.0,
     );
     controller.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+  }
+
+  void _clearSelectedActivity() {
+    setState(() {
+      _selectedActivity = null;
+    });
   }
 
   @override
@@ -127,7 +144,37 @@ class _MapPageState extends State<MapPage> {
             onMapCreated: (GoogleMapController controller) {
               _controller.complete(controller);
             },
+            onTap: (_) {
+              _clearSelectedActivity(); // Deseleziona l'attività quando si fa clic sulla mappa
+            },
           ),
+          if (_selectedActivity != null)
+            Positioned(
+              bottom: 16,
+              left: 16,
+              right: 16,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => DetailsActivityPage(activity: _selectedActivity!),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.info_outline, size: 24), // Icona
+                label: const Text('View Details', style: TextStyle(fontSize: 16)), // Testo
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48), // Altezza minima
+                  padding: const EdgeInsets.symmetric(horizontal: 12), // Spazio laterale
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16), // Angoli arrotondati
+                  ),
+                  elevation: 8, // Ombra
+                  backgroundColor: Colors.blue, // Colore di sfondo
+                  foregroundColor: Colors.white, // Colore del testo
+                ),
+              ),
+            ),
         ],
       ),
     );
