@@ -4,10 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../services/auth.dart';
-import '../services/check_permission.dart';
 import 'allerta_page.dart';
 import 'attivita_page.dart';
-import 'informativa_page.dart';
 import 'login_page.dart';
 import 'notifica_page.dart';
 import 'profilo_page.dart'; // Importa la pagina ProfiloPage
@@ -20,7 +18,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late User? user;
+  User? user;
   String menuTitle = 'Nessun utente'; // Titolo di default
 
   @override
@@ -28,45 +26,46 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     user = FirebaseAuth.instance.currentUser;
     updateMenuTitle();
-
-    //_checkPermission();
   }
 
   Future<void> signOut() async {
     await Auth().signOut();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
   }
 
   void updateMenuTitle() {
     if (user != null) {
-      // Recupera dati dell'utente da Firestore
+      // Recupera dati dell'utente dalla collezione 'users'
       FirebaseFirestore.instance.collection('users').doc(user!.uid).get().then((DocumentSnapshot userDoc) {
         if (userDoc.exists) {
-          Map<String, dynamic>? userData = userDoc.data() as Map<String, dynamic>?;
-
-          if (userData != null && userData.containsKey('Nome attività')) {
-            setState(() {
-              menuTitle = userData['Nome attività'];
-            });
-          } else {
-            setState(() {
-              menuTitle = user!.email ?? 'Nessun utente';
-            });
-          }
+          setState(() {
+            menuTitle = user!.email ?? 'Nessun utente';
+          });
         } else {
-          // Check if the user is an activity
-          FirebaseFirestore.instance.collection('attivita').where('userId', isEqualTo: user!.uid).get().then((QuerySnapshot activityQuery) {
+          // Se l'utente non è trovato nella collezione 'users', controlla nella collezione 'activities'
+          FirebaseFirestore.instance.collection('activities').where('activityId', isEqualTo: user!.uid).get().then((QuerySnapshot activityQuery) {
             if (activityQuery.docs.isNotEmpty) {
-              Map<String, dynamic> activityData = activityQuery.docs.first.data() as Map<String, dynamic>;
-              setState(() {
-                menuTitle = activityData['nome'];
-              });
-            } else {
               setState(() {
                 menuTitle = user!.email ?? 'Nessun utente';
               });
+            } else {
+              setState(() {
+                menuTitle = 'Nessun utente';
+              });
             }
+          }).catchError((error) {
+            setState(() {
+              menuTitle = 'Errore';
+            });
           });
         }
+      }).catchError((error) {
+        setState(() {
+          menuTitle = 'Errore';
+        });
       });
     }
   }
@@ -110,11 +109,7 @@ class _HomePageState extends State<HomePage> {
           onSelected: (String value) async {
             if (value == 'logout') {
               await signOut();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-              );
-            } else if (value == 'profilo') { // Aggiungi gestione per la voce Profilo
+            } else if (value == 'profilo') {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const ProfiloPage()),
@@ -130,7 +125,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const PopupMenuDivider(),
               const PopupMenuItem<String>(
-                value: 'profilo', // Voce del menu per il profilo
+                value: 'profilo',
                 child: Text('Profilo'),
               ),
               const PopupMenuItem<String>(
@@ -184,8 +179,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-              )
-
+              ),
             ),
           ),
           Expanded(
