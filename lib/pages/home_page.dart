@@ -18,7 +18,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  User? user;
+  late User? user;
   String menuTitle = 'Nessun utente'; // Titolo di default
 
   @override

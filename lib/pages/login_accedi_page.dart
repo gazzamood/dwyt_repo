@@ -13,21 +13,27 @@ class LoginAccediPage extends StatefulWidget {
 }
 
 class _LoginAccediPageState extends State<LoginAccediPage> {
-
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
-
+  bool _isLoading = false;
 
   Future<void> signIn() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       await Auth().signInWithEmailAndPassword(email: _email.text, password: _password.text);
-      // Naviga alla homepage se il login ha successo
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } on FirebaseAuthException catch (error) {
       _showErrorDialog(error.message);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -50,7 +56,6 @@ class _LoginAccediPageState extends State<LoginAccediPage> {
       },
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -81,10 +86,10 @@ class _LoginAccediPageState extends State<LoginAccediPage> {
               obscureText: true,
             ),
             const SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: () {
-                signIn();
-              },
+            _isLoading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+              onPressed: signIn,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
               ),

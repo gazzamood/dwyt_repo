@@ -56,6 +56,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
           email: _email.text,
           password: _password.text,
         );
+        print('User registered successfully: ${userCredential.user!.uid}');
 
         // 2. Get the ID of the new user
         String userId = userCredential.user!.uid;
@@ -79,6 +80,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'subscriptions': [],
             'notificationsId': [],
           });
+          print('User profile created successfully in Firestore');
         } else {
           // Geocode the address
           List<Location> locations = await locationFromAddress(_addressActivity.text);
@@ -99,6 +101,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'notificationsId': [], // Changed from 'notifications' to 'notificationsId'
             'email': _email.text, // Added email field
           });
+          print('Activity profile created successfully in Firestore');
         }
 
         // Navigate to the home page
@@ -106,9 +109,13 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
         );
+        print('Navigated to HomePage');
       } catch (error) {
         print('Error during registration: $error');
         // Handle any registration errors
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Errore durante la registrazione: $error')),
+        );
       }
     }
   }
