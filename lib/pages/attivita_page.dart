@@ -22,7 +22,7 @@ class AttivitaPage extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) =>  const MapPage()),
+                    MaterialPageRoute(builder: (context) => const CercaAttivitaPage()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -32,7 +32,7 @@ class AttivitaPage extends StatelessWidget {
                   padding: const EdgeInsets.all(16.0),
                 ),
                 child: const Text(
-                  'Mappa',
+                  'Lista Attività',
                   style: TextStyle(fontSize: 24.0),
                 ),
               ),
@@ -47,7 +47,7 @@ class AttivitaPage extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const CercaAttivitaPage()),
+                    MaterialPageRoute(builder: (context) =>  const MapPage()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -57,7 +57,7 @@ class AttivitaPage extends StatelessWidget {
                   padding: const EdgeInsets.all(16.0),
                 ),
                 child: const Text(
-                  'Lista Attività',
+                  'Mappa',
                   style: TextStyle(fontSize: 24.0),
                 ),
               ),
