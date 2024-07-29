@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'details_acttivity_page.dart';
+import 'details_activity_page.dart';
 import 'map_page.dart';  // Ensure the import is correct
 
 class CercaAttivitaPage extends StatefulWidget {
