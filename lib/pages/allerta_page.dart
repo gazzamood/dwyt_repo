@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -66,11 +68,32 @@ class _AllertaPageState extends State<AllertaPage> {
     }
   }
 
+  Future<loc.LocationData?> _getCurrentLocation() async {
+    final loc.Location location = loc.Location();
+
+    bool serviceEnabled = await location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await location.requestService();
+      if (!serviceEnabled) {
+        return null;
+      }
+    }
+
+    loc.PermissionStatus permissionGranted = await location.hasPermission();
+    if (permissionGranted == loc.PermissionStatus.denied) {
+      permissionGranted = await location.requestPermission();
+      if (permissionGranted != loc.PermissionStatus.granted) {
+        return null;
+      }
+    }
+
+    return await location.getLocation();
+  }
+
   Future<void> _sendAlert() async {
     final title = _titleController.text;
     final message = _messageController.text;
     final radius = _radiusController.text;
-    final location = _currentLocation;
     final senderId = FirebaseAuth.instance.currentUser!.uid;
 
     if (title.isEmpty || message.isEmpty) {
@@ -95,22 +118,51 @@ class _AllertaPageState extends State<AllertaPage> {
       return;
     }
 
+    loc.LocationData? location = _currentLocation;
+    if (location == null) {
+      location = await _getCurrentLocation();
+      if (location == null) {
+        // Mostra un popup di errore se la posizione è nulla
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Errore'),
+              content: const Text('La posizione dell\'utente non è disponibile.'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+        return;
+      }
+    }
+
+    double radiusKm = double.parse(radius);
+
+    double calculateArea(double radius) {
+      return pi * radius * radius;
+    }
+
     Map<String, dynamic> alertData = {
       'title': title,
       'message': message,
       'timestamp': FieldValue.serverTimestamp(),
       'senderId': senderId,
-      'radius': int.parse(radius),
+      'radius': radiusKm,
       'readBy': [], // Array vuoto per tracciare gli utenti che hanno letto la notifica
       'type': _isAlert ? 'allerta' : 'info', // Aggiunta del campo type
-    };
-
-    if (location != null) {
-      alertData['location'] = {
+      'location': {
         'latitude': location.latitude,
         'longitude': location.longitude,
-      };
-    }
+      },
+    };
 
     try {
       // Aggiungi i dati dell'allerta alla collezione 'notifications'
