@@ -5,10 +5,12 @@ import 'package:geolocator/geolocator.dart';
 
 import '../services/auth.dart';
 import 'allerta_page.dart';
-import 'attivita_page.dart';
+import 'attivita_page.dart'; // Aggiorna l'importazione se necessario
+import 'cerca_attivita_page.dart'; // Importa la pagina CercaAttivitaPage
 import 'login_page.dart';
+import 'map_page.dart'; // Importa la pagina MapPage
 import 'notifica_page.dart';
-import 'profilo_page.dart'; // Importa la pagina ProfiloPage
+import 'profilo_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,6 +22,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late User? user;
   String menuTitle = 'Nessun utente'; // Titolo di default
+  bool isUser = true;
 
   @override
   void initState() {
@@ -38,14 +41,12 @@ class _HomePageState extends State<HomePage> {
 
   void updateMenuTitle() {
     if (user != null) {
-      // Recupera dati dell'utente dalla collezione 'users'
       FirebaseFirestore.instance.collection('users').doc(user!.uid).get().then((DocumentSnapshot userDoc) {
         if (userDoc.exists) {
           setState(() {
             menuTitle = user!.email ?? 'Nessun utente';
           });
         } else {
-          // Se l'utente non è trovato nella collezione 'users', controlla nella collezione 'activities'
           FirebaseFirestore.instance.collection('activities').where('activityId', isEqualTo: user!.uid).get().then((QuerySnapshot activityQuery) {
             if (activityQuery.docs.isNotEmpty) {
               setState(() {
@@ -75,7 +76,6 @@ class _HomePageState extends State<HomePage> {
     if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
       permission = await Geolocator.requestPermission();
       if (permission != LocationPermission.whileInUse && permission != LocationPermission.always) {
-        // Handle the case where the user denied the permission
         showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -200,7 +200,7 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.all(16.0),
                 ),
                 child: const Text(
-                  'Centro Notifiche',
+                  'Notifiche',
                   style: TextStyle(fontSize: 34.0),
                 ),
               ),
@@ -214,7 +214,7 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const AttivitaPage()),
+                    MaterialPageRoute(builder: (context) => const CercaAttivitaPage()), // Modificato per collegarsi a CercaAttivitaPage
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -225,6 +225,30 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: const Text(
                   'Attività',
+                  style: TextStyle(fontSize: 34.0),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.all(16.0),
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MapPage()), // Aggiunto il nuovo tasto per la pagina MapPage
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                  padding: const EdgeInsets.all(16.0),
+                ),
+                child: const Text(
+                  'Mappa',
                   style: TextStyle(fontSize: 34.0),
                 ),
               ),
