@@ -1,48 +1,12 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'details_acttivity_page.dart';
-
-class Activity {
-  final String id;
-  final String name;
-  final double latitude;
-  final double longitude;
-  final String type;
-  final String openingHours;
-  final String addressActivity;
-  final String? contatti;
-  final String? description;
-
-  Activity({
-    required this.id,
-    required this.name,
-    required this.latitude,
-    required this.longitude,
-    required this.type,
-    required this.openingHours,
-    required this.addressActivity,
-    this.contatti,
-    this.description,
-  });
-
-  factory Activity.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return Activity(
-      id: doc.id,
-      name: data['name'] ?? '',
-      latitude: data['latitude']?.toDouble() ?? 0.0,
-      longitude: data['longitude']?.toDouble() ?? 0.0,
-      type: data['type'] ?? '',
-      openingHours: data['openingHours'] ?? '',
-      addressActivity: data['addressActivity'] ?? '',
-      contatti: data['contatti'],
-      description: data['description'],
-    );
-  }
-}
+import '../class/Activity.dart';
+import '../class/Notification.dart' as not;
+import 'details_page.dart';
 
 class MapPage extends StatefulWidget {
   final Activity? initialActivity;
@@ -63,6 +27,7 @@ class _MapPageState extends State<MapPage> {
 
   final Set<Marker> _markers = {};
   Activity? _selectedActivity;
+  not.Notification? _selectedNotification;
 
   @override
   void initState() {
@@ -77,34 +42,75 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> _loadActivities() async {
     final firestore = FirebaseFirestore.instance;
-    final querySnapshot = await firestore.collection('activities').get();
 
+    // Load activities
+    final activityQuerySnapshot = await firestore.collection('activities').get();
     setState(() {
       _markers.clear(); // Clear existing markers if any
-      for (var doc in querySnapshot.docs) {
-        final activity = Activity.fromFirestore(doc);
-        final marker = Marker(
-          markerId: MarkerId(activity.id),
-          position: LatLng(activity.latitude, activity.longitude),
-          infoWindow: InfoWindow(
-            title: activity.name,
-            onTap: () {
-              _onMarkerTapped(activity);
-            },
-          ),
-        );
-        _markers.add(marker);
-      }
 
-      if (widget.initialActivity != null) {
-        _moveToActivity(widget.initialActivity!);
+      for (var doc in activityQuerySnapshot.docs) {
+        final activity = Activity.fromFirestore(doc);
+
+        // Check if latitude and longitude are present before adding the marker
+        if (activity.latitude != 0.0 && activity.longitude != 0.0) {
+          final marker = Marker(
+            markerId: MarkerId(activity.id),
+            position: LatLng(activity.latitude, activity.longitude),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed), // Red marker
+            infoWindow: InfoWindow(
+              title: 'Activity',
+              snippet: 'Name: ${activity.name}',
+              onTap: () {
+                _onMarkerTappedActivity(activity);
+              },
+            ),
+          );
+          _markers.add(marker);
+        }
       }
+    });
+
+    // Load notifications
+    final notificationQuerySnapshot = await firestore.collection('notifications').get();
+    setState(() {
+      for (var doc in notificationQuerySnapshot.docs) {
+        final notification = not.Notification.fromFirestore(doc);
+
+        // Check if latitude and longitude are present before adding the marker
+        if (notification.latitude != 0.0 && notification.longitude != 0.0) {
+          final notificationMarker = Marker(
+            markerId: MarkerId('notification_${notification.id}'),
+            position: LatLng(notification.latitude, notification.longitude),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue), // Blue marker
+            infoWindow: InfoWindow(
+              title: 'Notification',
+              snippet: 'Message: ${notification.message}',
+              onTap: () {
+                _onMarkerTappedNotification(notification);
+              },
+            ),
+          );
+          _markers.add(notificationMarker);
+        }
+      }
+    });
+
+    if (widget.initialActivity != null) {
+      _moveToActivity(widget.initialActivity!);
+    }
+  }
+
+  void _onMarkerTappedActivity(Activity activity) {
+    setState(() {
+      _selectedActivity = activity;
+      _selectedNotification = null; // Deseleziona notifica
     });
   }
 
-  void _onMarkerTapped(Activity activity) {
+  void _onMarkerTappedNotification(not.Notification notification) {
     setState(() {
-      _selectedActivity = activity;
+      _selectedNotification = notification;
+      _selectedActivity = null; // Deseleziona attività
     });
   }
 
@@ -145,10 +151,10 @@ class _MapPageState extends State<MapPage> {
               _controller.complete(controller);
             },
             onTap: (_) {
-              _clearSelectedActivity(); // Deseleziona l'attività quando si fa clic sulla mappa
+              _clearSelectedActivity(); // Deselect activity when clicking on the map
             },
           ),
-          if (_selectedActivity != null)
+          if (_selectedActivity != null || _selectedNotification != null)
             Positioned(
               bottom: 16,
               left: 16,
@@ -157,21 +163,24 @@ class _MapPageState extends State<MapPage> {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => DetailsActivityPage(activity: _selectedActivity!),
+                      builder: (context) => DetailsPage(
+                        activity: _selectedActivity,
+                        notification: _selectedNotification,
+                      ),
                     ),
                   );
                 },
-                icon: const Icon(Icons.info_outline, size: 24), // Icona
-                label: const Text('View Details', style: TextStyle(fontSize: 16)), // Testo
+                icon: const Icon(Icons.info_outline, size: 24), // Icon
+                label: const Text('View Details', style: TextStyle(fontSize: 16)), // Text
                 style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48), // Altezza minima
-                  padding: const EdgeInsets.symmetric(horizontal: 12), // Spazio laterale
+                  minimumSize: const Size.fromHeight(48), // Minimum height
+                  padding: const EdgeInsets.symmetric(horizontal: 12), // Lateral padding
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16), // Angoli arrotondati
+                    borderRadius: BorderRadius.circular(16), // Rounded corners
                   ),
-                  elevation: 8, // Ombra
-                  backgroundColor: Colors.blue, // Colore di sfondo
-                  foregroundColor: Colors.white, // Colore del testo
+                  elevation: 8, // Shadow
+                  backgroundColor: Colors.blue, // Background color
+                  foregroundColor: Colors.white, // Text color
                 ),
               ),
             ),
