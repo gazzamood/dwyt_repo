@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'details_activity_page.dart';
+import '../class/Activity.dart';
+import 'details_page.dart';
 import 'map_page.dart';  // Ensure the import is correct
 
 class CercaAttivitaPage extends StatefulWidget {
@@ -191,7 +192,7 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => DetailsActivityPage(activity: activity),
+                  builder: (context) => DetailsPage(activity: activity),
                 ),
               );
             },
