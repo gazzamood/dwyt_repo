@@ -3,14 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 
-import '../services/auth.dart';
-import 'allerta_page.dart';
-import 'attivita_page.dart'; // Aggiorna l'importazione se necessario
-import 'cerca_attivita_page.dart'; // Importa la pagina CercaAttivitaPage
-import 'login_page.dart';
-import 'map_page.dart'; // Importa la pagina MapPage
-import 'notifica_page.dart';
-import 'profilo_page.dart';
+import '../../services/auth.dart';
+import 'activities/list_activity_page.dart';
+import 'notifications/send_notifications_page.dart';
+import '../login/login_page.dart';
+import 'geolocation/map_page.dart'; // Importa la pagina MapPage
+import 'notifications/centro_notifiche_page.dart';
+import 'profile/profilo_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

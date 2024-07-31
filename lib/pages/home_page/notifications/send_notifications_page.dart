@@ -158,8 +158,10 @@ class _AllertaPageState extends State<AllertaPage> {
       'radius': radiusKm,
       'readBy': [], // Array vuoto per tracciare gli utenti che hanno letto la notifica
       'type': _isAlert ? 'allerta' : 'info', // Aggiunta del campo type
-      'latitude': location.latitude,
-      'longitude': location.longitude,
+      'location': {
+        'latitude': location.latitude,
+        'longitude': location.longitude,
+      }
     };
 
     try {

@@ -4,7 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart'; // Importa il pacchetto per formattare le date
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/push_notification.dart';
+import '../../../services/push_notification.dart';
+import 'package:geolocator/geolocator.dart'; // Aggiungi questo pacchetto per ottenere la posizione dell'utente
 
 class NotificaPage extends StatefulWidget {
   const NotificaPage({super.key});
@@ -20,6 +21,7 @@ class NotificaPageState extends State<NotificaPage>
   List<Map<String, dynamic>> infoNotifications = [];
   List<String> notificheLette = [];
   String userId = FirebaseAuth.instance.currentUser!.uid;
+  Position? userPosition; // Posizione attuale dell'utente
 
   @override
   void initState() {
@@ -28,6 +30,7 @@ class NotificaPageState extends State<NotificaPage>
     _tabController.addListener(_handleTabSelection);
     loadNotifications();
     PushNotificationService().initialize();
+    _getUserPosition(); // Ottieni la posizione dell'utente
   }
 
   @override
@@ -62,26 +65,24 @@ class NotificaPageState extends State<NotificaPage>
       if (activityDoc.exists) {
         registrationDate = activityDoc['creationDate'];
       } else {
-        // Handle the case where neither user nor activity is found
-        // For example, setState with an error message
-        setState(() {
-          // Update state to reflect error or empty notifications
-        });
+        setState(() {});
         return;
       }
     }
+
     QuerySnapshot alertSnapshot = await FirebaseFirestore.instance
         .collection('notifications')
         .where('type', isEqualTo: 'allerta')
         .get();
     alertNotifications = alertSnapshot.docs
-        .where((doc) => doc['senderId'] != userId) // Filtra le notifiche create dall'utente loggato
-        .where((doc) => doc['timestamp'].compareTo(registrationDate) > 0) // Compare with registration date
+        .where((doc) => doc['senderId'] != userId)
+        .where((doc) => doc['timestamp'].compareTo(registrationDate) > 0)
+        .where((doc) => _isUserInRange(doc)) // Filtra in base alla posizione dell'utente
         .map((doc) => {
       'id': doc.id,
       'title': doc['title'],
       'message': doc['message'],
-      'timestamp': _formatTimestamp(doc['timestamp']), // Formatta il timestamp qui
+      'timestamp': _formatTimestamp(doc['timestamp']),
       'readBy': doc['readBy'] ?? [],
       'senderId': doc['senderId'],
     })
@@ -92,29 +93,58 @@ class NotificaPageState extends State<NotificaPage>
         .where('type', isEqualTo: 'info')
         .get();
     infoNotifications = infoSnapshot.docs
-        .where((doc) => doc['senderId'] != userId) // Filtra le notifiche create dall'utente loggato
-        .where((doc) => doc['timestamp'].compareTo(registrationDate) > 0) // Compare with registration date
+        .where((doc) => doc['senderId'] != userId)
+        .where((doc) => doc['timestamp'].compareTo(registrationDate) > 0)
+        .where((doc) => _isUserInRange(doc)) // Filtra in base alla posizione dell'utente
         .map((doc) => {
       'id': doc.id,
       'title': doc['title'],
       'message': doc['message'],
-      'timestamp': _formatTimestamp(doc['timestamp']), // Formatta il timestamp qui
+      'timestamp': _formatTimestamp(doc['timestamp']),
       'readBy': doc['readBy'] ?? [],
       'senderId': doc['senderId'],
     })
         .toList();
 
-    // Ordina le notifiche in base al timestamp
     alertNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
     infoNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
 
     setState(() {});
   }
 
+  bool _isUserInRange(DocumentSnapshot doc) {
+    if (userPosition == null) {
+      return false;
+    }
+
+    var location = doc.get('location');
+    var radius = doc.get('radius');
+
+    if (location == null || radius == null) {
+      return false;
+    }
+
+    double notificationLat = location['latitude'];
+    double notificationLon = location['longitude'];
+    double radiusValue = radius.toDouble(); // Assicurati che radius sia di tipo double
+
+    double distance = Geolocator.distanceBetween(
+      userPosition!.latitude,
+      userPosition!.longitude,
+      notificationLat,
+      notificationLon,
+    );
+
+    return distance <= radiusValue;
+  }
+
+  Future<void> _getUserPosition() async {
+    userPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  }
+
   String _formatTimestamp(Timestamp? timestamp) {
     if (timestamp == null) return '';
 
-    // Formatta il timestamp nel formato desiderato (giorno mese anno ore:minuti)
     DateTime dateTime = timestamp.toDate();
     String formattedTime = DateFormat('dd MMM yyyy HH:mm').format(dateTime);
     return formattedTime;
@@ -148,7 +178,7 @@ class NotificaPageState extends State<NotificaPage>
           color: notifications[index]['readBy'].contains(userId) ? Colors.grey[300] : Colors.white,
           child: ListTile(
             title: Text(notifications[index]['title']),
-            subtitle: Text(notifications[index]['timestamp']), // Mostra il timestamp come sottotitolo
+            subtitle: Text(notifications[index]['timestamp']),
             onTap: () async {
               String message = notifications[index]['message'];
               if (notifications[index].containsKey('location')) {

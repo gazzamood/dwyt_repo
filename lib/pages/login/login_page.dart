@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'login_accedi_page.dart';
-import 'login_registrati_page.dart';
+import 'accedi_page.dart';
+import 'registrati_page.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});

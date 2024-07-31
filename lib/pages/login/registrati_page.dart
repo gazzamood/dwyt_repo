@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:location/location.dart' as loc;
 
-import '../services/auth.dart';
-import 'home_page.dart';
+import '../../services/auth.dart';
+import '../home_page/home_page.dart';
 
 class LoginRegistratiPage extends StatefulWidget {
   const LoginRegistratiPage({super.key});

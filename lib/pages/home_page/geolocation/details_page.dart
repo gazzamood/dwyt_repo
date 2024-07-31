@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../class/Activity.dart';
-import '../class/Notification.dart' as not;
+import '../../../class/Activity.dart';
+import '../../../class/Notification.dart' as not;
 
 
 class DetailsPage extends StatelessWidget {

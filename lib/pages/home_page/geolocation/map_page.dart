@@ -4,14 +4,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
-import '../class/Activity.dart';
-import '../class/Notification.dart' as not;
+import '../../../class/Activity.dart';
+import '../../../class/Notification.dart' as not;
 import 'details_page.dart';
 
 class MapPage extends StatefulWidget {
   final Activity? initialActivity;
 
-  const MapPage({Key? key, this.initialActivity}) : super(key: key);
+  const MapPage({super.key, this.initialActivity});
 
   @override
   State<MapPage> createState() => _MapPageState();
@@ -170,15 +170,15 @@ class _MapPageState extends State<MapPage> {
                     ),
                   );
                 },
-                icon: const Icon(Icons.info_outline, size: 24), // Icon
-                label: const Text('View Details', style: TextStyle(fontSize: 16)), // Text
+                icon: const Icon(Icons.info_outline, size: 14), // Smaller icon
+                label: const Text('View Details', style: TextStyle(fontSize: 14)), // Smaller text
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(48), // Minimum height
-                  padding: const EdgeInsets.symmetric(horizontal: 12), // Lateral padding
+                  padding: const EdgeInsets.symmetric(horizontal: 8), // Lateral padding to fit text content
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16), // Rounded corners
+                    borderRadius: BorderRadius.circular(12), // Rounded corners
                   ),
-                  elevation: 8, // Shadow
+                  elevation: 6, // Slight shadow
                   backgroundColor: Colors.blue, // Background color
                   foregroundColor: Colors.white, // Text color
                 ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../class/Activity.dart';
-import 'details_page.dart';
-import 'map_page.dart';  // Ensure the import is correct
+import '../../../class/Activity.dart';
+import '../geolocation/details_page.dart';
+import '../geolocation/map_page.dart';
 
 class CercaAttivitaPage extends StatefulWidget {
   const CercaAttivitaPage({super.key});
