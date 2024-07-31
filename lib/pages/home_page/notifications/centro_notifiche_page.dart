@@ -22,13 +22,13 @@ class NotificaPageState extends State<NotificaPage>
   List<String> notificheLette = [];
   String userId = FirebaseAuth.instance.currentUser!.uid;
   Position? userPosition; // Posizione attuale dell'utente
+  static const double radiusInKm = 3.0; // Raggio in chilometri
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_handleTabSelection);
-    loadNotifications();
     PushNotificationService().initialize();
     _getUserPosition(); // Ottieni la posizione dell'utente
   }
@@ -70,6 +70,12 @@ class NotificaPageState extends State<NotificaPage>
       }
     }
 
+    if (userPosition == null) {
+      // Se la posizione dell'utente non è disponibile, mostra un messaggio o gestisci di conseguenza
+      setState(() {});
+      return;
+    }
+
     QuerySnapshot alertSnapshot = await FirebaseFirestore.instance
         .collection('notifications')
         .where('type', isEqualTo: 'allerta')
@@ -77,7 +83,7 @@ class NotificaPageState extends State<NotificaPage>
     alertNotifications = alertSnapshot.docs
         .where((doc) => doc['senderId'] != userId)
         .where((doc) => doc['timestamp'].compareTo(registrationDate) > 0)
-        .where((doc) => _isUserInRange(doc)) // Filtra in base alla posizione dell'utente
+        .where((doc) => _isUserInRange(doc, radiusInKm * 1000)) // Filtra in base alla posizione dell'utente
         .map((doc) => {
       'id': doc.id,
       'title': doc['title'],
@@ -85,6 +91,7 @@ class NotificaPageState extends State<NotificaPage>
       'timestamp': _formatTimestamp(doc['timestamp']),
       'readBy': doc['readBy'] ?? [],
       'senderId': doc['senderId'],
+      'location': doc['location'],
     })
         .toList();
 
@@ -95,7 +102,7 @@ class NotificaPageState extends State<NotificaPage>
     infoNotifications = infoSnapshot.docs
         .where((doc) => doc['senderId'] != userId)
         .where((doc) => doc['timestamp'].compareTo(registrationDate) > 0)
-        .where((doc) => _isUserInRange(doc)) // Filtra in base alla posizione dell'utente
+        .where((doc) => _isUserInRange(doc, radiusInKm * 1000)) // Filtra in base alla posizione dell'utente
         .map((doc) => {
       'id': doc.id,
       'title': doc['title'],
@@ -103,6 +110,7 @@ class NotificaPageState extends State<NotificaPage>
       'timestamp': _formatTimestamp(doc['timestamp']),
       'readBy': doc['readBy'] ?? [],
       'senderId': doc['senderId'],
+      'location': doc['location'],
     })
         .toList();
 
@@ -112,21 +120,18 @@ class NotificaPageState extends State<NotificaPage>
     setState(() {});
   }
 
-  bool _isUserInRange(DocumentSnapshot doc) {
+  bool _isUserInRange(DocumentSnapshot doc, double rangeInMeters) {
     if (userPosition == null) {
       return false;
     }
 
     var location = doc.get('location');
-    var radius = doc.get('radius');
-
-    if (location == null || radius == null) {
+    if (location == null) {
       return false;
     }
 
     double notificationLat = location['latitude'];
     double notificationLon = location['longitude'];
-    double radiusValue = radius.toDouble(); // Assicurati che radius sia di tipo double
 
     double distance = Geolocator.distanceBetween(
       userPosition!.latitude,
@@ -135,11 +140,12 @@ class NotificaPageState extends State<NotificaPage>
       notificationLon,
     );
 
-    return distance <= radiusValue;
+    return distance <= rangeInMeters;
   }
 
   Future<void> _getUserPosition() async {
     userPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    await loadNotifications(); // Carica le notifiche dopo aver ottenuto la posizione
   }
 
   String _formatTimestamp(Timestamp? timestamp) {
