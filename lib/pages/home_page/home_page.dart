@@ -28,6 +28,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     user = FirebaseAuth.instance.currentUser;
     updateMenuTitle();
+    _checkPermission(); // Aggiunto il controllo dei permessi
   }
 
   Future<void> signOut() async {
@@ -79,8 +80,8 @@ class _HomePageState extends State<HomePage> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Text('Permission Denied'),
-              content: const Text('Location permission is needed to provide better services.'),
+              title: const Text('Permesso negato'),
+              content: const Text('Il permesso di localizzazione è necessario per fornire servizi migliori.'),
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
@@ -94,6 +95,14 @@ class _HomePageState extends State<HomePage> {
         );
       }
     }
+  }
+
+  void _navigateToMap() async {
+    await _checkPermission();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MapPage()),
+    );
   }
 
   @override
@@ -234,12 +243,7 @@ class _HomePageState extends State<HomePage> {
               margin: const EdgeInsets.all(16.0),
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MapPage()), // Aggiunto il nuovo tasto per la pagina MapPage
-                  );
-                },
+                onPressed: _navigateToMap, // Aggiornato per gestire la navigazione alla mappa
                 style: ElevatedButton.styleFrom(
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.zero,
