@@ -7,6 +7,7 @@ class Notification {
   final double radius;
   final String title;
   final String message;
+  final String senderId;
 
   Notification({
     required this.id,
@@ -15,6 +16,7 @@ class Notification {
     required this.radius,
     required this.title,
     required this.message,
+    required this.senderId,
   });
 
   factory Notification.fromFirestore(DocumentSnapshot doc) {
@@ -28,6 +30,7 @@ class Notification {
       radius: data['radius']?.toDouble() ?? 0.0,
       title: data['title']?.toString() ?? "",
       message: data['message']?.toString() ?? "",
+      senderId: data['senderId']?.toString() ?? "",
     );
   }
 }

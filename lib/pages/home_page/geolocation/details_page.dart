@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../class/Activity.dart';
 import '../../../class/Notification.dart' as not;
-
 
 class DetailsPage extends StatelessWidget {
   final Activity? activity;
   final not.Notification? notification;
 
   const DetailsPage({super.key, this.activity, this.notification});
+
+  Future<String> _getSenderName() async {
+    if (notification == null || notification!.senderId.isEmpty) {
+      return 'Unknown';
+    }
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(notification!.senderId).get();
+      return userDoc.data()?['name'] ?? 'Unknown';
+    } catch (e) {
+      return 'Unknown';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +97,39 @@ class DetailsPage extends StatelessWidget {
               Text(
                 'Radius(km): ${notification!.radius}',
                 style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 8.0),
+              FutureBuilder<String>(
+                future: _getSenderName(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  }
+                  if (snapshot.hasError) {
+                    return const Text('Error fetching sender name');
+                  }
+                  return Text(
+                    'Sent by: ${snapshot.data}',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  );
+                },
+              ),
+              const SizedBox(height: 16.0),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.thumb_up),
+                    onPressed: () {
+                      // Handle thumbs up action
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.thumb_down),
+                    onPressed: () {
+                      // Handle thumbs down action
+                    },
+                  ),
+                ],
               ),
             ],
           ],
