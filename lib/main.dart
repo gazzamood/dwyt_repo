@@ -1,5 +1,5 @@
-import 'package:dwyt_test/pages/home_page.dart';
-import 'package:dwyt_test/pages/login_page.dart';
+import 'package:dwyt_test/pages/home_page/home_page.dart';
+import 'package:dwyt_test/pages/login/login_page.dart';
 import 'package:dwyt_test/services/auth.dart';
 import 'package:flutter/material.dart';
 
