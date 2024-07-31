@@ -22,11 +22,6 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   final Completer<GoogleMapController> _controller = Completer<GoogleMapController>();
 
-  static const CameraPosition _kInitialPosition = CameraPosition(
-    target: LatLng(41.796980946841416, 12.661297325291317), // Default position
-    zoom: 15.4746,
-  );
-
   final Set<Marker> _markers = {};
   final Set<Circle> _circles = {}; // Set to store circles
   Activity? _selectedActivity;
@@ -43,8 +38,8 @@ class _MapPageState extends State<MapPage> {
   Future<void> _initializeFirebase() async {
     await Firebase.initializeApp();
     _getUser();
+    await _getUserLocation(); // Wait until user location is obtained
     _loadActivities();
-    _getUserLocation();
   }
 
   Future<void> _getUser() async {
@@ -202,9 +197,14 @@ class _MapPageState extends State<MapPage> {
       ),
       body: Stack(
         children: [
-          GoogleMap(
+          _userLocation == null
+              ? const Center(child: CircularProgressIndicator())
+              : GoogleMap(
             mapType: MapType.hybrid,
-            initialCameraPosition: _kInitialPosition,
+            initialCameraPosition: CameraPosition(
+              target: _userLocation!,
+              zoom: 7.0,
+            ),
             markers: _markers,
             circles: _circles, // Add circles to the map
             onMapCreated: (GoogleMapController controller) {
