@@ -7,9 +7,10 @@ import '../../services/auth.dart';
 import 'activities/list_activity_page.dart';
 import 'notifications/send_notifications_page.dart';
 import '../login/login_page.dart';
-import 'geolocation/map_page.dart'; // Importa la pagina MapPage
+import 'geolocation/map_page.dart';
 import 'notifications/centro_notifiche_page.dart';
 import 'profile/profilo_page.dart';
+import 'geolocation/find_location_page.dart'; // Importa la pagina FindLocation
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -145,11 +146,11 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications),
+            icon: const Icon(Icons.search),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const NotificaPage()),
+                MaterialPageRoute(builder: (context) => const FindLocationPage()),
               );
             },
           ),
