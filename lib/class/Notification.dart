@@ -19,10 +19,12 @@ class Notification {
 
   factory Notification.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    final location = data['location'] as Map<String, dynamic>? ?? {};
+
     return Notification(
       id: doc.id,
-      latitude: data['latitude']?.toDouble() ?? 0.0,
-      longitude: data['longitude']?.toDouble() ?? 0.0,
+      latitude: location['latitude']?.toDouble() ?? 0.0,
+      longitude: location['longitude']?.toDouble() ?? 0.0,
       radius: data['radius']?.toDouble() ?? 0.0,
       title: data['title']?.toString() ?? "",
       message: data['message']?.toString() ?? "",
