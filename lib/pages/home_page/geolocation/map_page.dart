@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../class/Activity.dart';
 import '../../../class/Notification.dart' as not;
 import 'details_page.dart';
@@ -26,8 +27,10 @@ class _MapPageState extends State<MapPage> {
   );
 
   final Set<Marker> _markers = {};
+  final Set<Circle> _circles = {}; // Set to store circles
   Activity? _selectedActivity;
   not.Notification? _selectedNotification;
+  LatLng? _userLocation; // Store user's location
 
   @override
   void initState() {
@@ -38,6 +41,35 @@ class _MapPageState extends State<MapPage> {
   Future<void> _initializeFirebase() async {
     await Firebase.initializeApp();
     _loadActivities();
+    _getUserLocation();
+  }
+
+  Future<void> _getUserLocation() async {
+    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    setState(() {
+      _userLocation = LatLng(position.latitude, position.longitude);
+
+      // Add a circle to represent the user's location
+      final userLocationCircle = Circle(
+        circleId: const CircleId('user_location'),
+        center: _userLocation!,
+        radius: 22, // Radius in meters
+        fillColor: Colors.green.withOpacity(0.5), // Semi-transparent green
+        strokeColor: Colors.green,
+        strokeWidth: 2,
+      );
+      _circles.add(userLocationCircle);
+    });
+
+    // Print user's current location to the console
+    print('User\'s current location: $_userLocation');
+
+    // Move camera to the user's location
+    final GoogleMapController controller = await _controller.future;
+    controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+      target: _userLocation!,
+      zoom: 15.0,
+    )));
   }
 
   Future<void> _loadActivities() async {
@@ -46,8 +78,6 @@ class _MapPageState extends State<MapPage> {
     // Load activities
     final activityQuerySnapshot = await firestore.collection('activities').get();
     setState(() {
-      _markers.clear(); // Clear existing markers if any
-
       for (var doc in activityQuerySnapshot.docs) {
         final activity = Activity.fromFirestore(doc);
 
@@ -103,15 +133,17 @@ class _MapPageState extends State<MapPage> {
   void _onMarkerTappedActivity(Activity activity) {
     setState(() {
       _selectedActivity = activity;
-      _selectedNotification = null; // Deseleziona notifica
+      _selectedNotification = null; // Deselect notification
     });
+    _navigateToDetails();
   }
 
   void _onMarkerTappedNotification(not.Notification notification) {
     setState(() {
       _selectedNotification = notification;
-      _selectedActivity = null; // Deseleziona attività
+      _selectedActivity = null; // Deselect activity
     });
+    _navigateToDetails();
   }
 
   Future<void> _moveToActivity(Activity activity) async {
@@ -121,6 +153,17 @@ class _MapPageState extends State<MapPage> {
       zoom: 15.0,
     );
     controller.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+  }
+
+  void _navigateToDetails() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => DetailsPage(
+          activity: _selectedActivity,
+          notification: _selectedNotification,
+        ),
+      ),
+    );
   }
 
   void _clearSelectedActivity() {
@@ -147,6 +190,7 @@ class _MapPageState extends State<MapPage> {
             mapType: MapType.hybrid,
             initialCameraPosition: _kInitialPosition,
             markers: _markers,
+            circles: _circles, // Add circles to the map
             onMapCreated: (GoogleMapController controller) {
               _controller.complete(controller);
             },
@@ -154,36 +198,6 @@ class _MapPageState extends State<MapPage> {
               _clearSelectedActivity(); // Deselect activity when clicking on the map
             },
           ),
-          if (_selectedActivity != null || _selectedNotification != null)
-            Positioned(
-              bottom: 16,
-              left: 16,
-              right: 16,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => DetailsPage(
-                        activity: _selectedActivity,
-                        notification: _selectedNotification,
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.info_outline, size: 14), // Smaller icon
-                label: const Text('View Details', style: TextStyle(fontSize: 14)), // Smaller text
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48), // Minimum height
-                  padding: const EdgeInsets.symmetric(horizontal: 8), // Lateral padding to fit text content
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12), // Rounded corners
-                  ),
-                  elevation: 6, // Slight shadow
-                  backgroundColor: Colors.blue, // Background color
-                  foregroundColor: Colors.white, // Text color
-                ),
-              ),
-            ),
         ],
       ),
     );
