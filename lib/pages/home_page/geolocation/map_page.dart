@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../class/Activity.dart';
 import '../../../class/Notification.dart' as not;
@@ -31,6 +32,7 @@ class _MapPageState extends State<MapPage> {
   Activity? _selectedActivity;
   not.Notification? _selectedNotification;
   LatLng? _userLocation; // Store user's location
+  String? _userId; // Store user ID
 
   @override
   void initState() {
@@ -40,8 +42,18 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> _initializeFirebase() async {
     await Firebase.initializeApp();
+    _getUser();
     _loadActivities();
     _getUserLocation();
+  }
+
+  Future<void> _getUser() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      setState(() {
+        _userId = user.uid;
+      });
+    }
   }
 
   Future<void> _getUserLocation() async {
@@ -100,30 +112,34 @@ class _MapPageState extends State<MapPage> {
       }
     });
 
-    // Load notifications
-    final notificationQuerySnapshot = await firestore.collection('notifications').get();
-    setState(() {
-      for (var doc in notificationQuerySnapshot.docs) {
-        final notification = not.Notification.fromFirestore(doc);
+    // Load notifications, filtering by userId
+    if (_userId != null) {
+      final notificationQuerySnapshot = await firestore.collection('notifications')
+          .where('senderId', isNotEqualTo: _userId)
+          .get();
+      setState(() {
+        for (var doc in notificationQuerySnapshot.docs) {
+          final notification = not.Notification.fromFirestore(doc);
 
-        // Check if latitude and longitude are present before adding the marker
-        if (notification.latitude != 0.0 && notification.longitude != 0.0) {
-          final notificationMarker = Marker(
-            markerId: MarkerId('notification_${notification.id}'),
-            position: LatLng(notification.latitude, notification.longitude),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue), // Blue marker
-            infoWindow: InfoWindow(
-              title: 'Notification',
-              snippet: 'Message: ${notification.message}',
-              onTap: () {
-                _onMarkerTappedNotification(notification);
-              },
-            ),
-          );
-          _markers.add(notificationMarker);
+          // Check if latitude and longitude are present before adding the marker
+          if (notification.latitude != 0.0 && notification.longitude != 0.0) {
+            final notificationMarker = Marker(
+              markerId: MarkerId('notification_${notification.id}'),
+              position: LatLng(notification.latitude, notification.longitude),
+              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue), // Blue marker
+              infoWindow: InfoWindow(
+                title: 'Notification',
+                snippet: 'Message: ${notification.message}',
+                onTap: () {
+                  _onMarkerTappedNotification(notification);
+                },
+              ),
+            );
+            _markers.add(notificationMarker);
+          }
         }
-      }
-    });
+      });
+    }
 
     if (widget.initialActivity != null) {
       _moveToActivity(widget.initialActivity!);
