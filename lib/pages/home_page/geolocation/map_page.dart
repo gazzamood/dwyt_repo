@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../class/Activity.dart';
 import '../../../class/Notification.dart' as not;
+import '../activities/list_activity_page.dart';
 import 'details_page.dart';
 
 class MapPage extends StatefulWidget {
@@ -177,6 +178,14 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
+  void _navigateToCercaAttivita() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const CercaAttivitaPage(),
+      ),
+    );
+  }
+
   void _clearSelectedActivity() {
     setState(() {
       _selectedActivity = null;
@@ -188,6 +197,12 @@ class _MapPageState extends State<MapPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Map'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.list),
+            onPressed: _navigateToCercaAttivita,
+          ),
+        ],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {

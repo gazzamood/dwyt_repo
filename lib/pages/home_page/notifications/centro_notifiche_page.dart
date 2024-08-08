@@ -23,6 +23,7 @@ class NotificaPageState extends State<NotificaPage>
   String userId = FirebaseAuth.instance.currentUser!.uid;
   Position? userPosition; // Posizione attuale dell'utente
   static const double radiusInKm = 3.0; // Raggio in chilometri
+  String locationName = 'Notifiche'; // Nome della posizione da mostrare nel titolo
 
   @override
   void initState() {
@@ -145,7 +146,22 @@ class NotificaPageState extends State<NotificaPage>
 
   Future<void> _getUserPosition() async {
     userPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    await _getLocationName(userPosition!); // Ottieni il nome della posizione
     await loadNotifications(); // Carica le notifiche dopo aver ottenuto la posizione
+  }
+
+  Future<void> _getLocationName(Position position) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+      Placemark place = placemarks[0];
+      setState(() {
+        locationName = '${place.locality}, ${place.country}';
+      });
+    } catch (e) {
+      setState(() {
+        locationName = 'Posizione sconosciuta';
+      });
+    }
   }
 
   String _formatTimestamp(Timestamp? timestamp) {
@@ -235,7 +251,15 @@ class NotificaPageState extends State<NotificaPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifiche'),
+        title: Row(
+          children: [
+            Expanded(child: Text(locationName)),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _getUserPosition,
+            ),
+          ],
+        ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [

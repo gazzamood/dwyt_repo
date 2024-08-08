@@ -10,7 +10,7 @@ import '../login/login_page.dart';
 import 'geolocation/map_page.dart';
 import 'notifications/centro_notifiche_page.dart';
 import 'profile/profilo_page.dart';
-import 'geolocation/find_location_page.dart'; // Importa la pagina FindLocation
+import 'geolocation/find_location_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,7 +21,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late User? user;
-  String menuTitle = 'Nessun utente'; // Titolo di default
+  String menuTitle = 'Nessun utente'; // Default title
   bool isUser = true;
 
   @override
@@ -29,7 +29,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     user = FirebaseAuth.instance.currentUser;
     updateMenuTitle();
-    _checkPermission(); // Aggiunto il controllo dei permessi
+    _checkPermission(); // Check permissions
   }
 
   Future<void> signOut() async {
@@ -106,6 +106,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _navigateToAllerta() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AllertaPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,109 +163,46 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.all(16.0),
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AllertaPage()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  padding: const EdgeInsets.all(16.0),
-                ),
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Notifiche Push',
-                      style: TextStyle(fontSize: 34.0),
-                    ),
-                    Text(
-                      'Allerta-Info',
-                      style: TextStyle(fontSize: 20.0),
-                    ),
-                  ],
+      body: const NotificaPage(), // Set NotificaPage as the main body
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80.0), // Adjust the padding to move the buttons up
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 55.0), // Add padding for spacing
+              child: SizedBox(
+                width: 70, // Increase width
+                height: 70, // Increase height
+                child: FloatingActionButton(
+                  onPressed: _navigateToMap,
+                  tooltip: 'Mappa',
+                  heroTag: 'mapButton',
+                  backgroundColor: Colors.blue,
+                  elevation: 2.0,
+                  child: const Icon(Icons.map, size: 40), // Increase icon size
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.all(16.0),
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const NotificaPage()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  padding: const EdgeInsets.all(16.0),
-                ),
-                child: const Text(
-                  'Notifiche',
-                  style: TextStyle(fontSize: 34.0),
+            const SizedBox(width: 20), // Adjust space between buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 55.0), // Add padding for spacing
+              child: SizedBox(
+                width: 70, // Increase width
+                height: 70, // Increase height
+                child: FloatingActionButton(
+                  onPressed: _navigateToAllerta,
+                  tooltip: 'Allerta',
+                  heroTag: 'alertButton',
+                  backgroundColor: Colors.blue,
+                  elevation: 2.0,
+                  child: const Icon(Icons.send, size: 40), // Increase icon size
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.all(16.0),
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const CercaAttivitaPage()), // Modificato per collegarsi a CercaAttivitaPage
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  padding: const EdgeInsets.all(16.0),
-                ),
-                child: const Text(
-                  'Attività',
-                  style: TextStyle(fontSize: 34.0),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.all(16.0),
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _navigateToMap, // Aggiornato per gestire la navigazione alla mappa
-                style: ElevatedButton.styleFrom(
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  padding: const EdgeInsets.all(16.0),
-                ),
-                child: const Text(
-                  'Mappa',
-                  style: TextStyle(fontSize: 34.0),
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
