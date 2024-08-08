@@ -192,6 +192,16 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
+  Future<void> _centerMapOnUserLocation() async {
+    if (_userLocation != null) {
+      final GoogleMapController controller = await _controller.future;
+      controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+        target: _userLocation!,
+        zoom: 20.0,
+      )));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -218,7 +228,7 @@ class _MapPageState extends State<MapPage> {
             mapType: MapType.hybrid,
             initialCameraPosition: CameraPosition(
               target: _userLocation!,
-              zoom: 7.0,
+              zoom: 17.0,
             ),
             markers: _markers,
             circles: _circles, // Add circles to the map
@@ -228,6 +238,15 @@ class _MapPageState extends State<MapPage> {
             onTap: (_) {
               _clearSelectedActivity(); // Deselect activity when clicking on the map
             },
+          ),
+          Positioned(
+            bottom: 16.0,
+            right: 56.0,
+            child: FloatingActionButton(
+              onPressed: _centerMapOnUserLocation,
+              backgroundColor: Colors.blue,
+              child: const Icon(Icons.my_location),
+            ),
           ),
         ],
       ),
