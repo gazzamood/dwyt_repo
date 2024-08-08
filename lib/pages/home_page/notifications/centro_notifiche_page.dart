@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart'; // Importa il pacchetto per formattare le date
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../services/costants.dart';
 import '../../../services/push_notification.dart';
 import 'package:geolocator/geolocator.dart'; // Aggiungi questo pacchetto per ottenere la posizione dell'utente
 
@@ -22,7 +23,6 @@ class NotificaPageState extends State<NotificaPage>
   List<String> notificheLette = [];
   String userId = FirebaseAuth.instance.currentUser!.uid;
   Position? userPosition; // Posizione attuale dell'utente
-  static const double radiusInKm = 3.0; // Raggio in chilometri
   String locationName = 'Notifiche'; // Nome della posizione da mostrare nel titolo
 
   @override
@@ -84,7 +84,7 @@ class NotificaPageState extends State<NotificaPage>
 
     allNotifications = snapshot.docs
         .where((doc) => doc['senderId'] != userId)
-        .where((doc) => _isUserInRange(doc, radiusInKm * 1000)) // Filtra in base alla posizione dell'utente
+        .where((doc) => _isUserInRange(doc, Constants.radiusInKm * 1000)) // Filtra in base alla posizione dell'utente
         .map((doc) => {
       'id': doc.id,
       'title': doc['title'],
