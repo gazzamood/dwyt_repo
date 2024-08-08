@@ -19,10 +19,11 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   late User? user;
   String menuTitle = 'Nessun utente'; // Default title
   bool isUser = true;
+  late AnimationController _controller;
 
   @override
   void initState() {
@@ -30,6 +31,16 @@ class _HomePageState extends State<HomePage> {
     user = FirebaseAuth.instance.currentUser;
     updateMenuTitle();
     _checkPermission(); // Check permissions
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this, // `this` provides the `Ticker`
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> signOut() async {
