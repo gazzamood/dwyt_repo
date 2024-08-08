@@ -201,6 +201,15 @@ class NotificaPageState extends State<NotificaPage>
           child: ListTile(
             title: Text(notifications[index]['title']),
             subtitle: Text(notifications[index]['timestamp']),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () async {
+                bool? confirm = await _showDeleteConfirmationDialog();
+                if (confirm == true) {
+                  await _deleteNotification(notifications[index]['id']);
+                }
+              },
+            ),
             onTap: () async {
               String message = notifications[index]['message'];
               if (notifications[index].containsKey('location')) {
@@ -224,6 +233,48 @@ class NotificaPageState extends State<NotificaPage>
         );
       },
     );
+  }
+
+  Future<bool?> _showDeleteConfirmationDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Conferma Eliminazione"),
+          content: const Text("Sei sicuro di voler eliminare questa notifica?"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Annulla"),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            TextButton(
+              child: const Text("Elimina"),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteNotification(String notificationId) async {
+    try {
+      // Elimina la notifica da Firestore
+      await FirebaseFirestore.instance.collection('notifications').doc(notificationId).delete();
+
+      // Rimuovi la notifica dalla lista locale
+      setState(() {
+        alertNotifications.removeWhere((notification) => notification['id'] == notificationId);
+        infoNotifications.removeWhere((notification) => notification['id'] == notificationId);
+      });
+    } catch (e) {
+      // Gestisci eventuali errori
+      print('Errore durante l\'eliminazione della notifica: $e');
+    }
   }
 
   void markNotificationAsRead(String notificationId) async {
