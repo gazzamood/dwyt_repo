@@ -17,8 +17,8 @@ class NotificaPage extends StatefulWidget {
 class NotificaPageState extends State<NotificaPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  List<Map<String, dynamic>> alertNotifications = [];
-  List<Map<String, dynamic>> infoNotifications = [];
+  List<Map<String, dynamic>> allNotifications = [];
+  List<Map<String, dynamic>> sentNotifications = [];
   List<String> notificheLette = [];
   String userId = FirebaseAuth.instance.currentUser!.uid;
   Position? userPosition; // Posizione attuale dell'utente
@@ -77,13 +77,13 @@ class NotificaPageState extends State<NotificaPage>
       return;
     }
 
-    QuerySnapshot alertSnapshot = await FirebaseFirestore.instance
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('notifications')
-        .where('type', isEqualTo: 'allerta')
+        .where('timestamp', isGreaterThan: registrationDate)
         .get();
-    alertNotifications = alertSnapshot.docs
+
+    allNotifications = snapshot.docs
         .where((doc) => doc['senderId'] != userId)
-        .where((doc) => doc['timestamp'].compareTo(registrationDate) > 0)
         .where((doc) => _isUserInRange(doc, radiusInKm * 1000)) // Filtra in base alla posizione dell'utente
         .map((doc) => {
       'id': doc.id,
@@ -93,17 +93,12 @@ class NotificaPageState extends State<NotificaPage>
       'readBy': doc['readBy'] ?? [],
       'senderId': doc['senderId'],
       'location': doc['location'],
+      'type': doc['type'], // Aggiungi il tipo di notifica
     })
         .toList();
 
-    QuerySnapshot infoSnapshot = await FirebaseFirestore.instance
-        .collection('notifications')
-        .where('type', isEqualTo: 'info')
-        .get();
-    infoNotifications = infoSnapshot.docs
-        .where((doc) => doc['senderId'] != userId)
-        .where((doc) => doc['timestamp'].compareTo(registrationDate) > 0)
-        .where((doc) => _isUserInRange(doc, radiusInKm * 1000)) // Filtra in base alla posizione dell'utente
+    sentNotifications = snapshot.docs
+        .where((doc) => doc['senderId'] == userId)
         .map((doc) => {
       'id': doc.id,
       'title': doc['title'],
@@ -112,11 +107,12 @@ class NotificaPageState extends State<NotificaPage>
       'readBy': doc['readBy'] ?? [],
       'senderId': doc['senderId'],
       'location': doc['location'],
+      'type': doc['type'], // Aggiungi il tipo di notifica
     })
         .toList();
 
-    alertNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
-    infoNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
+    allNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
+    sentNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
 
     setState(() {});
   }
@@ -196,25 +192,51 @@ class NotificaPageState extends State<NotificaPage>
     return ListView.builder(
       itemCount: notifications.length,
       itemBuilder: (context, index) {
+        var notification = notifications[index];
         return Container(
-          color: notifications[index]['readBy'].contains(userId) ? Colors.grey[300] : Colors.white,
+          color: notification['readBy'].contains(userId) ? Colors.grey[300] : Colors.white,
           child: ListTile(
-            title: Text(notifications[index]['title']),
-            subtitle: Text(notifications[index]['timestamp']),
-            trailing: IconButton(
+            leading: notification['type'] == 'allerta'
+                ? const Icon(Icons.warning, color: Colors.red)
+                : const Icon(Icons.info, color: Colors.blue),
+            title: Text(notification['title']),
+            subtitle: Text(notification['timestamp']),
+            trailing: notification['senderId'] == userId
+                ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () {
+                    // Implementa la logica per modificare la notifica
+                    showNotificationDialog('Modifica la notifica: ${notification['title']}');
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () async {
+                    bool? confirm = await _showDeleteConfirmationDialog();
+                    if (confirm == true) {
+                      await _deleteNotification(notification['id']);
+                    }
+                  },
+                ),
+              ],
+            )
+                : IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () async {
                 bool? confirm = await _showDeleteConfirmationDialog();
                 if (confirm == true) {
-                  await _deleteNotification(notifications[index]['id']);
+                  await _deleteNotification(notification['id']);
                 }
               },
             ),
             onTap: () async {
-              String message = notifications[index]['message'];
-              if (notifications[index].containsKey('location')) {
-                double latitude = notifications[index]['location']['latitude'];
-                double longitude = notifications[index]['location']['longitude'];
+              String message = notification['message'];
+              if (notification.containsKey('location')) {
+                double latitude = notification['location']['latitude'];
+                double longitude = notification['location']['longitude'];
 
                 try {
                   List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
@@ -226,7 +248,7 @@ class NotificaPageState extends State<NotificaPage>
                 }
               }
 
-              markNotificationAsRead(notifications[index]['id']);
+              markNotificationAsRead(notification['id']);
               showNotificationDialog(message);
             },
           ),
@@ -268,8 +290,8 @@ class NotificaPageState extends State<NotificaPage>
 
       // Rimuovi la notifica dalla lista locale
       setState(() {
-        alertNotifications.removeWhere((notification) => notification['id'] == notificationId);
-        infoNotifications.removeWhere((notification) => notification['id'] == notificationId);
+        allNotifications.removeWhere((notification) => notification['id'] == notificationId);
+        sentNotifications.removeWhere((notification) => notification['id'] == notificationId);
       });
     } catch (e) {
       // Gestisci eventuali errori
@@ -285,12 +307,12 @@ class NotificaPageState extends State<NotificaPage>
     });
 
     setState(() {
-      for (var notification in alertNotifications) {
+      for (var notification in allNotifications) {
         if (notification['id'] == notificationId) {
           notification['readBy'].add(userId);
         }
       }
-      for (var notification in infoNotifications) {
+      for (var notification in sentNotifications) {
         if (notification['id'] == notificationId) {
           notification['readBy'].add(userId);
         }
@@ -302,6 +324,7 @@ class NotificaPageState extends State<NotificaPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Row(
           children: [
             Expanded(child: Text(locationName)),
@@ -314,16 +337,16 @@ class NotificaPageState extends State<NotificaPage>
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'Allerta'),
-            Tab(text: 'Info'),
+            Tab(text: 'Notifiche'),
+            Tab(text: 'Inviate'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
-          buildNotificationsList(alertNotifications),
-          buildNotificationsList(infoNotifications),
+          buildNotificationsList(allNotifications),
+          buildNotificationsList(sentNotifications),
         ],
       ),
     );
