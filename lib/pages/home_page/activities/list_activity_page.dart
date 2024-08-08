@@ -14,13 +14,16 @@ class CercaAttivitaPage extends StatefulWidget {
 class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
   late TextEditingController _searchController;
   late Stream<QuerySnapshot> _activitiesStream;
+  late Future<List<String>> _activityTypesFuture;
 
-  String? _selectedType; // Filter for activity type
+  String? _selectedType;
+  String _searchText = '';
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _activityTypesFuture = _getActivityTypes();
     _activitiesStream = _getActivitiesStream();
   }
 
@@ -33,13 +36,13 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
   Stream<QuerySnapshot> _getActivitiesStream() {
     var query = FirebaseFirestore.instance.collection('activities').snapshots();
 
-    if (_searchController.text.isNotEmpty || _selectedType != null) {
+    if (_searchText.isNotEmpty || _selectedType != null) {
       Query<Map<String, dynamic>> filteredQuery = FirebaseFirestore.instance.collection('activities');
 
-      if (_searchController.text.isNotEmpty) {
+      if (_searchText.isNotEmpty) {
         filteredQuery = filteredQuery
-            .where('name', isGreaterThanOrEqualTo: _searchController.text)
-            .where('name', isLessThanOrEqualTo: _searchController.text + '\uf8ff');
+            .where('name', isGreaterThanOrEqualTo: _searchText)
+            .where('name', isLessThanOrEqualTo: _searchText + '\uf8ff');
       }
 
       if (_selectedType != null) {
@@ -52,8 +55,34 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
     return query;
   }
 
+  Future<List<String>> _getActivityTypes() async {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('activities')
+        .get();
+
+    final types = <String>{};
+
+    for (var doc in querySnapshot.docs) {
+      final type = doc.get('type') as String?;
+      if (type != null) {
+        types.add(type);
+      }
+    }
+
+    return types.toList();
+  }
+
   void _applyFilters() {
     setState(() {
+      _activitiesStream = _getActivitiesStream();
+    });
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _searchText = '';
+      _searchController.clear();
+      _selectedType = null;
       _activitiesStream = _getActivitiesStream();
     });
   }
@@ -75,7 +104,9 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
                 ),
               ),
               onChanged: (value) {
-                // Optional: handle search text change
+                setState(() {
+                  _searchText = value;
+                });
               },
             ),
           ),
@@ -94,72 +125,116 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Filtri di Ricerca'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Filter by Name
-                TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Nome attività',
+        return FutureBuilder<List<String>>(
+          future: _activityTypesFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return AlertDialog(
+                title: const Text('Filtri di Ricerca'),
+                content: const Center(child: CircularProgressIndicator()),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('Annulla'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchController.text = value;
-                    });
-                  },
-                  controller: TextEditingController(text: _searchController.text),
-                ),
-                const SizedBox(height: 8.0),
+                ],
+              );
+            }
 
-                // Filter by Type
-                DropdownButtonFormField<String>(
-                  value: _selectedType,
-                  hint: const Text('Seleziona tipo'),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedType = value;
-                    });
-                  },
-                  items: <String>['Tipo 1', 'Tipo 2', 'Tipo 3'] // Replace with actual types
-                      .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 8.0),
-
-                // Filter by Position
-                TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Raggio(km)',
+            if (snapshot.hasError) {
+              return AlertDialog(
+                title: const Text('Errore'),
+                content: Text('Errore: ${snapshot.error}'),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('Annulla'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
                   ),
-                  onChanged: (value) {
-                    // Optionally process position filter
+                ],
+              );
+            }
+
+            final activityTypes = snapshot.data!;
+
+            return AlertDialog(
+              title: const Text('Filtri di Ricerca'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Filter by Name
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Nome attività',
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchText = value;
+                        });
+                      },
+                      controller: TextEditingController(text: _searchText),
+                    ),
+                    const SizedBox(height: 8.0),
+
+                    // Filter by Type
+                    DropdownButtonFormField<String>(
+                      value: _selectedType,
+                      hint: const Text('Seleziona tipo'),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedType = value;
+                        });
+                      },
+                      items: activityTypes
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 8.0),
+
+                    // Filter by Position
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Raggio(km)',
+                      ),
+                      onChanged: (value) {
+                        // Optionally process position filter
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Annulla'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: const Text('Resetta'),
+                  onPressed: () {
+                    _resetFilters(); // Reset the filters
+                    // Do not close the dialog
+                  },
+                ),
+                TextButton(
+                  child: const Text('Applica'),
+                  onPressed: () {
+                    _applyFilters(); // Apply the filters
+                    Navigator.of(context).pop(); // Close the dialog
                   },
                 ),
               ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Annulla'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Applica'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _applyFilters();
-              },
-            ),
-          ],
+            );
+          },
         );
       },
     );
