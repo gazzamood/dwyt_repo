@@ -293,6 +293,11 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     });
   }
 
+  // Function to reload notifications
+  Future<void> _reloadNotifications() async {
+    await loadNotifications();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -305,6 +310,14 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
             Tab(text: 'Inviate'),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () async {
+              await _reloadNotifications();
+            },
+          ),
+        ],
       ),
       body: TabBarView(
         controller: _tabController,
