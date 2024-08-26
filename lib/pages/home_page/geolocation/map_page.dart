@@ -13,8 +13,9 @@ import 'details_page.dart';
 
 class MapPage extends StatefulWidget {
   final Activity? initialActivity;
+  final Map<String, dynamic>? initialNotification; // Add this line
 
-  const MapPage({super.key, this.initialActivity});
+  const MapPage({super.key, this.initialActivity, this.initialNotification});
 
   @override
   State<MapPage> createState() => _MapPageState();
@@ -36,11 +37,25 @@ class _MapPageState extends State<MapPage> {
     _initializeFirebase();
   }
 
+
   Future<void> _initializeFirebase() async {
     await Firebase.initializeApp();
     _getUser();
-    await _getUserLocation(); // Wait until user location is obtained
+    await _getUserLocation();
     _loadActivities();
+
+    if (widget.initialNotification != null) {
+      _moveToNotification(widget.initialNotification!);
+    }
+  }
+
+  Future<void> _moveToNotification(Map<String, dynamic> notification) async {
+    final GoogleMapController controller = await _controller.future;
+    final CameraPosition cameraPosition = CameraPosition(
+      target: LatLng(notification['location']['latitude'], notification['location']['longitude']),
+      zoom: 15.0,
+    );
+    controller.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
   }
 
   Future<void> _getUser() async {
