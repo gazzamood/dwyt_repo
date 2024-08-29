@@ -11,7 +11,9 @@ import 'package:geolocator/geolocator.dart';
 import '../geolocation/map_page.dart'; // Import the MapPage
 
 class NotificaPage extends StatefulWidget {
-  const NotificaPage({super.key});
+  final Position? userPosition;
+
+  const NotificaPage({super.key, this.userPosition});
 
   @override
   State<NotificaPage> createState() => NotificaPageState();
@@ -33,6 +35,8 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     _tabController.addListener(_handleTabSelection);
     PushNotificationService().initialize();
     _getUserPosition();
+    userPosition = widget.userPosition; // Get the passed position
+    loadNotifications();
   }
 
   @override
@@ -300,31 +304,32 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(locationName),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Ricevute'),
-            Tab(text: 'Inviate'),
+    return WillPopScope(
+      onWillPop: () async {
+        // Prevent the user from navigating back
+        return Future.value(false);
+      },
+      child: Scaffold(
+        body: Column(
+          children: [
+            TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Ricevute'),
+                Tab(text: 'Inviate'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  buildNotificationsList(allNotifications),
+                  buildNotificationsList(sentNotifications),
+                ],
+              ),
+            ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () async {
-              await _reloadNotifications();
-            },
-          ),
-        ],
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          buildNotificationsList(allNotifications),
-          buildNotificationsList(sentNotifications),
-        ],
       ),
     );
   }
