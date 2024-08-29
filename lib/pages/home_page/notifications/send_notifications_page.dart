@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 
+import '../home_page.dart';
+
 class AllertaPage extends StatefulWidget {
   const AllertaPage({super.key});
 
@@ -98,17 +100,23 @@ class _AllertaPageState extends State<AllertaPage> {
 
     if (title.isEmpty || message.isEmpty) {
       // Mostra un popup di errore se il titolo o il messaggio è vuoto
+// Mostra un popup di conferma
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('Errore'),
-            content: const Text('Il titolo e il messaggio non possono essere vuoti.'),
+            title: const Text('Successo'),
+            content: const Text('Il messaggio di allerta è stato inviato con successo.'),
             actions: <Widget>[
               TextButton(
                 child: const Text('OK'),
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(); // Chiude il popup
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => const HomePage(), // Naviga alla HomePage
+                    ),
+                  );
                 },
               ),
             ],
@@ -179,7 +187,12 @@ class _AllertaPageState extends State<AllertaPage> {
               TextButton(
                 child: const Text('OK'),
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(); // Chiude il popup
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => const HomePage(), // Naviga alla HomePage
+                    ),
+                  );
                 },
               ),
             ],
