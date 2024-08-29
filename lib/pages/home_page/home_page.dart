@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 import '../../services/auth.dart';
 import 'activities/list_activity_page.dart';
@@ -21,19 +22,23 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   late User? user;
-  String menuTitle = 'Nessun utente'; // Default title
+  String menuTitle = 'Nessun utente';
   bool isUser = true;
   late AnimationController _controller;
+  Position? userPosition;
+  List<String> savedLocations = []; // Lista delle posizioni salvate
+  String currentLocation = 'Caricamento...'; // Posizione attuale
 
   @override
   void initState() {
     super.initState();
     user = FirebaseAuth.instance.currentUser;
     updateMenuTitle();
-    _checkPermission(); // Check permissions
+    _checkPermission(); // Controlla i permessi
+    _getUserPosition(); // Carica la posizione dell'utente all'avvio
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
-      vsync: this, // `this` provides the `Ticker`
+      vsync: this,
     );
   }
 
@@ -109,6 +114,33 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
+  Future<void> _getUserPosition() async {
+    try {
+      userPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      if (userPosition != null) {
+        await _getLocationName(userPosition!);
+      }
+    } catch (e) {
+      setState(() {
+        currentLocation = 'Posizione non trovata';
+      });
+    }
+  }
+
+  Future<void> _getLocationName(Position position) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+      Placemark place = placemarks[0];
+      setState(() {
+        currentLocation = '${place.locality}, ${place.country}';
+      });
+    } catch (e) {
+      setState(() {
+        currentLocation = 'Posizione sconosciuta';
+      });
+    }
+  }
+
   void _navigateToMap() async {
     await _checkPermission();
     Navigator.push(
@@ -124,11 +156,27 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
+  Future<void> _selectLocation() async {
+    final selectedLocation = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const FindLocationPage()),
+    );
+
+    if (selectedLocation != null && selectedLocation is String) {
+      setState(() {
+        if (!savedLocations.contains(selectedLocation)) {
+          savedLocations.add(selectedLocation);
+        }
+        currentLocation = selectedLocation;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('DWYT APP'),
+        title: const Text('DWYT'), // Nome fisso dell'app
         centerTitle: true,
         backgroundColor: Colors.blue,
         leading: PopupMenuButton<String>(
@@ -165,50 +213,58 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const FindLocationPage()),
-              );
-            },
+            onPressed: _selectLocation, // Apri FindLocationPage e aggiorna la posizione
           ),
         ],
       ),
-      body: const NotificaPage(), // Set NotificaPage as the main body
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              currentLocation, // Mostra il nome della posizione
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            child: NotificaPage(userPosition: userPosition), // Passa la userPosition a NotificaPage
+          ),
+        ],
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80.0), // Adjust the padding to move the buttons up
+        padding: const EdgeInsets.only(bottom: 80.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 55.0), // Add padding for spacing
+              padding: const EdgeInsets.symmetric(horizontal: 55.0),
               child: SizedBox(
-                width: 70, // Increase width
-                height: 70, // Increase height
+                width: 70,
+                height: 70,
                 child: FloatingActionButton(
                   onPressed: _navigateToMap,
                   tooltip: 'Mappa',
                   heroTag: 'mapButton',
                   backgroundColor: Colors.blue,
                   elevation: 2.0,
-                  child: const Icon(Icons.map, size: 40), // Increase icon size
+                  child: const Icon(Icons.map, size: 40),
                 ),
               ),
             ),
-            const SizedBox(width: 20), // Adjust space between buttons
+            const SizedBox(width: 20),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 55.0), // Add padding for spacing
+              padding: const EdgeInsets.symmetric(horizontal: 55.0),
               child: SizedBox(
-                width: 70, // Increase width
-                height: 70, // Increase height
+                width: 70,
+                height: 70,
                 child: FloatingActionButton(
                   onPressed: _navigateToAllerta,
                   tooltip: 'Allerta',
                   heroTag: 'alertButton',
                   backgroundColor: Colors.blue,
                   elevation: 2.0,
-                  child: const Icon(Icons.send, size: 40), // Increase icon size
+                  child: const Icon(Icons.send, size: 40),
                 ),
               ),
             ),
