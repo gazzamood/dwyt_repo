@@ -100,23 +100,17 @@ class _AllertaPageState extends State<AllertaPage> {
 
     if (title.isEmpty || message.isEmpty) {
       // Mostra un popup di errore se il titolo o il messaggio è vuoto
-// Mostra un popup di conferma
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('Successo'),
-            content: const Text('Il messaggio di allerta è stato inviato con successo.'),
+            title: const Text('Errore'),
+            content: const Text('Il titolo e il messaggio sono obbligatori.'),
             actions: <Widget>[
               TextButton(
                 child: const Text('OK'),
                 onPressed: () {
-                  Navigator.of(context).pop(); // Chiude il popup
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => const HomePage(), // Naviga alla HomePage
-                    ),
-                  );
+                  Navigator.of(context).pop();
                 },
               ),
             ],
@@ -130,7 +124,6 @@ class _AllertaPageState extends State<AllertaPage> {
     if (location == null) {
       location = await _getCurrentLocation();
       if (location == null) {
-        // Mostra un popup di errore se la posizione è nulla
         showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -162,10 +155,11 @@ class _AllertaPageState extends State<AllertaPage> {
       'title': title,
       'message': message,
       'timestamp': FieldValue.serverTimestamp(),
+      'expirationTime': DateTime.now().add(const Duration(hours: 24)), // Imposta la scadenza a 24 ore
       'senderId': senderId,
       'radius': radiusKm,
-      'readBy': [], // Array vuoto per tracciare gli utenti che hanno letto la notifica
-      'type': _isAlert ? 'allerta' : 'info', // Aggiunta del campo type
+      'readBy': [],
+      'type': _isAlert ? 'allerta' : 'info',
       'location': {
         'latitude': location.latitude,
         'longitude': location.longitude,
@@ -173,10 +167,8 @@ class _AllertaPageState extends State<AllertaPage> {
     };
 
     try {
-      // Aggiungi i dati dell'allerta alla collezione 'notifications'
       DocumentReference alertRef = await FirebaseFirestore.instance.collection('notifications').add(alertData);
 
-      // Mostra un popup di conferma
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -187,10 +179,10 @@ class _AllertaPageState extends State<AllertaPage> {
               TextButton(
                 child: const Text('OK'),
                 onPressed: () {
-                  Navigator.of(context).pop(); // Chiude il popup
+                  Navigator.of(context).pop();
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
-                      builder: (context) => const HomePage(), // Naviga alla HomePage
+                      builder: (context) => const HomePage(),
                     ),
                   );
                 },
@@ -200,7 +192,6 @@ class _AllertaPageState extends State<AllertaPage> {
         },
       );
 
-      // Resetta i campi di testo dopo aver inviato l'allerta
       _titleController.clear();
       _messageController.clear();
       _radiusController.clear();
@@ -209,14 +200,12 @@ class _AllertaPageState extends State<AllertaPage> {
         _locationMessage = null;
       });
 
-      // Aggiungi il campo readBy per tracciare l'utente corrente
       await alertRef.update({
         'readBy': FieldValue.arrayUnion([senderId]),
       });
 
     } catch (e) {
       print('Errore durante l\'invio dell\'allerta: $e');
-      // Mostra un popup di errore
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -279,6 +268,7 @@ class _AllertaPageState extends State<AllertaPage> {
       _titleController.text = 'Aiuto';
       _messageController.text = 'Aiuto';
       _isAlert = true;
+      _setRadius(1);
     });
     await _getLocation();
   }
@@ -288,6 +278,7 @@ class _AllertaPageState extends State<AllertaPage> {
       _titleController.text = 'Richiesta emergenza sanitaria';
       _messageController.text = 'Richiesta emergenza sanitaria';
       _isAlert = true;
+      _setRadius(1);
     });
     await _getLocation();
   }
@@ -297,6 +288,7 @@ class _AllertaPageState extends State<AllertaPage> {
       _titleController.text = 'Allerta di sicurezza pubblica';
       _messageController.text = 'Allerta di sicurezza pubblica';
       _isAlert = true;
+      _setRadius(1);
     });
     await _getLocation();
   }
@@ -537,7 +529,7 @@ class _AllertaPageState extends State<AllertaPage> {
               padding: const EdgeInsets.all(16.0),
             ),
             child: const Text(
-              'Annulla',
+              'Cancella',
               style: TextStyle(fontSize: 16.0),
             ),
           ),
