@@ -172,6 +172,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
+  Future<void> _reloadLocation() async {
+    await _getUserPosition(); // Ricarica la posizione dell'utente
+    setState(() {
+      // La funzione _getUserPosition aggiornerà già currentLocation
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,7 +194,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             } else if (value == 'profilo') {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ProfiloPage()),
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
               );
             }
           },
@@ -214,6 +221,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: _selectLocation, // Apri FindLocationPage e aggiorna la posizione
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh), // Icona di ricarica
+            onPressed: _reloadLocation, // Ricarica la posizione
           ),
         ],
       ),
