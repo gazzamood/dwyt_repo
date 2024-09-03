@@ -8,7 +8,7 @@ class Constants {
   static const String apiKey = "AIzaSyB46qyeuCysKMD5Ka7bf5W7agt0tSr2NAE";
 
   // RADIUS notifiche geolocalizzate
-  static const double radiusInKm = 3.0;
+  static const double radiusInKm = 1.7;
 
 
 
