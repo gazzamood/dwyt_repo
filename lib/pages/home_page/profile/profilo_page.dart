@@ -1,15 +1,17 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
-class ProfiloPage extends StatefulWidget {
-  const ProfiloPage({super.key});
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
 
   @override
-  State<ProfiloPage> createState() => _ProfiloPageState();
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfiloPageState extends State<ProfiloPage> {
+class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin {
+  TabController? tabController;
+
   User? _user;
   String _imageUrl = '';
   String _name = '';
@@ -18,10 +20,18 @@ class _ProfiloPageState extends State<ProfiloPage> {
   String _addressUser = '';
   String _phoneNumber = '';
 
+  String following = "0";
+  String followers = "0";
+  String fidelity = "0";
+
+  List<Map<String, dynamic>> votesList = [];
+
   @override
   void initState() {
     super.initState();
+    tabController = TabController(length: 2, vsync: this);
     _getUserProfile();
+    _fetchUserVotes(); // Fetch votes when initializing the state
   }
 
   Future<void> _getUserProfile() async {
@@ -38,108 +48,196 @@ class _ProfiloPageState extends State<ProfiloPage> {
           .get();
 
       setState(() {
-        //_imageUrl = userSnapshot['profileImageUrl'] ?? '';
         _name = userSnapshot['name'] ?? '';
         _surname = userSnapshot['surname'] ?? '';
         _birthdate = userSnapshot['birthdate'] ?? '';
         _addressUser = userSnapshot['addressUser'] ?? '';
         _phoneNumber = userSnapshot['phoneNumber'] ?? '';
+        fidelity = userSnapshot['fidelity']?.toString() ?? '0'; // Load the fidelity score
       });
     }
+  }
+
+  Future<void> _fetchUserVotes() async {
+    if (_user == null) return;
+
+    QuerySnapshot notificationsSnapshot = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('senderId', isEqualTo: _user!.uid)
+        .get();
+
+    List<Map<String, dynamic>> fetchedVotesList = [];
+
+    for (var doc in notificationsSnapshot.docs) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      bool vote = data['vote'] ?? false;
+      fetchedVotesList.add({
+        'message': data['message'] ?? '',
+        'vote': vote,
+      });
+    }
+
+    setState(() {
+      votesList = fetchedVotesList;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profilo'),
+        title: const Text("Profile"),
+        backgroundColor: Colors.teal,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_horiz),
+            onPressed: () {},
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Meta superiore: foto a sinistra, informazioni a destra
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Riquadro per caricare l'immagine del profilo
-                  Container(
-                    width: 150,
-                    height: 150,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(width: 2, color: Colors.grey),
-                      /*image: DecorationImage(
-                        image: _imageUrl.isNotEmpty
-                            ? NetworkImage(_imageUrl)
-                            : const AssetImage('assets/images/profile_image.jpg') as ImageProvider,
-                        fit: BoxFit.cover,
-                      ),*/
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0),
+            child: Column(
+              children: [
+                const CircleAvatar(
+                  backgroundImage: AssetImage('assets/images/emoji_occhiolino.jpg'),
+                  radius: 70.0,
+                ),
+                const SizedBox(height: 20.0),
+                Text(
+                  _user?.email ?? '',
+                  style: const TextStyle(
+                    fontSize: 30.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "$_name $_surname",
+                      style: const TextStyle(
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.grey,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16.0),
-                  // Informazioni del profilo: nome, cognome, email, punti fedeltà
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '$_name $_surname',
-                        style: const TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8.0),
-                      const Text(
-                        'Punti Fedeltà', // Scritta "Punti Fedeltà"
-                        style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4.0),
-                      const Text(
-                        '100', // Valore dei punti fedeltà (esempio)
-                        style: TextStyle(fontSize: 25.0),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                  ],
+                ),
+                const SizedBox(height: 20.0),
+              ],
             ),
-            const Divider(),
-            // Altre informazioni del profilo
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Altre informazioni del profilo',
-                    style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8.0),
-                  Text(
-                    'Email: ${_user?.email ?? 'N/A'}',
-                    style: const TextStyle(fontSize: 20.0),
-                  ),
-                  const SizedBox(height: 12.0),
-                  Text(
-                    'Data di nascita: $_birthdate',
-                    style: const TextStyle(fontSize: 18.0),
-                  ),
-                  const SizedBox(height: 12.0),
-                  Text(
-                    'Indirizzo: $_addressUser',
-                    style: const TextStyle(fontSize: 18.0),
-                  ),
-                  const SizedBox(height: 12.0),
-                  Text(
-                    'Numero di telefono: $_phoneNumber',
-                    style: const TextStyle(fontSize: 18.0),
-                  ),
-                ],
-              ),
+          ),
+          const SizedBox(height: 20.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatColumn(following, "Following"),
+              _buildStatColumn(fidelity, "Fidelity"),  // Added Fidelity between Following and Followers
+              _buildStatColumn(followers, "Followers"),
+            ],
+          ),
+          const SizedBox(height: 30.0),
+          _buildTabBar(),
+          const SizedBox(height: 10.0),
+          Expanded(
+            child: TabBarView(
+              controller: tabController,
+              children: [
+                const Center(child: Text("You don't have any photos")),
+                _buildGridView(), // Use _buildGridView to display votes
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Column _buildStatColumn(String count, String label) {
+    return Column(
+      children: [
+        Text(
+          count,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20.0,
+          ),
+        ),
+        const SizedBox(height: 10.0),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.black.withOpacity(0.3),
+            fontSize: 16.0,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+
+  TabBar _buildTabBar() {
+    return TabBar(
+      controller: tabController,
+      indicatorColor: Colors.teal,
+      labelColor: Colors.black,
+      labelStyle: const TextStyle(
+        fontSize: 16.0,
+        fontWeight: FontWeight.bold,
+      ),
+      unselectedLabelColor: Colors.black26,
+      tabs: const [
+        Tab(text: "Photos"),
+        Tab(text: "Votes"),
+      ],
+    );
+  }
+
+  GridView _buildGridView() {
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 8.0,
+        crossAxisSpacing: 8.0,
+        childAspectRatio: 0.7,
+      ),
+      itemCount: votesList.length,
+      itemBuilder: (context, index) {
+        final voteData = votesList[index];
+        bool vote = voteData['vote'];
+
+        // Aggiungi un log per verificare il valore del voto
+        print('Vote at index $index: $vote');
+
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10.0),
+            color: Colors.grey.shade200,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                vote ? Icons.thumb_up : Icons.thumb_down,
+                color: vote ? Colors.green : Colors.red,
+                size: 50.0,
+              ),
+              const SizedBox(height: 10.0),
+              Text(
+                voteData['message'],
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14.0,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
