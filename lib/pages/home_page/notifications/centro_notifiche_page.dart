@@ -7,8 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../services/costants.dart';
-import '../../login/vote.dart';
-import '../geolocation/map_page.dart'; // Import the MapPage
+import '../../../services/vote.dart';
+import '../geolocation/map_page.dart';
 
 class NotificaPage extends StatefulWidget {
   final Position? userPosition;
@@ -27,8 +27,6 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
   String userId = FirebaseAuth.instance.currentUser!.uid;
   Position? userPosition;
   String locationName = 'Notifiche';
-
-  final VoteService _voteService = VoteService();
 
   @override
   void initState() {
@@ -164,7 +162,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     return formattedTime;
   }
 
-  void showNotificationDialog(BuildContext context, String message, String notificationId) {
+  void showNotificationDialog(BuildContext context, String message, String notificationId, {bool canVote = true}) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -174,30 +172,29 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(message),
-              const SizedBox(height: 20), // Spazio tra il testo e i bottoni
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  IconButton(
-                    icon: const Icon(Icons.thumb_up),
-                    color: Colors.green,
-                    onPressed: () {
-                      // Logica per gestire il voto positivo
-                      _submitVote(notificationId, true);
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.thumb_down),
-                    color: Colors.red,
-                    onPressed: () {
-                      // Logica per gestire il voto negativo
-                      _submitVote(notificationId, false);
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              ),
+              if (canVote) const SizedBox(height: 20), // Spazio tra il testo e i bottoni solo se si può votare
+              if (canVote)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    IconButton(
+                      icon: const Icon(Icons.thumb_up),
+                      color: Colors.green,
+                      onPressed: () {
+                        _submitVote(notificationId, true);
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.thumb_down),
+                      color: Colors.red,
+                      onPressed: () {
+                        _submitVote(notificationId, false);
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                ),
             ],
           ),
           actions: <Widget>[
@@ -221,18 +218,27 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
 
     try {
       DocumentSnapshot voteSnapshot = await voteRef.get();
+      bool? previousVote;
 
-      // Controlla se esiste già un voto
+      // Se esiste già un voto, recupera il tipo di voto precedente
       if (voteSnapshot.exists) {
-        // Aggiorna il voto esistente
-        await voteRef.update({'vote': isUpvote});
-      } else {
-        // Crea un nuovo voto
+        previousVote = voteSnapshot.get('vote') as bool?;
+      }
+
+      if (previousVote == null) {
+        // Nessun voto precedente, crea un nuovo voto
         await voteRef.set({
           'voterId': voterId,
           'notificationId': notificationId,
           'vote': isUpvote,
         });
+      } else if (previousVote == isUpvote) {
+        // Il voto attuale è lo stesso del precedente, non fare nulla
+        print('Hai già votato con questo tipo.');
+        return;
+      } else {
+        // Il voto attuale è diverso dal precedente, aggiorna il voto
+        await voteRef.update({'vote': isUpvote});
       }
 
       // Recupera il documento della notifica per ottenere il senderId
@@ -256,7 +262,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     }
   }
 
-  Widget buildNotificationsList(List<Map<String, dynamic>> notifications) {
+  Widget buildNotificationsList(List<Map<String, dynamic>> notifications, {bool canVote = true}) {
     return ListView.builder(
       itemCount: notifications.length,
       itemBuilder: (context, index) {
@@ -286,15 +292,16 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
                     );
                   },
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () async {
-                    bool? confirm = await _showDeleteConfirmationDialog(context);
-                    if (confirm == true) {
-                      await _deleteNotification(notification['id']);
-                    }
-                  },
-                ),
+                if (canVote)
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () async {
+                      bool? confirm = await _showDeleteConfirmationDialog(context);
+                      if (confirm == true) {
+                        await _deleteNotification(notification['id']);
+                      }
+                    },
+                  ),
               ],
             ),
             onTap: () async {
@@ -314,7 +321,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
               }
 
               markNotificationAsRead(notification['id']);
-              showNotificationDialog(context, message, notification['id']);
+              showNotificationDialog(context, message, notification['id'], canVote: canVote);
             },
           ),
         );
@@ -367,7 +374,13 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     });
 
     setState(() {
-      allNotifications.firstWhere((notification) => notification['id'] == notificationId)['readBy'].add(userId);
+      // Find the notification in the list
+      var notificationIndex = allNotifications.indexWhere((notification) => notification['id'] == notificationId);
+
+      // If the notification is found, mark it as read
+      if (notificationIndex != -1) {
+        allNotifications[notificationIndex]['readBy'].add(userId);
+      }
     });
   }
 
@@ -398,7 +411,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
                 controller: _tabController,
                 children: [
                   buildNotificationsList(allNotifications),
-                  buildNotificationsList(sentNotifications),
+                  buildNotificationsList(sentNotifications, canVote: false), // Pass canVote: false for sent notifications
                 ],
               ),
             ),
