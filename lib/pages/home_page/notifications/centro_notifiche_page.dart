@@ -4,10 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../services/costants.dart';
-import '../../../services/push_notification.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../../services/costants.dart';
+import '../../login/vote.dart';
 import '../geolocation/map_page.dart'; // Import the MapPage
 
 class NotificaPage extends StatefulWidget {
@@ -28,15 +28,15 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
   Position? userPosition;
   String locationName = 'Notifiche';
 
+  final VoteService _voteService = VoteService();
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_handleTabSelection);
-    PushNotificationService().initialize();
-    _getUserPosition();
     userPosition = widget.userPosition; // Get the passed position
-    loadNotifications();
+    _getUserPosition();
   }
 
   @override
@@ -74,7 +74,8 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
       return;
     }
 
-    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('notifications').where('timestamp', isGreaterThan: registrationDate).get();
+    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('notifications')
+        .where('timestamp', isGreaterThan: registrationDate).get();
 
     allNotifications = snapshot.docs
         .where((doc) => doc['senderId'] != userId)
@@ -93,7 +94,8 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
 
     allNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
 
-    QuerySnapshot sentSnapshot = await FirebaseFirestore.instance.collection('notifications').where('senderId', isEqualTo: userId).get();
+    QuerySnapshot sentSnapshot = await FirebaseFirestore.instance.collection('notifications')
+        .where('senderId', isEqualTo: userId).get();
 
     sentNotifications = sentSnapshot.docs.map((doc) => {
       'id': doc.id,
@@ -162,13 +164,42 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     return formattedTime;
   }
 
-  void showNotificationDialog(String message) {
+  void showNotificationDialog(BuildContext context, String message, String notificationId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Dettagli"),
-          content: Text(message),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(message),
+              const SizedBox(height: 20), // Spazio tra il testo e i bottoni
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  IconButton(
+                    icon: const Icon(Icons.thumb_up),
+                    color: Colors.green,
+                    onPressed: () {
+                      // Logica per gestire il voto positivo
+                      _submitVote(notificationId, true);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.thumb_down),
+                    color: Colors.red,
+                    onPressed: () {
+                      // Logica per gestire il voto negativo
+                      _submitVote(notificationId, false);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
           actions: <Widget>[
             TextButton(
               child: const Text("Chiudi"),
@@ -180,6 +211,49 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
         );
       },
     );
+  }
+
+  Future<void> _submitVote(String notificationId, bool isUpvote) async {
+    String voterId = FirebaseAuth.instance.currentUser!.uid;
+    DocumentReference voteRef = FirebaseFirestore.instance
+        .collection('votes')
+        .doc('$voterId-$notificationId'); // Usa una combinazione unica di voterId e notificationId come ID del documento del voto
+
+    try {
+      DocumentSnapshot voteSnapshot = await voteRef.get();
+
+      // Controlla se esiste già un voto
+      if (voteSnapshot.exists) {
+        // Aggiorna il voto esistente
+        await voteRef.update({'vote': isUpvote});
+      } else {
+        // Crea un nuovo voto
+        await voteRef.set({
+          'voterId': voterId,
+          'notificationId': notificationId,
+          'vote': isUpvote,
+        });
+      }
+
+      // Recupera il documento della notifica per ottenere il senderId
+      DocumentSnapshot notificationSnapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .doc(notificationId)
+          .get();
+
+      if (notificationSnapshot.exists) {
+        String senderId = notificationSnapshot.get('senderId');
+
+        // Aggiorna il campo fidelity nel documento dell'utente
+        await FirebaseFirestore.instance.collection('users').doc(senderId).update({
+          'fidelity': FieldValue.increment(isUpvote ? 1 : -1),
+        });
+      } else {
+        print('Notifica non trovata.');
+      }
+    } catch (e) {
+      print('Errore durante il voto: $e');
+    }
   }
 
   Widget buildNotificationsList(List<Map<String, dynamic>> notifications) {
@@ -215,7 +289,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
                 IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: () async {
-                    bool? confirm = await _showDeleteConfirmationDialog();
+                    bool? confirm = await _showDeleteConfirmationDialog(context);
                     if (confirm == true) {
                       await _deleteNotification(notification['id']);
                     }
@@ -240,7 +314,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
               }
 
               markNotificationAsRead(notification['id']);
-              showNotificationDialog(message);
+              showNotificationDialog(context, message, notification['id']);
             },
           ),
         );
@@ -248,7 +322,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     );
   }
 
-  Future<bool?> _showDeleteConfirmationDialog() {
+  Future<bool?> _showDeleteConfirmationDialog(BuildContext context) {
     return showDialog<bool>(
       context: context,
       builder: (BuildContext context) {

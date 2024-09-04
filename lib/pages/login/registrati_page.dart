@@ -79,6 +79,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'registrationDate': Timestamp.now(),
             'subscriptions': [],
             'notificationsId': [],
+            'fidelity': 0,
           });
           print('User profile created successfully in Firestore');
         } else {
@@ -99,7 +100,8 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'creationDate': Timestamp.now(),
             'subscribers': [],
             'notificationsId': [], // Changed from 'notifications' to 'notificationsId'
-            'email': _email.text, // Added email field
+            'email': _email.text,
+            'fidelity': 0,
           });
           print('Activity profile created successfully in Firestore');
         }
