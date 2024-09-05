@@ -73,7 +73,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     }
 
     QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('notifications')
-        .where('timestamp', isGreaterThan: registrationDate).get();
+        .get();
 
     allNotifications = snapshot.docs
         .where((doc) => doc['senderId'] != userId)
@@ -214,29 +214,38 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     String voterId = FirebaseAuth.instance.currentUser!.uid;
     DocumentReference voteRef = FirebaseFirestore.instance
         .collection('votes')
-        .doc('$voterId-$notificationId'); // Usa una combinazione unica di voterId e notificationId come ID del documento del voto
+        .doc(notificationId); // Usa il notificationId come ID del documento
 
     try {
       DocumentSnapshot voteSnapshot = await voteRef.get();
-      bool? previousVote;
+      Map<String, dynamic> voteData = voteSnapshot.exists
+          ? voteSnapshot.data() as Map<String, dynamic>
+          : {
+        'upvotes': 0,
+        'downvotes': 0,
+        'voters': <String, bool>{},
+      };
 
-      // Se esiste già un voto, recupera il tipo di voto precedente
-      if (voteSnapshot.exists) {
-        previousVote = voteSnapshot.get('vote') as bool?;
-      }
+      bool? previousVote = voteData['voters'][voterId] as bool?;
 
       if (previousVote == null) {
         // Nessun voto precedente, crea un nuovo voto
-        await voteRef.set({
-          'voterId': voterId,
-          'notificationId': notificationId,
-          'vote': isUpvote,
-        });
+        voteData['voters'][voterId] = isUpvote;
+        if (isUpvote) {
+          voteData['upvotes']++;
+        } else {
+          voteData['downvotes']++;
+        }
       } else if (previousVote == isUpvote) {
         // Se il voto attuale è lo stesso del precedente, annulla il voto
-        await voteRef.delete();
+        voteData['voters'].remove(voterId);
+        if (isUpvote) {
+          voteData['upvotes']--;
+        } else {
+          voteData['downvotes']--;
+        }
 
-        // Recupera il documento della notifica per ottenere il senderId
+        // Aggiorna il campo fidelity nel documento dell'utente
         DocumentSnapshot notificationSnapshot = await FirebaseFirestore.instance
             .collection('notifications')
             .doc(notificationId)
@@ -244,8 +253,6 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
 
         if (notificationSnapshot.exists) {
           String senderId = notificationSnapshot.get('senderId');
-
-          // Aggiorna il campo fidelity nel documento dell'utente
           await FirebaseFirestore.instance.collection('users').doc(senderId).update({
             'fidelity': FieldValue.increment(isUpvote ? -1 : 1),
           });
@@ -254,13 +261,21 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
         }
 
         print('Voto annullato.');
+        await voteRef.set(voteData);
         return;
       } else {
         // Il voto attuale è diverso dal precedente, aggiorna il voto
-        await voteRef.update({'vote': isUpvote});
+        voteData['voters'][voterId] = isUpvote;
+        if (isUpvote) {
+          voteData['upvotes']++;
+          voteData['downvotes']--;
+        } else {
+          voteData['downvotes']++;
+          voteData['upvotes']--;
+        }
       }
 
-      // Recupera il documento della notifica per ottenere il senderId
+      // Aggiorna il campo fidelity nel documento dell'utente
       DocumentSnapshot notificationSnapshot = await FirebaseFirestore.instance
           .collection('notifications')
           .doc(notificationId)
@@ -268,14 +283,14 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
 
       if (notificationSnapshot.exists) {
         String senderId = notificationSnapshot.get('senderId');
-
-        // Aggiorna il campo fidelity nel documento dell'utente
         await FirebaseFirestore.instance.collection('users').doc(senderId).update({
           'fidelity': FieldValue.increment(isUpvote ? 1 : -1),
         });
       } else {
         print('Notifica non trovata.');
       }
+
+      await voteRef.set(voteData);
     } catch (e) {
       print('Errore durante il voto: $e');
     }
