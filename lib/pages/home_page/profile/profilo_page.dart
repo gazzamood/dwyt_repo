@@ -235,7 +235,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                       ),
                       const SizedBox(height: 10.0),
                       Text(
-                        "Birthdate: $_birthdate",
+                        " $_birthdate",
                         style: const TextStyle(
                           fontSize: 16.0,
                           fontWeight: FontWeight.w400,
@@ -244,7 +244,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                       ),
                       const SizedBox(height: 10.0),
                       Text(
-                        "Address: $_addressUser",
+                        " $_addressUser",
                         style: const TextStyle(
                           fontSize: 16.0,
                           fontWeight: FontWeight.w400,
@@ -253,7 +253,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                       ),
                       const SizedBox(height: 10.0),
                       Text(
-                        "Phone: $_phoneNumber",
+                        " $_phoneNumber",
                         style: const TextStyle(
                           fontSize: 16.0,
                           fontWeight: FontWeight.w400,
