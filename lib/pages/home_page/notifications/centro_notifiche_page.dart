@@ -418,7 +418,6 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     });
   }
 
-  // Function to reload notifications
   Future<void> _reloadNotifications() async {
     await loadNotifications();
   }

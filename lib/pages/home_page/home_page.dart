@@ -5,7 +5,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
 import '../../services/auth.dart';
-import 'activities/list_activity_page.dart';
 import 'notifications/send_notifications_page.dart';
 import '../login/login_page.dart';
 import 'geolocation/map_page.dart';
@@ -28,6 +27,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Position? userPosition;
   List<String> savedLocations = []; // Lista delle posizioni salvate
   String currentLocation = 'Caricamento...'; // Posizione attuale
+
+  final GlobalKey<NotificaPageState> _notificaPageKey = GlobalKey<NotificaPageState>();
+
 
   @override
   void initState() {
@@ -175,7 +177,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _reloadLocation() async {
     await _getUserPosition(); // Ricarica la posizione dell'utente
     setState(() {
-      // La funzione _getUserPosition aggiornerà già currentLocation
+      _notificaPageKey.currentState?.loadNotifications(); // Richiama _reloadNotifications su NotificaPage
     });
   }
 
@@ -238,7 +240,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             ),
           ),
           Expanded(
-            child: NotificaPage(userPosition: userPosition), // Passa la userPosition a NotificaPage
+            child: NotificaPage(
+                key: _notificaPageKey,
+                userPosition: userPosition), // Passa la userPosition a NotificaPage
           ),
         ],
       ),
