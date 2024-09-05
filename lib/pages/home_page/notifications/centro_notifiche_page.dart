@@ -233,8 +233,27 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
           'vote': isUpvote,
         });
       } else if (previousVote == isUpvote) {
-        // Il voto attuale è lo stesso del precedente, non fare nulla
-        print('Hai già votato con questo tipo.');
+        // Se il voto attuale è lo stesso del precedente, annulla il voto
+        await voteRef.delete();
+
+        // Recupera il documento della notifica per ottenere il senderId
+        DocumentSnapshot notificationSnapshot = await FirebaseFirestore.instance
+            .collection('notifications')
+            .doc(notificationId)
+            .get();
+
+        if (notificationSnapshot.exists) {
+          String senderId = notificationSnapshot.get('senderId');
+
+          // Aggiorna il campo fidelity nel documento dell'utente
+          await FirebaseFirestore.instance.collection('users').doc(senderId).update({
+            'fidelity': FieldValue.increment(isUpvote ? -1 : 1),
+          });
+        } else {
+          print('Notifica non trovata.');
+        }
+
+        print('Voto annullato.');
         return;
       } else {
         // Il voto attuale è diverso dal precedente, aggiorna il voto
