@@ -297,6 +297,15 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
   }
 
   Widget buildNotificationsList(List<Map<String, dynamic>> notifications, {bool canVote = true}) {
+    if (notifications.isEmpty) {
+      return const Center(
+        child: Text(
+          'Al momento non ci sono notifiche',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+
     return ListView.builder(
       itemCount: notifications.length,
       itemBuilder: (context, index) {
