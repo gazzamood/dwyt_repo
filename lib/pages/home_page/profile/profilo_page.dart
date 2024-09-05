@@ -61,6 +61,17 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   Future<void> _fetchUserVotes() async {
     if (_user == null) return;
 
+    // Step 1: Ottieni tutti i documenti della collezione 'votes' che contengono gli ID delle notifiche valide
+    QuerySnapshot voteSnapshot = await FirebaseFirestore.instance
+        .collection('votes')
+        .get();
+
+    // Crea una mappa che associa ogni notificationId al suo corrispondente valore di vote
+    Map<String, bool> notificationVotesMap = {
+      for (var doc in voteSnapshot.docs) doc['notificationId'] as String: doc['vote'] as bool
+    };
+
+    // Step 2: Ottieni le notifiche dalla collezione 'notifications' filtrate per senderId uguale all'ID dell'utente loggato
     QuerySnapshot notificationsSnapshot = await FirebaseFirestore.instance
         .collection('notifications')
         .where('senderId', isEqualTo: _user!.uid)
@@ -69,17 +80,30 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     List<Map<String, dynamic>> fetchedVotesList = [];
 
     for (var doc in notificationsSnapshot.docs) {
-      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-      bool vote = data['vote'] ?? false;
-      fetchedVotesList.add({
-        'message': data['message'] ?? '',
-        'vote': vote,
-      });
+      String notificationId = doc.id;
+
+      if (notificationVotesMap.containsKey(notificationId)) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+        // Recupera il valore di vote dalla mappa
+        bool vote = notificationVotesMap[notificationId] ?? true;
+
+        // Log per vedere esattamente cosa viene recuperato
+        print('Data for notificationId $notificationId: $data');
+
+        fetchedVotesList.add({
+          'title': data['title'] ?? '',
+          'vote': vote,
+        });
+      }
     }
 
     setState(() {
       votesList = fetchedVotesList;
     });
+
+    // Log finale per confermare i dati memorizzati in votesList
+    print('Final votesList: $votesList');
   }
 
   @override
@@ -228,7 +252,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
               ),
               const SizedBox(height: 10.0),
               Text(
-                voteData['message'],
+                voteData['title'],
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 14.0,
