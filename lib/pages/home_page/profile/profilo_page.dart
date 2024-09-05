@@ -61,14 +61,18 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   Future<void> _fetchUserVotes() async {
     if (_user == null) return;
 
-    // Step 1: Ottieni tutti i documenti della collezione 'votes' che contengono gli ID delle notifiche valide
+    // Step 1: Ottieni tutti i documenti della collezione 'votes'
     QuerySnapshot voteSnapshot = await FirebaseFirestore.instance
         .collection('votes')
         .get();
 
-    // Crea una mappa che associa ogni notificationId al suo corrispondente valore di vote
-    Map<String, bool> notificationVotesMap = {
-      for (var doc in voteSnapshot.docs) doc['notificationId'] as String: doc['vote'] as bool
+    // Crea una mappa che associa ogni notificationId ai suoi corrispondenti valori di upvotes e downvotes
+    Map<String, Map<String, int>> notificationVotesMap = {
+      for (var doc in voteSnapshot.docs)
+        doc.id: {
+          'upvotes': doc['upvotes'] as int,
+          'downvotes': doc['downvotes'] as int,
+        }
     };
 
     // Step 2: Ottieni le notifiche dalla collezione 'notifications' filtrate per senderId uguale all'ID dell'utente loggato
@@ -85,15 +89,14 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       if (notificationVotesMap.containsKey(notificationId)) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-        // Recupera il valore di vote dalla mappa
-        bool vote = notificationVotesMap[notificationId] ?? true;
-
-        // Log per vedere esattamente cosa viene recuperato
-        print('Data for notificationId $notificationId: $data');
+        // Recupera i valori di upvotes e downvotes dalla mappa
+        int upvotes = notificationVotesMap[notificationId]?['upvotes'] ?? 0;
+        int downvotes = notificationVotesMap[notificationId]?['downvotes'] ?? 0;
 
         fetchedVotesList.add({
           'title': data['title'] ?? '',
-          'vote': vote,
+          'upvotes': upvotes,
+          'downvotes': downvotes,
         });
       }
     }
@@ -106,6 +109,85 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     print('Final votesList: $votesList');
   }
 
+  // Funzione per mostrare il dialogo di modifica del profilo
+  Future<void> _showEditProfileDialog() async {
+    TextEditingController nameController = TextEditingController(text: _name);
+    TextEditingController surnameController = TextEditingController(text: _surname);
+    TextEditingController birthdateController = TextEditingController(text: _birthdate);
+    TextEditingController addressController = TextEditingController(text: _addressUser);
+    TextEditingController phoneNumberController = TextEditingController(text: _phoneNumber);
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Profile'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
+                TextField(
+                  controller: surnameController,
+                  decoration: const InputDecoration(labelText: 'Surname'),
+                ),
+                TextField(
+                  controller: birthdateController,
+                  decoration: const InputDecoration(labelText: 'Birthdate'),
+                ),
+                TextField(
+                  controller: addressController,
+                  decoration: const InputDecoration(labelText: 'Address'),
+                ),
+                TextField(
+                  controller: phoneNumberController,
+                  decoration: const InputDecoration(labelText: 'Phone Number'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                // Aggiorna i dati dell'utente nel Firestore
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(_user!.uid)
+                    .update({
+                  'name': nameController.text,
+                  'surname': surnameController.text,
+                  'birthdate': birthdateController.text,
+                  'addressUser': addressController.text,
+                  'phoneNumber': phoneNumberController.text,
+                });
+
+                // Aggiorna lo stato locale
+                setState(() {
+                  _name = nameController.text;
+                  _surname = surnameController.text;
+                  _birthdate = birthdateController.text;
+                  _addressUser = addressController.text;
+                  _phoneNumber = phoneNumberController.text;
+                });
+
+                Navigator.of(context).pop(); // Chiudi il dialogo
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,8 +196,8 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
         backgroundColor: Colors.teal,
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_horiz),
-            onPressed: () {},
+            icon: const Icon(Icons.edit),
+            onPressed: _showEditProfileDialog, // Apre il dialogo di modifica del profilo
           ),
         ],
       ),
@@ -123,35 +205,64 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20.0),
-            child: Column(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const CircleAvatar(
                   backgroundImage: AssetImage('assets/images/emoji_occhiolino.jpg'),
                   radius: 70.0,
                 ),
-                const SizedBox(height: 20.0),
-                Text(
-                  _user?.email ?? '',
-                  style: const TextStyle(
-                    fontSize: 30.0,
-                    fontWeight: FontWeight.bold,
+                const SizedBox(width: 20.0),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _user?.email ?? '',
+                        style: const TextStyle(
+                          fontSize: 22.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Text(
+                        "$_name $_surname",
+                        style: const TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Text(
+                        "Birthdate: $_birthdate",
+                        style: const TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Text(
+                        "Address: $_addressUser",
+                        style: const TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Text(
+                        "Phone: $_phoneNumber",
+                        style: const TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 10.0),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "$_name $_surname",
-                      style: const TextStyle(
-                        fontSize: 18.0,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20.0),
               ],
             ),
           ),
@@ -160,7 +271,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildStatColumn(following, "Following"),
-              _buildStatColumn(fidelity, "Fidelity"),  // Added Fidelity between Following and Followers
+              _buildStatColumn(fidelity, "Fidelity"),
               _buildStatColumn(followers, "Followers"),
             ],
           ),
@@ -224,36 +335,73 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   GridView _buildGridView() {
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+        crossAxisCount: 1,  // Una sola colonna per riga
         mainAxisSpacing: 8.0,
         crossAxisSpacing: 8.0,
-        childAspectRatio: 0.7,
+        childAspectRatio: 3.0, // Cambia il rapporto di aspetto per dare più spazio alla riga
       ),
       itemCount: votesList.length,
       itemBuilder: (context, index) {
         final voteData = votesList[index];
-        bool vote = voteData['vote'];
+        int upvotes = voteData['upvotes'];
+        int downvotes = voteData['downvotes'];
 
         return Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10.0),
             color: Colors.grey.shade200,
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          padding: const EdgeInsets.all(10.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(
-                vote ? Icons.thumb_up : Icons.thumb_down,
-                color: vote ? Colors.green : Colors.red,
-                size: 50.0,
-              ),
-              const SizedBox(height: 10.0),
-              Text(
-                voteData['title'],
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14.0,
+              Expanded(
+                child: Text(
+                  voteData['title'],
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.thumb_up,
+                        color: Colors.green,
+                        size: 30.0,
+                      ),
+                      const SizedBox(width: 5.0),
+                      Text(
+                        '$upvotes',
+                        style: const TextStyle(
+                          fontSize: 18.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10.0),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.thumb_down,
+                        color: Colors.red,
+                        size: 30.0,
+                      ),
+                      const SizedBox(width: 5.0),
+                      Text(
+                        '$downvotes',
+                        style: const TextStyle(
+                          fontSize: 18.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
