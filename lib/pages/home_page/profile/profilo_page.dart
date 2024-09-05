@@ -234,9 +234,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
         final voteData = votesList[index];
         bool vote = voteData['vote'];
 
-        // Aggiungi un log per verificare il valore del voto
-        print('Vote at index $index: $vote');
-
         return Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10.0),
