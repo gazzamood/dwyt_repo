@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
-import '../../services/auth.dart';
+import '../../services/firebase_service/auth.dart';
 import 'notifications/send_notifications_page.dart';
 import '../login/login_page.dart';
 import 'geolocation/map_page.dart';
