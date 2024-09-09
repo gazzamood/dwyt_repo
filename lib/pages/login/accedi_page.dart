@@ -2,7 +2,7 @@ import 'package:dwyt_test/pages/login/registrati_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../services/auth.dart';
+import '../../services/firebase_service/auth.dart';
 import '../home_page/home_page.dart';
 
 class LoginAccediPage extends StatefulWidget {

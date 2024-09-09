@@ -1,6 +1,6 @@
 import 'package:dwyt_test/pages/home_page/home_page.dart';
 import 'package:dwyt_test/pages/login/login_page.dart';
-import 'package:dwyt_test/services/auth.dart';
+import 'package:dwyt_test/services/firebase_service/auth.dart';
 import 'package:flutter/material.dart';
 
 import 'package:firebase_core/firebase_core.dart';

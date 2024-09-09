@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../services/costants.dart';
-import '../../../services/vote.dart';
+import '../../../services/profile_service/vote.dart';
 import '../geolocation/map_page.dart';
 
 class NotificaPage extends StatefulWidget {
