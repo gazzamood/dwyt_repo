@@ -40,4 +40,13 @@ class Auth{
           .set({'fcmToken': token}, SetOptions(merge: true));
     }
   }
+
+  User? getCurrentUser() {
+    return _firebaseAuth.currentUser;
+  }
+
+  Future<String?> getUserEmail() async {
+    final user = _firebaseAuth.currentUser;
+    return user?.email;
+  }
 }
