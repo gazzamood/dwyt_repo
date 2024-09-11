@@ -1,3 +1,4 @@
+import 'package:dwyt_test/pages/login/accedi_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -52,7 +53,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     await Auth().signOut();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
+      MaterialPageRoute(builder: (context) => const LoginAccediPage()),
     );
   }
 

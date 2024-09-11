@@ -1,4 +1,5 @@
 import 'package:dwyt_test/pages/home_page/home_page.dart';
+import 'package:dwyt_test/pages/login/accedi_page.dart';
 import 'package:dwyt_test/pages/login/login_page.dart';
 import 'package:dwyt_test/services/firebase_service/auth.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +37,7 @@ class _MyAppState extends State<MyApp> {
         if(snapshot.hasData){
           return const HomePage();
         }else{
-          return const LoginPage();
+          return const LoginAccediPage();
         }
       }
     )

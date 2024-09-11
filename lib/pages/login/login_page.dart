@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'accedi_page.dart';
 import 'registrati_page.dart';
 
@@ -23,7 +22,8 @@ class LoginPage extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const LoginAccediPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const LoginAccediPage()),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -38,13 +38,14 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 16.0), // Adds spacing between the buttons
+              const SizedBox(width: 16.0), // Spaziatura tra i pulsanti
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const LoginRegistratiPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const LoginRegistratiPage()),
                     );
                   },
                   style: ElevatedButton.styleFrom(

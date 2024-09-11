@@ -1,7 +1,6 @@
 import 'package:dwyt_test/pages/login/registrati_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
 import '../../services/firebase_service/auth.dart';
 import '../home_page/home_page.dart';
 
@@ -60,70 +59,118 @@ class _LoginAccediPageState extends State<LoginAccediPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            TextField(
-              controller: _email,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.emailAddress,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Ensures the column takes only the space it needs
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _header(context),
+                _inputField(context),
+                _forgotPassword(context),
+                _signup(context),
+              ],
             ),
-            const SizedBox(height: 16.0),
-            TextField(
-              controller: _password,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
-              ),
-              obscureText: true,
-            ),
-            const SizedBox(height: 16.0),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-              onPressed: signIn,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-              ),
-              child: const Text(
-                'Accedi',
-                style: TextStyle(fontSize: 18.0),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextButton(
-              onPressed: () {
-                // Implementa la logica di recupero password qui
-              },
-              child: const Text(
-                'Recupera password',
-                style: TextStyle(decoration: TextDecoration.underline),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginRegistratiPage()),
-                );
-              },
-              child: const Text(
-                'Non hai un account? Registrati',
-                style: TextStyle(decoration: TextDecoration.underline),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _header(BuildContext context) {
+    return const Column(
+      children: [
+        Text(
+          "Welcome Back",
+          style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+        ),
+        Text("Enter your credential to login"),
+      ],
+    );
+  }
+
+  Widget _inputField(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _email,
+          decoration: InputDecoration(
+              hintText: "Email",
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: BorderSide.none
+              ),
+              fillColor: Colors.purple.withOpacity(0.1),
+              filled: true,
+              prefixIcon: const Icon(Icons.email)),
+          keyboardType: TextInputType.emailAddress,
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _password,
+          decoration: InputDecoration(
+            hintText: "Password",
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide.none),
+            fillColor: Colors.purple.withOpacity(0.1),
+            filled: true,
+            prefixIcon: const Icon(Icons.lock),
+          ),
+          obscureText: true,
+        ),
+        const SizedBox(height: 10),
+        _isLoading
+            ? const CircularProgressIndicator()
+            : ElevatedButton(
+          onPressed: signIn,
+          style: ElevatedButton.styleFrom(
+            shape: const StadiumBorder(),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: Colors.teal,
+          ),
+          child: const Text(
+            "Login",
+            style: TextStyle(fontSize: 20),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _forgotPassword(BuildContext context) {
+    return TextButton(
+      onPressed: () {
+        // Implementa la logica di recupero password qui
+      },
+      child: const Text(
+        "Forgot password?",
+        style: TextStyle(color: Colors.teal),
+      ),
+    );
+  }
+
+  Widget _signup(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text("Don't have an account? "),
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginRegistratiPage()),
+            );
+          },
+          child: const Text(
+            "Sign Up",
+            style: TextStyle(color: Colors.teal),
+          ),
+        )
+      ],
     );
   }
 }
