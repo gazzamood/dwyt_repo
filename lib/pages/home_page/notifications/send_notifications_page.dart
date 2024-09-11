@@ -149,11 +149,11 @@ class _AllertaPageState extends State<AllertaPage> {
       }
     }
 
-    double radiusKm = double.parse(radius);
+    //double radiusKm = double.parse(radius);
 
-    double calculateArea(double radius) {
+    /*double calculateArea(double radius) {
       return pi * radius * radius;
-    }
+    }*/
 
     Map<String, dynamic> alertData = {
       'title': title,
@@ -161,7 +161,7 @@ class _AllertaPageState extends State<AllertaPage> {
       'timestamp': FieldValue.serverTimestamp(),
       'expirationTime': DateTime.now().add(const Duration(hours: 24)), // Imposta la scadenza a 24 ore
       'senderId': senderId,
-      'radius': radiusKm,
+      //'radius': radiusKm,
       'readBy': [],
       'type': _isAlert ? 'allerta' : 'info',
       'location': {

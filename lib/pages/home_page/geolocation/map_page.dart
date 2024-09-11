@@ -212,7 +212,7 @@ class _MapPageState extends State<MapPage> {
       final GoogleMapController controller = await _controller.future;
       controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
         target: _userLocation!,
-        zoom: 20.0,
+        zoom: 15.0,
       )));
     }
   }
