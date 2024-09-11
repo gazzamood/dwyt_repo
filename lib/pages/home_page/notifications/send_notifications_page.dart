@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 
-import '../../../services/notification_service/predefine_alert.dart';
+import '../../../services/notification_service/predefine_alert_service.dart';
 import '../home_page.dart';
 
 class AllertaPage extends StatefulWidget {
