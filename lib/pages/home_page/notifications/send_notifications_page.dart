@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 
+import '../../../services/notification_service/predefine_alert.dart';
 import '../home_page.dart';
 
 class AllertaPage extends StatefulWidget {
@@ -19,9 +20,12 @@ class _AllertaPageState extends State<AllertaPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _radiusController = TextEditingController(text: '1');
+  final AlertService _alertService = AlertService();
+
   loc.LocationData? _currentLocation;
   String? _locationMessage;
   bool _isAlert = true; // Variabile di stato per il tipo di messaggio (true = allerta, false = info)
+
 
   Future<void> _getLocation() async {
     final loc.Location location = loc.Location();
@@ -226,71 +230,43 @@ class _AllertaPageState extends State<AllertaPage> {
     }
   }
 
-  final List<String> _predefineTitledMessages = [
-    'Title predefinito 1',
-    'Title predefinito 2',
-    'Title predefinito 3',
-  ];
-
-  void _setTitleMessage(String title) {
-    setState(() {
-      _titleController.text = title;
-    });
+  void _setTitleMessage(String value) {
+    _alertService.setTitle(value, _titleController);
   }
 
-  final List<String> _predefinedMessages = [
-    'Messaggio predefinito 1',
-    'Messaggio predefinito 2',
-    'Messaggio predefinito 3',
-  ];
-
-  void _setMessage(String message) {
-    setState(() {
-      _messageController.text = message;
-    });
+  void _setMessage(String value) {
+    _alertService.setMessage(value, _messageController);
   }
 
-  final List<int> _predefinedRadius = [
-    1,
-    3,
-    5,
-    10,
-  ];
-
-  void _setRadius(int message) {
-    setState(() {
-      _radiusController.text = message.toString();
-    });
+  void _setRadius(int value) {
+    _alertService.setRadius(value, _radiusController);
   }
 
   Future<void> _setHelpGenericMessage() async {
-    setState(() {
-      _titleController.text = 'Aiuto';
-      _messageController.text = 'Aiuto';
-      _isAlert = true;
-      _setRadius(1);
-    });
-    await _getLocation();
+    await _alertService.setHelpGenericMessage(
+      titleController: _titleController,
+      messageController: _messageController,
+      setRadius: _setRadius,
+      getLocation: _getLocation,
+    );
   }
 
   Future<void> _setHelpSaluteMessage() async {
-    setState(() {
-      _titleController.text = 'Richiesta emergenza sanitaria';
-      _messageController.text = 'Richiesta emergenza sanitaria';
-      _isAlert = true;
-      _setRadius(1);
-    });
-    await _getLocation();
+    await _alertService.setHelpSaluteMessage(
+      titleController: _titleController,
+      messageController: _messageController,
+      setRadius: _setRadius,
+      getLocation: _getLocation,
+    );
   }
 
   Future<void> _setHelpSicurezzaMessage() async {
-    setState(() {
-      _titleController.text = 'Allerta di sicurezza pubblica';
-      _messageController.text = 'Allerta di sicurezza pubblica';
-      _isAlert = true;
-      _setRadius(1);
-    });
-    await _getLocation();
+    await _alertService.setHelpSicurezzaMessage(
+      titleController: _titleController,
+      messageController: _messageController,
+      setRadius: _setRadius,
+      getLocation: _getLocation,
+    );
   }
 
   void _toggleLocation() async {
@@ -365,7 +341,7 @@ class _AllertaPageState extends State<AllertaPage> {
                         _setTitleMessage(value);
                       },
                       itemBuilder: (BuildContext context) {
-                        return _predefineTitledMessages.map<PopupMenuItem<String>>((String value) {
+                        return _alertService.getPredefinedTitles().map<PopupMenuItem<String>>((String value) {
                           return PopupMenuItem<String>(
                             value: value,
                             child: Text(value),
@@ -387,7 +363,7 @@ class _AllertaPageState extends State<AllertaPage> {
                         _setMessage(value);
                       },
                       itemBuilder: (BuildContext context) {
-                        return _predefinedMessages.map<PopupMenuItem<String>>((String value) {
+                        return _alertService.getPredefinedMessages().map<PopupMenuItem<String>>((String value) {
                           return PopupMenuItem<String>(
                             value: value,
                             child: Text(value),
@@ -398,26 +374,6 @@ class _AllertaPageState extends State<AllertaPage> {
                   ),
                 ),
                 const SizedBox(height: 26.0),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: _toggleLocation,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    ),
-                    child: Text(
-                      _currentLocation == null ? 'Allega posizione' : 'Rimuovi posizione',
-                      style: const TextStyle(fontSize: 18.0),
-                    ),
-                  ),
-                ),
-                if (_locationMessage != null) ...[
-                  const SizedBox(height: 16.0),
-                  Text(
-                    'Posizione: $_locationMessage',
-                    style: const TextStyle(fontSize: 16.0),
-                  ),
-                ],
-                const SizedBox(height: 16.0),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
@@ -453,59 +409,6 @@ class _AllertaPageState extends State<AllertaPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 26.0),
-                Row(
-                  children: [
-                    const Expanded(
-                      flex: 2,
-                      child: Text(
-                        'Raggio(km)',
-                        style: TextStyle(fontSize: 16.0), // Imposta la dimensione del testo se necessario
-                      ),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _radiusController,
-                              readOnly: true, // Rende il TextField non interattivo
-                              decoration: InputDecoration(
-                                border: const OutlineInputBorder(),
-                                suffixIcon: PopupMenuButton<int>(
-                                  icon: const Icon(Icons.arrow_drop_down),
-                                  onSelected: (int value) {
-                                    setState(() {
-                                      _setRadius(value);
-                                      _radiusController.text = value.toString(); // Imposta il testo del TextField
-                                    });
-                                  },
-                                  itemBuilder: (BuildContext context) {
-                                    return _predefinedRadius.map<PopupMenuItem<int>>((int value) {
-                                      return PopupMenuItem<int>(
-                                        value: value,
-                                        child: Text(value.toString()), // Converte il valore in stringa
-                                      );
-                                    }).toList();
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              setState(() {
-                                _radiusController.clear(); // Pulisce il testo del TextField
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 16.0), // Aggiungi spazio finale per separazione dal fondo
               ],
             ),
@@ -519,7 +422,6 @@ class _AllertaPageState extends State<AllertaPage> {
             onPressed: () {
               _titleController.clear();
               _messageController.clear();
-              _radiusController.clear();
               setState(() {
                 _currentLocation = null;
                 _locationMessage = null;
