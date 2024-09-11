@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../../services/firebase_service/auth.dart';
 import '../../services/location_service/location_service.dart';
+import '../../services/notification_service/notification_old_service.dart';
 import '../login/login_page.dart';
 import 'notifications/send_notifications_page.dart';
 import 'geolocation/map_page.dart';
@@ -30,6 +31,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   String currentLocation = 'Caricamento...'; // Posizione attuale
 
   final GlobalKey<NotificaPageState> _notificaPageKey = GlobalKey<NotificaPageState>();
+  final NotificationOldService _notificationOldService = NotificationOldService();
 
   @override
   void initState() {
@@ -41,6 +43,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       duration: const Duration(seconds: 2),
       vsync: this,
     );
+    _notificationOldService.moveExpiredNotifications();
   }
 
   @override
@@ -73,12 +76,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     try {
       userPosition = await LocationService().getCurrentPosition();
       if (userPosition != null) {
-        await _getLocationName(userPosition!);
+        // Controlla se il widget è ancora montato prima di chiamare _getLocationName
+        if (mounted) {
+          await _getLocationName(userPosition!);
+        }
       }
     } catch (e) {
-      setState(() {
-        currentLocation = 'Posizione non trovata';
-      });
+      // Controlla se il widget è ancora montato prima di chiamare setState
+      if (mounted) {
+        setState(() {
+          currentLocation = 'Posizione non trovata';
+        });
+      }
     }
   }
 
@@ -173,7 +182,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           IconButton(
             icon: const Icon(Icons.refresh),
               onPressed: () {
-                Navigator.of(context).pop();
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
                     builder: (context) => const HomePage(),
@@ -206,34 +214,38 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 55.0),
-              child: SizedBox(
-                width: 70,
-                height: 70,
-                child: FloatingActionButton(
-                  onPressed: _navigateToMap,
-                  tooltip: 'Mappa',
-                  heroTag: 'mapButton',
-                  backgroundColor: Colors.blue,
-                  elevation: 2.0,
-                  child: const Icon(Icons.map, size: 40),
+            Expanded( // Aggiungi Expanded qui
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0), // Riduci il padding per risparmiare spazio
+                child: SizedBox(
+                  width: 70,  // Larghezza pulsante
+                  height: 80,  // Altezza pulsante
+                  child: FloatingActionButton(
+                    onPressed: _navigateToMap,
+                    tooltip: 'Mappa',
+                    heroTag: 'mapButton',
+                    backgroundColor: Colors.blue,
+                    elevation: 2.0,
+                    child: const Icon(Icons.map, size: 40),  // Dimensione icona
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 55.0),
-              child: SizedBox(
-                width: 70,
-                height: 70,
-                child: FloatingActionButton(
-                  onPressed: _navigateToAllerta,
-                  tooltip: 'Allerta',
-                  heroTag: 'alertButton',
-                  backgroundColor: Colors.blue,
-                  elevation: 2.0,
-                  child: const Icon(Icons.send, size: 40),
+            Expanded( // Aggiungi Expanded qui
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0), // Riduci il padding per risparmiare spazio
+                child: SizedBox(
+                  width: 70,  // Larghezza pulsante
+                  height: 80,  // Altezza pulsante
+                  child: FloatingActionButton(
+                    onPressed: _navigateToAllerta,
+                    tooltip: 'Allerta',
+                    heroTag: 'alertButton',
+                    backgroundColor: Colors.blue,
+                    elevation: 2.0,
+                    child: const Icon(Icons.send, size: 40),  // Dimensione icona
+                  ),
                 ),
               ),
             ),
