@@ -12,33 +12,43 @@ class NotificationService {
 
   NotificationService(this.userId, this.userPosition);
 
-  Future<List<Map<String, dynamic>>> loadNotifications() async {
+  Future<Map<String, List<Map<String, dynamic>>>> loadNotifications() async {
     List<Map<String, dynamic>> allNotifications = [];
     List<Map<String, dynamic>> sentNotifications = [];
-    List<String> notificheLette = [];
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    notificheLette = prefs.getStringList('notificheLette') ?? [];
     Timestamp registrationDate;
 
+    // Recupera il documento dell'utente
     DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
     if (userDoc.exists) {
       registrationDate = userDoc['registrationDate'];
     } else {
+      // Se non è un utente, controlla se è un'attività
       DocumentSnapshot activityDoc = await FirebaseFirestore.instance.collection('activities').doc(userId).get();
       if (activityDoc.exists) {
         registrationDate = activityDoc['creationDate'];
       } else {
-        return allNotifications;
+        // Se nessuno dei due esiste, ritorna le liste vuote
+        return {
+          'allNotifications': allNotifications,
+          'sentNotifications': sentNotifications,
+        };
       }
     }
 
+    // Controlla se la posizione dell'utente è disponibile
     if (userPosition == null) {
-      return allNotifications;
+      return {
+        'allNotifications': allNotifications,
+        'sentNotifications': sentNotifications,
+      };
     }
 
+    // Recupera tutte le notifiche
     QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('notifications').get();
 
+    // Filtra le notifiche che non sono state inviate dall'utente e che sono nel raggio
     allNotifications = snapshot.docs
         .where((doc) => doc['senderId'] != userId)
         .where((doc) => _isUserInRange(doc, Constants.radiusInKm * 1000))
@@ -54,8 +64,10 @@ class NotificationService {
     })
         .toList();
 
+    // Ordina le notifiche per timestamp decrescente
     allNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
 
+    // Recupera le notifiche inviate dall'utente
     QuerySnapshot sentSnapshot = await FirebaseFirestore.instance.collection('notifications')
         .where('senderId', isEqualTo: userId).get();
 
@@ -70,9 +82,14 @@ class NotificationService {
       'type': doc['type'],
     }).toList();
 
+    // Ordina le notifiche inviate per timestamp decrescente
     sentNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
 
-    return allNotifications;
+    // Ritorna entrambe le liste in una mappa
+    return {
+      'allNotifications': allNotifications,
+      'sentNotifications': sentNotifications,
+    };
   }
 
   bool _isUserInRange(DocumentSnapshot doc, double rangeInMeters) {

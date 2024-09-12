@@ -49,7 +49,15 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
 
   Future<void> _loadNotifications() async {
     NotificationService notificationService = NotificationService(userId, userPosition);
-    allNotifications = await notificationService.loadNotifications();
+
+    // Ottieni entrambe le liste di notifiche dalla funzione loadNotifications
+    Map<String, List<Map<String, dynamic>>> notificationsData = await notificationService.loadNotifications();
+
+    // Decomponi le liste dal risultato
+    allNotifications = notificationsData['allNotifications']!;
+    sentNotifications = notificationsData['sentNotifications']!;
+
+    // Aggiorna lo stato dell'interfaccia utente
     setState(() {});
   }
 
