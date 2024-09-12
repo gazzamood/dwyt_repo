@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Metodo per spostare le notifiche scadute da 'notifications' a 'notificationsOld'
 class NotificationOldService {
-  // Metodo per spostare le notifiche scadute da 'notifications' a 'notificationsOld'
   Future<void> moveExpiredNotifications() async {
     final now = DateTime.now();
 
