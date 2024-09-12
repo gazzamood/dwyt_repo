@@ -2,13 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:geolocator/geolocator.dart';
 
-import '../../../services/costants.dart';
 import '../../../services/notification_service/load_notification_service.dart';
-import '../../../services/profile_service/vote.dart';
 import '../geolocation/map_page.dart';
 
 class NotificaPage extends StatefulWidget {
