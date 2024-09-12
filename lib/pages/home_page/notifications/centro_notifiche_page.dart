@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../services/costants.dart';
+import '../../../services/notification_service/load_notification_service.dart';
 import '../../../services/profile_service/vote.dart';
 import '../geolocation/map_page.dart';
 
@@ -49,95 +50,16 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     }
   }
 
-  Future<void> loadNotifications() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    notificheLette = prefs.getStringList('notificheLette') ?? [];
-    Timestamp registrationDate;
-
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
-    if (userDoc.exists) {
-      registrationDate = userDoc['registrationDate'];
-    } else {
-      DocumentSnapshot activityDoc = await FirebaseFirestore.instance.collection('activities').doc(userId).get();
-      if (activityDoc.exists) {
-        registrationDate = activityDoc['creationDate'];
-      } else {
-        setState(() {});
-        return;
-      }
-    }
-
-    if (userPosition == null) {
-      setState(() {});
-      return;
-    }
-
-    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('notifications')
-        .get();
-
-    allNotifications = snapshot.docs
-        .where((doc) => doc['senderId'] != userId)
-        .where((doc) => _isUserInRange(doc, Constants.radiusInKm * 1000))
-        .map((doc) => {
-      'id': doc.id,
-      'title': doc['title'],
-      'message': doc['message'],
-      'timestamp': _formatTimestamp(doc['timestamp']),
-      'readBy': doc['readBy'] ?? [],
-      'senderId': doc['senderId'],
-      'location': doc['location'],
-      'type': doc['type'],
-    })
-        .toList();
-
-    allNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
-
-    QuerySnapshot sentSnapshot = await FirebaseFirestore.instance.collection('notifications')
-        .where('senderId', isEqualTo: userId).get();
-
-    sentNotifications = sentSnapshot.docs.map((doc) => {
-      'id': doc.id,
-      'title': doc['title'],
-      'message': doc['message'],
-      'timestamp': _formatTimestamp(doc['timestamp']),
-      'readBy': doc['readBy'] ?? [],
-      'senderId': doc['senderId'],
-      'location': doc['location'],
-      'type': doc['type'],
-    }).toList();
-
-    sentNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
-
+  Future<void> _loadNotifications() async {
+    NotificationService notificationService = NotificationService(userId, userPosition);
+    allNotifications = await notificationService.loadNotifications();
     setState(() {});
-  }
-
-  bool _isUserInRange(DocumentSnapshot doc, double rangeInMeters) {
-    if (userPosition == null) {
-      return false;
-    }
-
-    var location = doc.get('location');
-    if (location == null) {
-      return false;
-    }
-
-    double notificationLat = location['latitude'];
-    double notificationLon = location['longitude'];
-
-    double distance = Geolocator.distanceBetween(
-      userPosition!.latitude,
-      userPosition!.longitude,
-      notificationLat,
-      notificationLon,
-    );
-
-    return distance <= rangeInMeters;
   }
 
   Future<void> _getUserPosition() async {
     userPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     await _getLocationName(userPosition!);
-    await loadNotifications();
+    await _loadNotifications();
   }
 
   Future<void> _getLocationName(Position position) async {
@@ -152,14 +74,6 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
         locationName = 'Posizione sconosciuta';
       });
     }
-  }
-
-  String _formatTimestamp(Timestamp? timestamp) {
-    if (timestamp == null) return '';
-
-    DateTime dateTime = timestamp.toDate();
-    String formattedTime = DateFormat('dd MMM yyyy HH:mm').format(dateTime);
-    return formattedTime;
   }
 
   void showNotificationDialog(BuildContext context, String message, String notificationId, {bool canVote = true}) {
@@ -426,11 +340,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
       }
     });
   }
-
-  Future<void> _reloadNotifications() async {
-    await loadNotifications();
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
