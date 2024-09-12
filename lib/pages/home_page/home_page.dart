@@ -114,19 +114,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _selectLocation() async {
-    final selectedLocation = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const FindLocationPage()),
-    );
-
-    if (selectedLocation != null && selectedLocation is String) {
-      setState(() {
-        if (!savedLocations.contains(selectedLocation)) {
-          savedLocations.add(selectedLocation);
-        }
-        currentLocation = selectedLocation;
-      });
-    }
+    // da implementare
   }
 
   /*Future<void> _reloadLocation() async {
@@ -176,7 +164,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search),
+            icon: const Icon(Icons.add_location),
             onPressed: _selectLocation,
           ),
           IconButton(
