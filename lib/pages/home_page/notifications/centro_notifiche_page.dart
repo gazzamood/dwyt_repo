@@ -58,21 +58,27 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
 
   Future<void> _getUserPosition() async {
     userPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    await _getLocationName(userPosition!);
-    await _loadNotifications();
+    if (mounted) {
+      await _getLocationName(userPosition!);
+      await _loadNotifications();
+    }
   }
 
   Future<void> _getLocationName(Position position) async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
       Placemark place = placemarks[0];
-      setState(() {
-        locationName = '${place.locality}, ${place.country}';
-      });
+      if (mounted) {
+        setState(() {
+          locationName = '${place.locality}, ${place.country}';
+        });
+      }
     } catch (e) {
-      setState(() {
-        locationName = 'Posizione sconosciuta';
-      });
+      if (mounted) {
+        setState(() {
+          locationName = 'Posizione sconosciuta';
+        });
+      }
     }
   }
 
