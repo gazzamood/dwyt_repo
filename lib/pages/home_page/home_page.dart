@@ -117,13 +117,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     // da implementare
   }
 
-  /*Future<void> _reloadLocation() async {
-    await _getUserPosition();
-    setState(() {
-      _notificaPageKey.currentState?.loadNotifications();
-    });
-  }*/
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
