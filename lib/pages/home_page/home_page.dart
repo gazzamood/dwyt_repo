@@ -6,12 +6,11 @@ import 'package:geolocator/geolocator.dart';
 import '../../services/firebase_service/auth.dart';
 import '../../services/location_service/location_service.dart';
 import '../../services/notification_service/notification_old_service.dart';
+import '../geolocation/map_page.dart';
 import '../login/login_page.dart';
-import 'notifications/send_notifications_page.dart';
-import 'geolocation/map_page.dart';
-import 'notifications/centro_notifiche_page.dart';
-import 'profile/profilo_page.dart';
-import 'geolocation/find_location_page.dart';
+import '../notifications/centro_notifiche_page.dart';
+import '../notifications/send_notifications_page.dart';
+import '../profile/profilo_page.dart';
 
 
 class HomePage extends StatefulWidget {
