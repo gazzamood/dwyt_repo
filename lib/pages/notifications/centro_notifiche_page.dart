@@ -6,6 +6,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../services/notification_service/load_notification_service.dart';
+import '../../services/notification_service/notification_popup_service.dart';
 import '../geolocation/map_page.dart';
 
 class NotificaPage extends StatefulWidget {
@@ -25,6 +26,8 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
   String userId = FirebaseAuth.instance.currentUser!.uid;
   Position? userPosition;
   String locationName = 'Notifiche';
+
+  final NotificationPopupService _notificationPopupService = NotificationPopupService();
 
   @override
   void initState() {
@@ -88,137 +91,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
   }
 
   void showNotificationDialog(BuildContext context, String message, String notificationId, {bool canVote = true}) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Dettagli"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(message),
-              if (canVote) const SizedBox(height: 20), // Spazio tra il testo e i bottoni solo se si può votare
-              if (canVote)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: <Widget>[
-                    IconButton(
-                      icon: const Icon(Icons.thumb_up),
-                      color: Colors.green,
-                      onPressed: () {
-                        _submitVote(notificationId, true);
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.thumb_down),
-                      color: Colors.red,
-                      onPressed: () {
-                        _submitVote(notificationId, false);
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text("Chiudi"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _submitVote(String notificationId, bool isUpvote) async {
-    String voterId = FirebaseAuth.instance.currentUser!.uid;
-    DocumentReference voteRef = FirebaseFirestore.instance
-        .collection('votes')
-        .doc(notificationId); // Usa il notificationId come ID del documento
-
-    try {
-      DocumentSnapshot voteSnapshot = await voteRef.get();
-      Map<String, dynamic> voteData = voteSnapshot.exists
-          ? voteSnapshot.data() as Map<String, dynamic>
-          : {
-        'upvotes': 0,
-        'downvotes': 0,
-        'voters': <String, bool>{},
-      };
-
-      bool? previousVote = voteData['voters'][voterId] as bool?;
-
-      if (previousVote == null) {
-        // Nessun voto precedente, crea un nuovo voto
-        voteData['voters'][voterId] = isUpvote;
-        if (isUpvote) {
-          voteData['upvotes']++;
-        } else {
-          voteData['downvotes']++;
-        }
-      } else if (previousVote == isUpvote) {
-        // Se il voto attuale è lo stesso del precedente, annulla il voto
-        voteData['voters'].remove(voterId);
-        if (isUpvote) {
-          voteData['upvotes']--;
-        } else {
-          voteData['downvotes']--;
-        }
-
-        // Aggiorna il campo fidelity nel documento dell'utente
-        DocumentSnapshot notificationSnapshot = await FirebaseFirestore.instance
-            .collection('notifications')
-            .doc(notificationId)
-            .get();
-
-        if (notificationSnapshot.exists) {
-          String senderId = notificationSnapshot.get('senderId');
-          await FirebaseFirestore.instance.collection('users').doc(senderId).update({
-            'fidelity': FieldValue.increment(isUpvote ? -1 : 1),
-          });
-        } else {
-          print('Notifica non trovata.');
-        }
-
-        print('Voto annullato.');
-        await voteRef.set(voteData);
-        return;
-      } else {
-        // Il voto attuale è diverso dal precedente, aggiorna il voto
-        voteData['voters'][voterId] = isUpvote;
-        if (isUpvote) {
-          voteData['upvotes']++;
-          voteData['downvotes']--;
-        } else {
-          voteData['downvotes']++;
-          voteData['upvotes']--;
-        }
-      }
-
-      // Aggiorna il campo fidelity nel documento dell'utente
-      DocumentSnapshot notificationSnapshot = await FirebaseFirestore.instance
-          .collection('notifications')
-          .doc(notificationId)
-          .get();
-
-      if (notificationSnapshot.exists) {
-        String senderId = notificationSnapshot.get('senderId');
-        await FirebaseFirestore.instance.collection('users').doc(senderId).update({
-          'fidelity': FieldValue.increment(isUpvote ? 1 : -1),
-        });
-      } else {
-        print('Notifica non trovata.');
-      }
-
-      await voteRef.set(voteData);
-    } catch (e) {
-      print('Errore durante il voto: $e');
-    }
+    _notificationPopupService.showNotificationDialog(context, message, notificationId, canVote: canVote);
   }
 
   Widget buildNotificationsList(List<Map<String, dynamic>> notifications, {bool canVote = true}) {

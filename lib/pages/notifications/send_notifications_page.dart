@@ -7,7 +7,7 @@ import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 
 import '../../../services/notification_service/predefine_alert_service.dart';
-import '../home_page.dart';
+import '../home_page/home_page.dart';
 
 class AllertaPage extends StatefulWidget {
   const AllertaPage({super.key});
