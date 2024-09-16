@@ -26,7 +26,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool isUser = true;
   late AnimationController _controller;
   Position? userPosition;
-  List<String> savedLocations = []; // Lista delle posizioni salvate
   String currentLocation = 'Caricamento...'; // Posizione attuale
 
   final GlobalKey<NotificaPageState> _notificaPageKey = GlobalKey<NotificaPageState>();
@@ -97,7 +96,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     });
   }
 
-  void _navigateToMap() async {
+   void _navigateToMap() async {
     await LocationService().checkPermission();
     Navigator.push(
       context,
