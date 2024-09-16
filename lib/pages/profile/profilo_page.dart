@@ -209,7 +209,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const CircleAvatar(
-                  backgroundImage: AssetImage('assets/images/emoji_occhiolino.jpg'),
+                  backgroundImage: AssetImage('assets/images/photo_profile/emoji_occhiolino.jpg'),
                   radius: 70.0,
                 ),
                 const SizedBox(width: 20.0),

@@ -66,7 +66,10 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
+  assets:
+    #   - images/a_dot_burr.jpeg
+    - assets/images/photo_profile/emoji_occhiolino.jpg
+    - assets/images/login_signup/google.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -77,10 +80,7 @@ flutter_icons:
   ios: true
   image_path: "assets/images/logo/dwyt_logo.png" # Path to your icon image
   # To add assets to your application, add an assets section, like this:
-  assets:
-  #   - images/a_dot_burr.jpeg
-    - assets/images/photo_profile/emoji_occhiolino.jpg
-    - assets/images/login_signup/google.png
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

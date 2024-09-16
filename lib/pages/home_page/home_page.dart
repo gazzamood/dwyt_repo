@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../services/firebase_service/auth.dart';
 import '../../services/location_service/location_service.dart';
 import '../../services/notification_service/notification_old_service.dart';
+import '../activities/list_activity_page.dart';
 import '../geolocation/map_page.dart';
 import '../login/login_page.dart';
 import '../notifications/centro_notifiche_page.dart';
@@ -160,13 +161,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-              onPressed: () {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const HomePage(),
-                  ),
-                );
-              },
+            onPressed: () {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => const HomePage(),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -187,46 +188,32 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80.0),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.blue,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8.0,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Expanded( // Aggiungi Expanded qui
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0), // Riduci il padding per risparmiare spazio
-                child: SizedBox(
-                  width: 70,  // Larghezza pulsante
-                  height: 80,  // Altezza pulsante
-                  child: FloatingActionButton(
-                    onPressed: _navigateToMap,
-                    tooltip: 'Mappa',
-                    heroTag: 'mapButton',
-                    backgroundColor: Colors.blue,
-                    elevation: 2.0,
-                    child: const Icon(Icons.map, size: 40),  // Dimensione icona
-                  ),
-                ),
-              ),
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.map, size: 30, color: Colors.white),
+              onPressed: _navigateToMap,
+              tooltip: 'Mappa',
             ),
-            const SizedBox(width: 20),
-            Expanded( // Aggiungi Expanded qui
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0), // Riduci il padding per risparmiare spazio
-                child: SizedBox(
-                  width: 70,  // Larghezza pulsante
-                  height: 80,  // Altezza pulsante
-                  child: FloatingActionButton(
-                    onPressed: _navigateToAllerta,
-                    tooltip: 'Allerta',
-                    heroTag: 'alertButton',
-                    backgroundColor: Colors.blue,
-                    elevation: 2.0,
-                    child: const Icon(Icons.send, size: 40),  // Dimensione icona
-                  ),
-                ),
-              ),
+            IconButton(
+              icon: const Icon(Icons.search, size: 30, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CercaAttivitaPage()),
+                );
+              },
+              tooltip: 'Cerca',
+            ),
+            IconButton(
+              icon: const Icon(Icons.send, size: 30, color: Colors.white),
+              onPressed: _navigateToAllerta,
+              tooltip: 'Allerta',
             ),
           ],
         ),
