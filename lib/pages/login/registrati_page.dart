@@ -85,7 +85,6 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'name': _nomeAttivita.text,
             'type': _tipologia.text,
             'description': _description.text,
-            'openingHours': _orariApertura.text,
             'contacts': _contatti.text,
             'addressActivity': _addressActivity.text,
             'latitude': location.latitude,
