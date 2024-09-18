@@ -1,11 +1,16 @@
+import 'package:carousel_slider/carousel_options.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dwyt_test/class/Place.dart';
 import 'package:dwyt_test/pages/login/accedi_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../services/carousel_service/carouselService.dart';
 import '../../services/firebase_service/auth.dart';
 import '../../services/location_service/location_service.dart';
+import '../../services/notification_service/load_notification_service.dart';
 import '../../services/notification_service/notification_old_service.dart';
 import '../../services/places_service/placesUpdateService.dart';
 import '../activities/list_activity_page.dart';
@@ -32,9 +37,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Position? userPosition;
   String currentLocation = 'Caricamento...'; // Posizione attuale
 
+  List<Place> placesList = []; // Lista dei luoghi per il carosello
+  int _currentCarouselIndex = 0;
+
   final GlobalKey<NotificaPageState> _notificaPageKey = GlobalKey<NotificaPageState>();
   final NotificationOldService _notificationOldService = NotificationOldService();
   final PlacesUpdateService _placesUpdateService = PlacesUpdateService();
+  final CarouselService _carouselService = CarouselService();
+  final NotificaPage _notificaPage = const NotificaPage();
+
+
 
   @override
   void initState() {
@@ -47,6 +59,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       vsync: this,
     );
     _notificationOldService.moveExpiredNotifications();
+    _loadPlaces();
   }
 
   @override
@@ -128,6 +141,64 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
+  Future<void> _loadPlaces() async {
+    if (user != null) {
+      List<Place> fetchedPlaces = await _carouselService.getPlacesList(user!.uid);
+      setState(() {
+        placesList = fetchedPlaces;
+      });
+    }
+  }
+
+  Position convertLatLongToPosition(double latitude, double longitude) {
+    return Position(
+      latitude: latitude,
+      longitude: longitude,
+      timestamp: DateTime.now(), // Puoi aggiornare se necessario
+      accuracy: 0.0,  // Imposta precisione a 0 se non necessaria
+      altitude: 0.0,  // Imposta altitudine a 0 se non necessaria
+      heading: 0.0,   // Direzione (può essere 0.0 se non necessaria)
+      speed: 0.0,     // Velocità (può essere 0.0 se non necessaria)
+      speedAccuracy: 0.0,
+      altitudeAccuracy: 0.0,
+      headingAccuracy: 0.0, // Precisione velocità
+    );
+  }
+
+  void _onCarouselPageChanged(int index, CarouselPageChangedReason reason) {
+    setState(() {
+      _currentCarouselIndex = index;
+    });
+
+    // Aggiorna la posizione in NotificaPage
+    if (_notificaPageKey.currentState != null) {
+      Position newPosition = convertLatLongToPosition(
+        placesList[index].latitude,
+        placesList[index].longitude,
+      );
+
+      // Passa la nuova posizione a NotificaPage
+      _notificaPageKey.currentState!.userPosition = newPosition;
+      _notificaPageKey.currentState!.loadNotifications();
+    }
+  }
+  void _refreshNotifications() {
+    // Verifica che la chiave sia associata a un'istanza di NotificaPageState
+    if (_notificaPageKey.currentState != null) {
+      _notificaPageKey.currentState!.loadNotifications();
+    }
+  }
+
+
+  Future<void> _refreshData() async {
+    await _loadPlaces(); // Ricarica la lista dei luoghi
+    _notificationOldService.moveExpiredNotifications();
+    user = Auth().getCurrentUser();
+    _refreshNotifications();
+    // Assicurati di aggiornare la visualizzazione, se necessario
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -173,29 +244,84 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => const HomePage(),
-                ),
-              );
-            },
+            onPressed: _refreshData,
           ),
         ],
       ),
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              currentLocation,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              CarouselSlider.builder(
+                itemCount: placesList.length,
+                itemBuilder: (context, index, realIndex) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                    margin: EdgeInsets.zero,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        placesList[index].name,
+                        style: const TextStyle(
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                },
+                options: CarouselOptions(
+                  height: 100,
+                  enlargeCenterPage: true,
+                  autoPlay: false,
+                  aspectRatio: 16 / 9,
+                  enableInfiniteScroll: false,
+                  viewportFraction: 0.85,
+                  onPageChanged: _onCarouselPageChanged, // Imposta la funzione di aggiornamento dell'indice
+                ),
+              ),
+              Positioned(
+                left: 10,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
+                  onPressed: () {
+                   // _carouselController.previousPage(); // Sposta verso sinistra
+                  },
+                ),
+              ),
+              Positioned(
+                right: 10,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_forward, size: 20, color: Colors.black),
+                  onPressed: () {
+                    // _carouselController.nextPage(); // Sposta verso destra
+                  },
+                ),
+              ),
+            ],
           ),
           Expanded(
             child: NotificaPage(
               key: _notificaPageKey,
-              userPosition: userPosition,
+              userPosition: placesList.isNotEmpty
+                  ? convertLatLongToPosition(
+                placesList[_currentCarouselIndex].latitude, // Utilizza l'indice corrente
+                placesList[_currentCarouselIndex].longitude,
+              )
+                  : null, // Gestisci il caso in cui `placesList` sia vuoto
             ),
           ),
         ],

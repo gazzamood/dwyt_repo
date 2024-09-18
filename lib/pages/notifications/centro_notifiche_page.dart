@@ -44,10 +44,25 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant NotificaPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.userPosition != oldWidget.userPosition) {
+      setState(() {
+        userPosition = widget.userPosition;
+        _loadNotifications(); // Ricarica le notifiche se la posizione cambia
+      });
+    }
+  }
+
   void _handleTabSelection() {
     if (!_tabController.indexIsChanging) {
       setState(() {});
     }
+  }
+
+  void loadNotifications() {
+    _loadNotifications();
   }
 
   Future<void> _loadNotifications() async {
@@ -224,7 +239,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
       }
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
