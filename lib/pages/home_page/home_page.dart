@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dwyt_test/pages/login/accedi_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,9 @@ import 'package:geolocator/geolocator.dart';
 import '../../services/firebase_service/auth.dart';
 import '../../services/location_service/location_service.dart';
 import '../../services/notification_service/notification_old_service.dart';
+import '../../services/places_service/placesUpdateService.dart';
 import '../activities/list_activity_page.dart';
+import '../geolocation/find_location_page.dart';
 import '../geolocation/map_page.dart';
 import '../login/login_page.dart';
 import '../notifications/centro_notifiche_page.dart';
@@ -31,6 +34,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   final GlobalKey<NotificaPageState> _notificaPageKey = GlobalKey<NotificaPageState>();
   final NotificationOldService _notificationOldService = NotificationOldService();
+  final PlacesUpdateService _placesUpdateService = PlacesUpdateService();
 
   @override
   void initState() {
@@ -92,10 +96,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _getLocationName(Position position) async {
     final locationName = await LocationService().getLocationName(position);
+
+    //salva all'indice 0(zero) la posizione coorennte
+    _placesUpdateService.updateFirstPlaceInList(userPosition!, locationName!);
+    print('Posizione aggiornata in positionList');
     setState(() {
       currentLocation = locationName ?? 'Posizione sconosciuta';
     });
   }
+
 
    void _navigateToMap() async {
     await LocationService().checkPermission();
@@ -113,7 +122,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _selectLocation() async {
-    // da implementare
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const FindLocationPage()),
+    );
   }
 
   @override
