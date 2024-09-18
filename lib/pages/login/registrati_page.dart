@@ -90,7 +90,6 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
           // Create places entry
           await FirebaseFirestore.instance.collection('places').doc(userId).set({
             'userId': userId,
-            'name': _addressUser.text,
             'placesList': [],
           });
 
@@ -118,7 +117,6 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
           // Create places entry
           await FirebaseFirestore.instance.collection('places').doc(userId).set({
             'userId': userId,
-            'name': _addressActivity.text,
             'placesList': [],
           });
         }
