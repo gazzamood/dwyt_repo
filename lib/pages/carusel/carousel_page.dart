@@ -69,24 +69,6 @@ class _CarouselPageState extends State<CarouselPage> {
             onPageChanged: widget.onPageChanged,
           ),
         ),
-        Positioned(
-          left: 10,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
-            onPressed: () {
-              // Naviga indietro nel carosello se necessario
-            },
-          ),
-        ),
-        Positioned(
-          right: 10,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_forward, size: 20, color: Colors.black),
-            onPressed: () {
-              // Naviga avanti nel carosello se necessario
-            },
-          ),
-        ),
       ],
     );
   }
