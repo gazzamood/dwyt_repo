@@ -126,7 +126,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
       return const Center(
         child: Text(
           'Al momento non ci sono notifiche',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
+          style: TextStyle(fontSize: 18, color: Colors.grey),
         ),
       );
     }
@@ -251,6 +251,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
@@ -259,12 +260,18 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
       child: Scaffold(
         body: Column(
           children: [
-            TabBar(
-              controller: _tabController,
-              tabs: const [
-                Tab(text: 'Ricevute'),
-                Tab(text: 'Inviate'),
-              ],
+            Container(
+              color: Colors.transparent, // Sfondo trasparente
+              child: TabBar(
+                controller: _tabController,
+                tabs: const [
+                  Tab(text: 'Ricevute'),
+                  Tab(text: 'Inviate'),
+                ],
+                indicatorColor: Colors.blueAccent, // Colore dell'indicatore
+                labelColor: Colors.black, // Colore del testo attivo
+                unselectedLabelColor: Colors.grey, // Colore del testo non attivo
+              ),
             ),
             Expanded(
               child: TabBarView(

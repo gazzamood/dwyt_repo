@@ -23,7 +23,6 @@ import '../notifications/send_notifications_page.dart';
 import '../places/manage_places_page.dart';
 import '../profile/profilo_page.dart';
 
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -37,9 +36,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool isUser = true;
   late AnimationController _controller;
   Position? userPosition;
-  String currentLocation = 'Caricamento...'; // Posizione attuale
+  String currentLocation = 'Caricamento...';
 
-  List<Place> placesList = []; // Lista dei luoghi per il carosello
+  List<Place> placesList = [];
   int _currentCarouselIndex = 0;
 
   final GlobalKey<NotificaPageState> _notificaPageKey = GlobalKey<NotificaPageState>();
@@ -48,23 +47,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   final CarouselService _carouselService = CarouselService();
   final NotificaPage _notificaPage = const NotificaPage();
 
-
-
   @override
   void initState() {
     super.initState();
     user = Auth().getCurrentUser();
     updateMenuTitle();
     LocationService().checkPermission().then((_) => _getUserPosition());
-    _controller = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    );
+    _controller = AnimationController(duration: const Duration(seconds: 2), vsync: this);
     _notificationOldService.moveExpiredNotifications();
     _loadPlaces();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshData();  // Questo assicura che venga chiamata dopo la costruzione iniziale
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshData());
   }
 
   @override
@@ -75,10 +67,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> signOut() async {
     await Auth().signOut();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginAccediPage()),
-    );
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginAccediPage()));
   }
 
   void updateMenuTitle() {
@@ -97,13 +86,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     try {
       userPosition = await LocationService().getCurrentPosition();
       if (userPosition != null) {
-        // Controlla se il widget è ancora montato prima di chiamare _getLocationName
-        if (mounted) {
-          await _getLocationName(userPosition!);
-        }
+        if (mounted) await _getLocationName(userPosition!);
       }
     } catch (e) {
-      // Controlla se il widget è ancora montato prima di chiamare setState
       if (mounted) {
         setState(() {
           currentLocation = 'Posizione non trovata';
@@ -114,44 +99,28 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _getLocationName(Position position) async {
     final locationName = await LocationService().getLocationName(position);
-
-    //salva all'indice 0(zero) la posizione coorennte
     _placesUpdateService.updateFirstPlaceInList(userPosition!, locationName!);
-    print('Posizione aggiornata in positionList');
     setState(() {
       currentLocation = locationName ?? 'Posizione sconosciuta';
     });
   }
 
-
-   void _navigateToMap() async {
+  void _navigateToMap() async {
     await LocationService().checkPermission();
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const MapPage()),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const MapPage()));
   }
 
   void _navigateToAllerta() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AllertaPage()),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const AllertaPage()));
   }
 
   Future<void> _selectLocation() async {
-    // Naviga verso ManagePlacesPage e attendi un risultato
-    bool? result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ManagePlacesPage(user!.uid)),
-    );
-
-    // Se il risultato è 'true', significa che c'è stato un aggiornamento, quindi carica la posizione 0
+    bool? result = await Navigator.push(context, MaterialPageRoute(builder: (context) => ManagePlacesPage(user!.uid)));
     if (result == true) {
       setState(() {
-        _currentCarouselIndex = 0; // Reset dell'indice del carosello
+        _currentCarouselIndex = 0;
       });
-      _refreshData(); // Aggiorna la lista dei luoghi e ricarica il carosello
+      _refreshData();
     }
   }
 
@@ -168,14 +137,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return Position(
       latitude: latitude,
       longitude: longitude,
-      timestamp: DateTime.now(), // Puoi aggiornare se necessario
-      accuracy: 0.0,  // Imposta precisione a 0 se non necessaria
-      altitude: 0.0,  // Imposta altitudine a 0 se non necessaria
-      heading: 0.0,   // Direzione (può essere 0.0 se non necessaria)
-      speed: 0.0,     // Velocità (può essere 0.0 se non necessaria)
+      timestamp: DateTime.now(),
+      accuracy: 0.0,
+      altitude: 0.0,
+      heading: 0.0,
+      speed: 0.0,
       speedAccuracy: 0.0,
       altitudeAccuracy: 0.0,
-      headingAccuracy: 0.0, // Precisione velocità
+      headingAccuracy: 0.0,
     );
   }
 
@@ -184,15 +153,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       setState(() {
         _currentCarouselIndex = index;
       });
-
-      // Aggiorna la posizione in NotificaPage
       if (_notificaPageKey.currentState != null) {
         Position newPosition = convertLatLongToPosition(
           placesList[index].latitude,
           placesList[index].longitude,
         );
-
-        // Passa la nuova posizione a NotificaPage
         _notificaPageKey.currentState!.userPosition = newPosition;
         _notificaPageKey.currentState!.loadNotifications();
       }
@@ -200,26 +165,21 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _refreshNotifications() {
-    // Verifica che la chiave sia associata a un'istanza di NotificaPageState
     if (_notificaPageKey.currentState != null) {
       _notificaPageKey.currentState!.loadNotifications();
     }
   }
 
   Future<void> _refreshData() async {
-    await _loadPlaces(); // Ricarica la lista dei luoghi
+    await _loadPlaces();
     if (placesList.isNotEmpty) {
-      // Resetta l'indice del carosello a 0 e carica la prima posizione
       setState(() {
         _currentCarouselIndex = 0;
       });
-
-      // Aggiorna la posizione nella pagina delle notifiche
       Position firstPosition = convertLatLongToPosition(
         placesList[0].latitude,
         placesList[0].longitude,
       );
-
       if (_notificaPageKey.currentState != null) {
         _notificaPageKey.currentState!.userPosition = firstPosition;
         _notificaPageKey.currentState!.loadNotifications();
@@ -240,10 +200,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             if (value == 'logout') {
               await signOut();
             } else if (value == 'profilo') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfilePage()),
-              );
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
             }
           },
           itemBuilder: (BuildContext context) {
@@ -276,25 +233,39 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ),
         ],
       ),
-      body: Column(
-        children: [
-          CarouselPage(
-            placesList: placesList,
-            currentIndex: _currentCarouselIndex,
-            onPageChanged: _onCarouselPageChanged, // Passa la funzione per cambiare pagina
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          Expanded(
-            child: NotificaPage(
-              key: _notificaPageKey,
-              userPosition: placesList.isNotEmpty
-                  ? convertLatLongToPosition(
-                placesList[_currentCarouselIndex].latitude, // Utilizza l'indice corrente
-                placesList[_currentCarouselIndex].longitude,
-              )
-                  : null, // Gestisci il caso in cui `placesList` sia vuoto
+        ),
+        child: Column(
+          children: [
+            CarouselPage(
+              placesList: placesList,
+              currentIndex: _currentCarouselIndex,
+              onPageChanged: _onCarouselPageChanged,
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Expanded(
+              child: Card(
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                elevation: 4,
+                child: NotificaPage(
+                  key: _notificaPageKey,
+                  userPosition: placesList.isNotEmpty
+                      ? convertLatLongToPosition(
+                    placesList[_currentCarouselIndex].latitude,
+                    placesList[_currentCarouselIndex].longitude,
+                  )
+                      : null,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: BottomAppBar(
         color: Colors.blueAccent,
@@ -311,10 +282,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             IconButton(
               icon: const Icon(Icons.search, size: 30, color: Colors.white),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CercaAttivitaPage()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const CercaAttivitaPage()));
               },
               tooltip: 'Cerca',
             ),

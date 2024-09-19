@@ -47,7 +47,7 @@ class _CarouselPageState extends State<CarouselPage> {
                   child: Text(
                     widget.placesList[index].name,
                     style: const TextStyle(
-                      fontSize: 23,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     ),
