@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../home_page/home_page.dart';
+
 class FindLocationPage extends StatefulWidget {
   const FindLocationPage({super.key});
 
@@ -171,6 +173,12 @@ class _FindLocationPageState extends State<FindLocationPage> {
 
                           // Aggiungi la posizione selezionata automaticamente e torna alla schermata precedente
                           await _addLocation(_suggestions[index], selectedPosition);
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HomePage(), // Torna alla home
+                            ),
+                          );
                         },
                       ),
                     );

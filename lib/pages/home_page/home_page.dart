@@ -86,7 +86,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     try {
       userPosition = await LocationService().getCurrentPosition();
       if (userPosition != null) {
-        if (mounted) await _getLocationName(userPosition!);
+        String? locationName = await LocationService().getLocationName(userPosition!);
+        await _placesUpdateService.updateFirstPlaceInList(userPosition!, locationName!); // Aggiorna la posizione
+        if (mounted) {
+          setState(() {
+            currentLocation = locationName ?? 'Posizione sconosciuta';
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -95,14 +101,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         });
       }
     }
-  }
-
-  Future<void> _getLocationName(Position position) async {
-    final locationName = await LocationService().getLocationName(position);
-    _placesUpdateService.updateFirstPlaceInList(userPosition!, locationName!);
-    setState(() {
-      currentLocation = locationName ?? 'Posizione sconosciuta';
-    });
   }
 
   void _navigateToMap() async {
@@ -172,6 +170,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _refreshData() async {
     await _loadPlaces();
+    await _getUserPosition();
     if (placesList.isNotEmpty) {
       setState(() {
         _currentCarouselIndex = 0;
