@@ -18,7 +18,7 @@ class _ManagePlacesPageState extends State<ManagePlacesPage> {
   @override
   void initState() {
     super.initState();
-    _refreshPlaces(); // Carica la lista di posizioni all'avvio
+    _refreshPlaces(); // Load the places list on startup
   }
 
   Future<void> _refreshPlaces() async {
@@ -28,15 +28,9 @@ class _ManagePlacesPageState extends State<ManagePlacesPage> {
         _placesList = places;
       });
     } catch (e) {
-      // Gestisci l'errore
+      // Handle the error
       print('Error loading places: $e');
     }
-  }
-
-  Future<void> _deletePlace(String name) async {
-    await _placesService.deletePlace(widget.userId, name);
-    // Ricarica la lista dopo la cancellazione
-    await _refreshPlaces();
   }
 
   @override
@@ -80,6 +74,7 @@ class _ManagePlacesPageState extends State<ManagePlacesPage> {
                   return Card(
                     elevation: 5,
                     margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    color: index == 0 ? Colors.lightGreen[100] : null, // Change background for the first place
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(16),
                       title: Text(
@@ -87,12 +82,14 @@ class _ManagePlacesPageState extends State<ManagePlacesPage> {
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       subtitle: Text('Lat: $latitude, Lon: $longitude'),
-                      trailing: IconButton(
+                      // Removed the delete button for the first position
+                      trailing: index == 0
+                          ? null
+                          : IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () async {
-                          // Cancella la posizione e aspetta il ritorno alla home con aggiornamento
                           await _deletePlace(name);
-                          Navigator.pop(context, true); // Passa 'true' per indicare che i dati sono stati aggiornati
+                          Navigator.pop(context, true);
                         },
                       ),
                     ),
@@ -105,17 +102,21 @@ class _ManagePlacesPageState extends State<ManagePlacesPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          // Naviga alla FindLocationPage e ricarica le posizioni al ritorno
           await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const FindLocationPage()),
           );
-          await _refreshPlaces(); // Ricarica la lista al ritorno dalla FindLocationPage
+          await _refreshPlaces(); // Reload the list after returning from FindLocationPage
         },
         backgroundColor: Colors.blueAccent,
         tooltip: 'Add New Place',
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  Future<void> _deletePlace(String name) async {
+    await _placesService.deletePlace(widget.userId, name);
+    await _refreshPlaces();
   }
 }
