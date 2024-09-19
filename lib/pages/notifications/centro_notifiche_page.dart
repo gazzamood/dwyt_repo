@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geocoding/geocoding.dart';
-
 import 'package:geolocator/geolocator.dart';
 
 import '../../../services/notification_service/load_notification_service.dart';
@@ -22,11 +21,9 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
   late TabController _tabController;
   List<Map<String, dynamic>> allNotifications = [];
   List<Map<String, dynamic>> sentNotifications = [];
-  List<String> notificheLette = [];
   String userId = FirebaseAuth.instance.currentUser!.uid;
   Position? userPosition;
   String locationName = 'Notifiche';
-
   final NotificationPopupService _notificationPopupService = NotificationPopupService();
 
   @override
@@ -34,12 +31,13 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_handleTabSelection);
-    userPosition = widget.userPosition; // Get the passed position
-    _getUserPosition();
+    userPosition = widget.userPosition; // Posizione passata dal widget
+    _getUserPosition(); // Carica la posizione dell'utente
   }
 
   @override
   void dispose() {
+    // Elimina il controller quando il widget viene smontato
     _tabController.dispose();
     super.dispose();
   }
@@ -50,7 +48,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     if (widget.userPosition != oldWidget.userPosition) {
       setState(() {
         userPosition = widget.userPosition;
-        _loadNotifications(); // Ricarica le notifiche se la posizione cambia
+        _loadNotifications(); // Ricarica le notifiche quando la posizione cambia
       });
     }
   }
@@ -68,22 +66,36 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
   Future<void> _loadNotifications() async {
     NotificationService notificationService = NotificationService(userId, userPosition);
 
-    // Ottieni entrambe le liste di notifiche dalla funzione loadNotifications
-    Map<String, List<Map<String, dynamic>>> notificationsData = await notificationService.loadNotifications();
+    try {
+      // Ottieni entrambe le liste di notifiche
+      Map<String, List<Map<String, dynamic>>> notificationsData = await notificationService.loadNotifications();
 
-    // Decomponi le liste dal risultato
-    allNotifications = notificationsData['allNotifications']!;
-    sentNotifications = notificationsData['sentNotifications']!;
+      // Decomponi le liste dal risultato
+      allNotifications = notificationsData['allNotifications']!;
+      sentNotifications = notificationsData['sentNotifications']!;
 
-    // Aggiorna lo stato dell'interfaccia utente
-    setState(() {});
+      // Verifica che il widget sia ancora montato prima di aggiornare lo stato
+      if (mounted) {
+        setState(() {}); // Aggiorna l'interfaccia utente
+      }
+    } catch (e) {
+      print('Errore durante il caricamento delle notifiche: $e');
+    }
   }
 
   Future<void> _getUserPosition() async {
-    userPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    if (mounted) {
-      await _getLocationName(userPosition!);
-      await _loadNotifications();
+    try {
+      userPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      if (mounted) {
+        await _getLocationName(userPosition!); // Recupera il nome della posizione
+        await _loadNotifications(); // Carica le notifiche
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          locationName = 'Posizione sconosciuta'; // Gestione dell'errore
+        });
+      }
     }
   }
 
@@ -93,13 +105,13 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
       Placemark place = placemarks[0];
       if (mounted) {
         setState(() {
-          locationName = '${place.locality}, ${place.country}';
+          locationName = '${place.locality}, ${place.country}'; // Aggiorna il nome della posizione
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          locationName = 'Posizione sconosciuta';
+          locationName = 'Posizione sconosciuta'; // Se si verifica un errore
         });
       }
     }
@@ -137,12 +149,12 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
                 IconButton(
                   icon: const Icon(Icons.map),
                   onPressed: () {
-                    // Navigate to MapPage and show the notification's location
+                    // Vai alla pagina della mappa e mostra la posizione della notifica
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => MapPage(
-                          initialActivity: null, // No activity to focus on
-                          initialNotification: notification, // Pass the selected notification
+                          initialActivity: null, // Nessuna attività specifica
+                          initialNotification: notification, // Passa la notifica selezionata
                         ),
                       ),
                     );
@@ -230,10 +242,8 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     });
 
     setState(() {
-      // Find the notification in the list
       var notificationIndex = allNotifications.indexWhere((notification) => notification['id'] == notificationId);
 
-      // If the notification is found, mark it as read
       if (notificationIndex != -1) {
         allNotifications[notificationIndex]['readBy'].add(userId);
       }
@@ -244,8 +254,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // Prevent the user from navigating back
-        return Future.value(false);
+        return Future.value(false); // Evita che l'utente torni indietro
       },
       child: Scaffold(
         body: Column(
@@ -262,7 +271,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
                 controller: _tabController,
                 children: [
                   buildNotificationsList(allNotifications),
-                  buildNotificationsList(sentNotifications, canVote: false), // Pass canVote: false for sent notifications
+                  buildNotificationsList(sentNotifications, canVote: false), // Le notifiche inviate non possono essere votate
                 ],
               ),
             ),
