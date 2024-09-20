@@ -112,8 +112,15 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'subscribers': [],
             'email': _email.text,
             'fidelity': 0,
-            'filter': [],
+            'filter': [], // Initial empty filter list
           });
+
+// Create filter entry
+          await FirebaseFirestore.instance.collection('filter').doc(userId).set({
+            'userId': userId,
+            'filters': [], // Initial empty filter list
+          });
+
 
           // Create places entry
           await FirebaseFirestore.instance.collection('places').doc(userId).set({
