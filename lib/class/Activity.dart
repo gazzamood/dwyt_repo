@@ -10,6 +10,7 @@ class Activity {
   final String addressActivity;
   final String? contatti;
   final String? description;
+  final List<String> filter;
 
   Activity({
     required this.id,
@@ -21,6 +22,7 @@ class Activity {
     required this.addressActivity,
     this.contatti,
     this.description,
+    required this.filter, // Update constructor
   });
 
   factory Activity.fromFirestore(DocumentSnapshot doc) {
@@ -35,6 +37,7 @@ class Activity {
       addressActivity: data['addressActivity'] ?? '',
       contatti: data['contatti'],
       description: data['description'],
+      filter: List<String>.from(data['filter'] ?? []),
     );
   }
 }

@@ -15,6 +15,7 @@ import '../../services/notification_service/notification_old_service.dart';
 import '../../services/places_service/placesUpdateService.dart';
 import '../activities/list_activity_page.dart';
 import '../carusel/carousel_page.dart';
+import '../filter/filter_page.dart';
 import '../geolocation/find_location_page.dart';
 import '../geolocation/map_page.dart';
 import '../login/login_page.dart';
@@ -281,7 +282,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             IconButton(
               icon: const Icon(Icons.search, size: 30, color: Colors.white),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const CercaAttivitaPage()));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const FilterPage()));
               },
               tooltip: 'Cerca',
             ),

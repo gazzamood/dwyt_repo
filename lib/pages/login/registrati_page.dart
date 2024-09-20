@@ -112,6 +112,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'subscribers': [],
             'email': _email.text,
             'fidelity': 0,
+            'filter': [],
           });
 
           // Create places entry
