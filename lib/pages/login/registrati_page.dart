@@ -117,10 +117,15 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'role': 'activities',  // Add role
           });
 
-          // Create filter entry
+
           await FirebaseFirestore.instance.collection('filter').doc(userId).set({
-            'userId': userId,
-            'filters': [], // Initial empty filter list
+            'filterId': userId, // Usa lo stesso ID dell'attività
+            'filters': [
+              {
+                'filterName': 'Nome del filtro', // Esempio di nome del filtro
+                'adv': '', // Campo di descrizione inizialmente vuoto
+              },
+            ], // Lista iniziale di filtri
           });
 
           // Create places entry

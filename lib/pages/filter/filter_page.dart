@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../services/filter_service/filterService.dart';
 
 class FilterPage extends StatefulWidget {
@@ -10,98 +9,50 @@ class FilterPage extends StatefulWidget {
 }
 
 class _FilterPageState extends State<FilterPage> {
-  late TextEditingController _searchController;
   late Future<List<String>> _filtersFuture;
-
   final List<String> _selectedFilters = [];
-  String _searchText = '';
 
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController();
     _filtersFuture = FilterService().getUniqueFilters();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _applyFilters() {
-    setState(() {
-      // Here you could implement filter application logic if needed
-    });
-  }
-
-  void _resetFilters() {
-    setState(() {
-      _searchText = '';
-      _searchController.clear();
-      _selectedFilters.clear();
-    });
-  }
-
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Cerca filtri...',
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: _applyFilters,
-                ),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchText = value;
-                });
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showFilterDialog(List<String> filters) {
+  void _showFilterDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Filtri di Ricerca'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Filter by Filter
-                Wrap(
-                  spacing: 8.0,
+          content: FutureBuilder<List<String>>(
+            future: _filtersFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(child: Text('Errore: ${snapshot.error}'));
+              }
+
+              final filters = snapshot.data!;
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: filters.map((filter) {
-                    return ChoiceChip(
-                      label: Text(filter),
-                      selected: _selectedFilters.contains(filter),
-                      onSelected: (selected) {
+                    return ListTile(
+                      title: Text(filter),
+                      onTap: () {
                         setState(() {
-                          if (selected) {
-                            _selectedFilters.add(filter);
-                          } else {
-                            _selectedFilters.remove(filter);
-                          }
+                          _selectedFilters.add(filter);
                         });
+                        Navigator.of(context).pop(); // Close the dialog
                       },
                     );
                   }).toList(),
                 ),
-              ],
-            ),
+              );
+            },
           ),
           actions: <Widget>[
             TextButton(
@@ -110,16 +61,37 @@ class _FilterPageState extends State<FilterPage> {
                 Navigator.of(context).pop();
               },
             ),
-            TextButton(
-              child: const Text('Applica'),
-              onPressed: () {
-                _applyFilters(); // Apply the filters
-                Navigator.of(context).pop(); // Close the dialog
-              },
-            ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildSelectedFilters() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Card(
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Wrap(
+            spacing: 8.0,
+            children: _selectedFilters.map((filter) {
+              return Chip(
+                label: Text(filter),
+                onDeleted: () {
+                  setState(() {
+                    _selectedFilters.remove(filter);
+                  });
+                },
+                backgroundColor: Colors.lightBlueAccent,
+                deleteIconColor: Colors.white,
+              );
+            }).toList(),
+          ),
+        ),
+      ),
     );
   }
 
@@ -128,30 +100,29 @@ class _FilterPageState extends State<FilterPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Filtri'),
+        backgroundColor: Colors.blueAccent,
       ),
-      body: FutureBuilder<List<String>>(
-        future: _filtersFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(child: Text('Errore: ${snapshot.error}'));
-          }
-
-          final filters = snapshot.data!;
-
-          return Column(
-            children: <Widget>[
-              _buildSearchBar(),
-              ElevatedButton(
-                onPressed: () => _showFilterDialog(filters), // Show filter dialog
-                child: const Text('Seleziona Filtri'),
+      body: Column(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton.icon(
+              onPressed: _showFilterDialog,
+              icon: const Icon(Icons.filter_list),
+              label: const Text('Seleziona Filtri'),
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.green,
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 5,
               ),
-            ],
-          );
-        },
+            ),
+          ),
+          _buildSelectedFilters(), // Display selected filters below the button
+        ],
       ),
     );
   }

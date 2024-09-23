@@ -13,7 +13,10 @@ import '../../services/location_service/location_service.dart';
 import '../../services/notification_service/load_notification_service.dart';
 import '../../services/notification_service/notification_old_service.dart';
 import '../../services/places_service/placesUpdateService.dart';
+import '../../services/profile_service/voteService.dart';
+import '../../services/role_service/roleService.dart';
 import '../activities/list_activity_page.dart';
+import '../activity/ADV_page/adv_page.dart';
 import '../carusel/carousel_page.dart';
 import '../filter/filter_page.dart';
 import '../geolocation/find_location_page.dart';
@@ -35,6 +38,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late User? user;
   String menuTitle = 'Nessun utente';
   bool isUser = true;
+  String? userRole;
   late AnimationController _controller;
   Position? userPosition;
   String currentLocation = 'Caricamento...';
@@ -46,16 +50,24 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   final NotificationOldService _notificationOldService = NotificationOldService();
   final PlacesUpdateService _placesUpdateService = PlacesUpdateService();
   final CarouselService _carouselService = CarouselService();
-  final NotificaPage _notificaPage = const NotificaPage();
+  final VoteService _voteService = VoteService();
+  final RoleService _roleService = RoleService();
 
   @override
   void initState() {
     super.initState();
     user = Auth().getCurrentUser();
     updateMenuTitle();
+
+    _getUserRole();
+
+    // Controlla i permessi della posizione e ottieni la posizione dell'utente
     LocationService().checkPermission().then((_) => _getUserPosition());
     _controller = AnimationController(duration: const Duration(seconds: 2), vsync: this);
+
+    // Sposta le notifiche scadute
     _notificationOldService.moveExpiredNotifications();
+
     _loadPlaces();
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshData());
   }
@@ -69,6 +81,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> signOut() async {
     await Auth().signOut();
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginAccediPage()));
+  }
+
+  Future<void> _getUserRole() async {
+    if (user != null) {
+      userRole = await RoleService().getUserRole(user!.uid);
+      if (mounted) {
+        setState(() {
+          // Puoi usare userRole per modificare il comportamento dell'interfaccia
+        });
+      }
+    }
   }
 
   void updateMenuTitle() {
@@ -200,7 +223,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             if (value == 'logout') {
               await signOut();
             } else if (value == 'profilo') {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfilePage(userRole!), // Pass userRole directly
+                ),
+              );
+
             }
           },
           itemBuilder: (BuildContext context) {
@@ -282,7 +311,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             IconButton(
               icon: const Icon(Icons.search, size: 30, color: Colors.white),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const FilterPage()));
+                if (userRole == 'activities') {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => ADVPage(user!.uid)));
+                } else {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const FilterPage()));
+                }
               },
               tooltip: 'Cerca',
             ),
