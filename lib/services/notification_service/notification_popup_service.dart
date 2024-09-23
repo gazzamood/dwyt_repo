@@ -93,6 +93,7 @@ class NotificationPopupService {
       bool? previousVote = voteData['voters'][voterId] as bool?;
 
       if (previousVote == null) {
+        // Nuovo voto
         voteData['voters'][voterId] = isUpvote;
         if (isUpvote) {
           voteData['upvotes']++;
@@ -100,6 +101,7 @@ class NotificationPopupService {
           voteData['downvotes']++;
         }
       } else if (previousVote == isUpvote) {
+        // Voto annullato
         voteData['voters'].remove(voterId);
         if (isUpvote) {
           voteData['upvotes']--;
@@ -107,21 +109,9 @@ class NotificationPopupService {
           voteData['downvotes']--;
         }
 
-        DocumentSnapshot notificationSnapshot = await _firestore.collection('notifications').doc(notificationId).get();
-
-        if (notificationSnapshot.exists) {
-          String senderId = notificationSnapshot.get('senderId');
-          await _firestore.collection('users').doc(senderId).update({
-            'fidelity': FieldValue.increment(isUpvote ? -1 : 1),
-          });
-        } else {
-          print('Notifica non trovata.');
-        }
-
         print('Voto annullato.');
-        await voteRef.set(voteData);
-        return;
       } else {
+        // Cambio voto
         voteData['voters'][voterId] = isUpvote;
         if (isUpvote) {
           voteData['upvotes']++;
@@ -132,17 +122,7 @@ class NotificationPopupService {
         }
       }
 
-      DocumentSnapshot notificationSnapshot = await _firestore.collection('notifications').doc(notificationId).get();
-
-      if (notificationSnapshot.exists) {
-        String senderId = notificationSnapshot.get('senderId');
-        await _firestore.collection('users').doc(senderId).update({
-          'fidelity': FieldValue.increment(isUpvote ? 1 : -1),
-        });
-      } else {
-        print('Notifica non trovata.');
-      }
-
+      // Salva solo i dati di upvotes e downvotes nella collezione 'votes'
       await voteRef.set(voteData);
     } catch (e) {
       print('Errore durante il voto: $e');
