@@ -114,7 +114,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'email': _email.text,
             'fidelity': 0,
             'filter': [], // Initial empty filter list
-            'role': 'activity',  // Add role
+            'role': 'activities',  // Add role
           });
 
           // Create filter entry
