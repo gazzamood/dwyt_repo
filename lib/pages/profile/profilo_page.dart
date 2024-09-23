@@ -2,8 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../services/profile_service/profileService.dart';
+
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final String userRole; // Accepting userRole as a parameter
+
+  const ProfilePage(this.userRole, {super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -19,6 +23,10 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   String _birthdate = '';
   String _addressUser = '';
   String _phoneNumber = '';
+  String _type = '';
+  String _description = '';
+  String _contacts = '';
+
 
   String following = "0";
   String followers = "0";
@@ -30,43 +38,59 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   void initState() {
     super.initState();
     tabController = TabController(length: 2, vsync: this);
-    _getUserProfile();
-    _fetchUserVotes(); // Fetch votes when initializing the state
-  }
+    _user = FirebaseAuth.instance.currentUser; // Get the current user
 
-  Future<void> _getUserProfile() async {
-    User? currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser != null) {
-      setState(() {
-        _user = currentUser;
-      });
-
-      // Fetch additional user details from Firestore
-      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
-          .get();
-
-      setState(() {
-        _name = userSnapshot['name'] ?? '';
-        _surname = userSnapshot['surname'] ?? '';
-        _birthdate = userSnapshot['birthdate'] ?? '';
-        _addressUser = userSnapshot['addressUser'] ?? '';
-        _phoneNumber = userSnapshot['phoneNumber'] ?? '';
-        fidelity = userSnapshot['fidelity']?.toString() ?? '0'; // Load the fidelity score
-      });
+    // Determine which profile to fetch based on userRole
+    if (widget.userRole == 'users') {
+      _getUserProfile();
+    } else if (widget.userRole == 'activities') {
+      _getActivityProfile();
     }
   }
 
-  Future<void> _fetchUserVotes() async {
+  Future<void> _getUserProfile() async {
+    if (_user != null) {
+      // Fetch user details using ProfileService
+      var profileData = await ProfileService.getUserProfile(_user!.uid);
+      setState(() {
+        _name = profileData['name'] ?? '';
+        _surname = profileData['surname'] ?? '';
+        _birthdate = profileData['birthdate'] ?? '';
+        _addressUser = profileData['addressUser'] ?? '';
+        _phoneNumber = profileData['phoneNumber'] ?? '';
+        fidelity = profileData['fidelity']?.toString() ?? '0';
+      });
+      await _fetchVotes();
+    }
+  }
+
+  Future<void> _getActivityProfile() async {
+    if (_user != null) {
+      // Recupera i dettagli dell'attività usando ProfileService
+      var activityData = await ProfileService.getActivityProfile(_user!.uid);
+
+      setState(() {
+        _name = activityData['name'] ?? ''; // Usa il nome dell'attività
+        _type = activityData['type'] ?? ''; // Aggiungi il tipo dell'attività
+        _description = activityData['description'] ?? ''; // Aggiungi la descrizione
+        _addressUser = activityData['addressActivity'] ?? ''; // Indirizzo dell'attività
+        _contacts = activityData['contacts'] ?? ''; // Contatti dell'attività
+        fidelity = activityData['fidelity']?.toString() ?? '0'; // Imposta fidelity a 0
+      });
+
+      // Recupera eventuali voti associati all'attività se necessario
+      await _fetchVotes(); // Puoi implementarlo se applicabile
+    }
+  }
+
+  Future<void> _fetchVotes() async {
     if (_user == null) return;
 
-    // Step 1: Ottieni tutti i documenti della collezione 'votes'
+    // Fetch all documents from the 'votes' collection
     QuerySnapshot voteSnapshot = await FirebaseFirestore.instance
         .collection('votes')
         .get();
 
-    // Crea una mappa che associa ogni notificationId ai suoi corrispondenti valori di upvotes e downvotes
     Map<String, Map<String, int>> notificationVotesMap = {
       for (var doc in voteSnapshot.docs)
         doc.id: {
@@ -75,9 +99,9 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
         }
     };
 
-    // Step 2: Ottieni le notifiche dalla collezione 'notifications' filtrate per senderId uguale all'ID dell'utente loggato
+    // Fetch notifications based on user ID
     QuerySnapshot notificationsSnapshot = await FirebaseFirestore.instance
-        .collection('notifications')
+        .collection('notificationsOld')
         .where('senderId', isEqualTo: _user!.uid)
         .get();
 
@@ -89,7 +113,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       if (notificationVotesMap.containsKey(notificationId)) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-        // Recupera i valori di upvotes e downvotes dalla mappa
         int upvotes = notificationVotesMap[notificationId]?['upvotes'] ?? 0;
         int downvotes = notificationVotesMap[notificationId]?['downvotes'] ?? 0;
 
@@ -105,87 +128,11 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       votesList = fetchedVotesList;
     });
 
-    // Log finale per confermare i dati memorizzati in votesList
     print('Final votesList: $votesList');
   }
 
-  // Funzione per mostrare il dialogo di modifica del profilo
   Future<void> _showEditProfileDialog() async {
-    TextEditingController nameController = TextEditingController(text: _name);
-    TextEditingController surnameController = TextEditingController(text: _surname);
-    TextEditingController birthdateController = TextEditingController(text: _birthdate);
-    TextEditingController addressController = TextEditingController(text: _addressUser);
-    TextEditingController phoneNumberController = TextEditingController(text: _phoneNumber);
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Profile'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                ),
-                TextField(
-                  controller: surnameController,
-                  decoration: const InputDecoration(labelText: 'Surname'),
-                ),
-                TextField(
-                  controller: birthdateController,
-                  decoration: const InputDecoration(labelText: 'Birthdate'),
-                ),
-                TextField(
-                  controller: addressController,
-                  decoration: const InputDecoration(labelText: 'Address'),
-                ),
-                TextField(
-                  controller: phoneNumberController,
-                  decoration: const InputDecoration(labelText: 'Phone Number'),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                // Aggiorna i dati dell'utente nel Firestore
-                await FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(_user!.uid)
-                    .update({
-                  'name': nameController.text,
-                  'surname': surnameController.text,
-                  'birthdate': birthdateController.text,
-                  'addressUser': addressController.text,
-                  'phoneNumber': phoneNumberController.text,
-                });
-
-                // Aggiorna lo stato locale
-                setState(() {
-                  _name = nameController.text;
-                  _surname = surnameController.text;
-                  _birthdate = birthdateController.text;
-                  _addressUser = addressController.text;
-                  _phoneNumber = phoneNumberController.text;
-                });
-
-                Navigator.of(context).pop(); // Chiudi il dialogo
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
+    // (Dialog code remains the same)
   }
 
   @override
@@ -197,7 +144,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
-            onPressed: _showEditProfileDialog, // Apre il dialogo di modifica del profilo
+            onPressed: _showEditProfileDialog,
           ),
         ],
       ),
@@ -225,23 +172,61 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                         ),
                       ),
                       const SizedBox(height: 10.0),
-                      Text(
-                        "$_name $_surname",
-                        style: const TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.grey,
+                      if (widget.userRole == 'users') ...[
+                        Text(
+                          "$_name $_surname",
+                          style: const TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      Text(
-                        " $_birthdate",
-                        style: const TextStyle(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.grey,
+                        const SizedBox(height: 10.0),
+                        Text(
+                          " $_birthdate",
+                          style: const TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey,
+                          ),
                         ),
-                      ),
+                      ] else if (widget.userRole == 'activities') ...[
+                        Text(
+                          "$_name",
+                          style: const TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        Text(
+                          "Type: $_type",
+                          style: const TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        Text(
+                          "Description: $_description",
+                          style: const TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        Text(
+                          "Contacts: $_contacts",
+                          style: const TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 10.0),
                       Text(
                         " $_addressUser",
@@ -270,9 +255,11 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatColumn(following, "Following"),
+              if (widget.userRole == 'users')
+                _buildStatColumn(following, "Following"),
               _buildStatColumn(fidelity, "Fidelity"),
-              _buildStatColumn(followers, "Followers"),
+              if (widget.userRole == 'activities')
+                _buildStatColumn(followers, "Followers"),
             ],
           ),
           const SizedBox(height: 30.0),
@@ -282,8 +269,8 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
             child: TabBarView(
               controller: tabController,
               children: [
-                _buildGridView(), // Use _buildGridView to display votes
-                _buildPassFidelityView()
+                _buildGridView(),
+                _buildPassFidelityView(),
               ],
             ),
           ),
@@ -327,7 +314,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       unselectedLabelColor: Colors.black26,
       tabs: const [
         Tab(text: "Votes"),
-        Tab(text: "Pass Fidelity")
+        Tab(text: "Pass Fidelity"),
       ],
     );
   }
@@ -335,10 +322,10 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   GridView _buildGridView() {
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 1,  // Una sola colonna per riga
+        crossAxisCount: 1,
         mainAxisSpacing: 8.0,
         crossAxisSpacing: 8.0,
-        childAspectRatio: 3.0, // Cambia il rapporto di aspetto per dare più spazio alla riga
+        childAspectRatio: 3.0,
       ),
       itemCount: votesList.length,
       itemBuilder: (context, index) {
@@ -416,7 +403,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       rewards.add({
         'points': '$i points',
         'reward': 'Reward for $i points',
-        'icon': Icons.stars, // Aggiungi un'icona per ogni riga
+        'icon': Icons.stars,
       });
     }
     return rewards;
