@@ -72,7 +72,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
           List<Location> locations = await locationFromAddress(_addressUser.text);
           Location location = locations.first;
 
-          // Save user data to Firestore
+          // Save user data to Firestore with role
           await FirebaseFirestore.instance.collection('users').doc(userId).set({
             'userId': userId,
             'name': _nome.text,
@@ -85,6 +85,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'longitude': location.longitude,
             'registrationDate': Timestamp.now(),
             'fidelity': 0,
+            'role': 'user',  // Add role
           });
 
           // Create places entry
@@ -98,7 +99,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
           List<Location> locations = await locationFromAddress(_addressActivity.text);
           Location location = locations.first;
 
-          // Create activities entry
+          // Create activities entry with role
           await FirebaseFirestore.instance.collection('activities').doc(userId).set({
             'activityId': userId,
             'name': _nomeAttivita.text,
@@ -113,14 +114,14 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'email': _email.text,
             'fidelity': 0,
             'filter': [], // Initial empty filter list
+            'role': 'activity',  // Add role
           });
 
-// Create filter entry
+          // Create filter entry
           await FirebaseFirestore.instance.collection('filter').doc(userId).set({
             'userId': userId,
             'filters': [], // Initial empty filter list
           });
-
 
           // Create places entry
           await FirebaseFirestore.instance.collection('places').doc(userId).set({
