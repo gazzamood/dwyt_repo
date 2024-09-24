@@ -21,13 +21,14 @@ class _ADVPageState extends State<ADVPage> {
     _fetchFilters();
   }
 
+  // Recupera i filtri esistenti
   Future<void> _fetchFilters() async {
-    // Usa l'ID dell'utente passato al costruttore
     String userId = widget.uid;
     filters = await FilterService.getFilters(userId); // Recupera i filtri esistenti
     setState(() {}); // Aggiorna l'interfaccia
   }
 
+  // Aggiunge un nuovo filtro
   Future<void> _addFilter() async {
     String filterName = _filterNameController.text;
     String adv = _advController.text;
@@ -48,6 +49,16 @@ class _ADVPageState extends State<ADVPage> {
         const SnackBar(content: Text('Entrambi i campi devono essere compilati.')),
       );
     }
+  }
+
+  // Elimina un filtro esistente
+  Future<void> _deleteFilter(String filterName) async {
+    String userId = widget.uid;
+    await FilterService.deleteFilter(userId, filterName); // Chiama il servizio per eliminare il filtro
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Filtro eliminato con successo!')),
+    );
+    _fetchFilters(); // Aggiorna i filtri dopo la cancellazione
   }
 
   @override
@@ -84,6 +95,18 @@ class _ADVPageState extends State<ADVPage> {
                     child: ListTile(
                       title: Text(filter['filterName'] ?? ''),
                       subtitle: Text(filter['adv'] ?? ''),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          if (filter['filterName'] != null) {
+                            _deleteFilter(filter['filterName']!); // Chiama il metodo solo se il filtro ha un filterName
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Errore: filtro non valido.')),
+                            );
+                          }
+                        },
+                      ),
                     ),
                   );
                 },
