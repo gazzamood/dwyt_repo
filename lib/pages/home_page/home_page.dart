@@ -309,12 +309,24 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               tooltip: 'Mappa',
             ),
             IconButton(
-              icon: const Icon(Icons.search, size: 30, color: Colors.white),
+              icon: Icon(
+                userRole == 'activities'
+                    ? Icons.announcement  // Icona ADV per 'activities'
+                    : Icons.search,        // Icona search per gli altri ruoli
+                size: 30,
+                color: Colors.white,
+              ),
               onPressed: () {
                 if (userRole == 'activities') {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => ADVPage(user!.uid)));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ADVPage(user!.uid)),
+                  );
                 } else {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const FilterPage()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const FilterPage()),
+                  );
                 }
               },
               tooltip: 'Cerca',

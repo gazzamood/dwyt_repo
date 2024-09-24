@@ -38,7 +38,7 @@ class _ManagePlacesPageState extends State<ManagePlacesPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestisci posizioni'),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: const Color(0xFF4D5B9F),
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -108,7 +108,7 @@ class _ManagePlacesPageState extends State<ManagePlacesPage> {
           );
           await _refreshPlaces(); // Reload the list after returning from FindLocationPage
         },
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: const Color(0xFF4D5B9F),
         tooltip: 'Add New Place',
         child: const Icon(Icons.add),
       ),

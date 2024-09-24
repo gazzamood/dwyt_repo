@@ -80,11 +80,6 @@ class _ADVPageState extends State<ADVPage> {
               decoration: const InputDecoration(labelText: 'ADV'),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _addFilter,
-              child: const Text('Aggiungi Filtro'),
-            ),
-            const SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
                 itemCount: filters.length,
@@ -114,6 +109,11 @@ class _ADVPageState extends State<ADVPage> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addFilter,
+        backgroundColor: const Color(0xFF4D5B9F),
+        child: const Icon(Icons.add),
       ),
     );
   }
