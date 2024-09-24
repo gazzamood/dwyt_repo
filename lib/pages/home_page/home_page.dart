@@ -216,7 +216,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       appBar: AppBar(
         title: const Text('DWYT'),
         centerTitle: true,
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: const Color(0xFF4D5B9F),
         leading: PopupMenuButton<String>(
           icon: const Icon(Icons.menu),
           onSelected: (String value) async {
@@ -297,7 +297,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         ),
       ),
       bottomNavigationBar: BottomAppBar(
-        color: Colors.blueAccent,
+        color: const Color(0xFF4D5B9F),
         shape: const CircularNotchedRectangle(),
         notchMargin: 8.0,
         child: Row(

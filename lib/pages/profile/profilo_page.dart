@@ -140,7 +140,8 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     return Scaffold(
       appBar: AppBar(
         title: const Text("Profile"),
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF4D5B9F),
+
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),

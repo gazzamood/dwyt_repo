@@ -37,7 +37,7 @@ class _ManagePlacesPageState extends State<ManagePlacesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Places'),
+        title: const Text('Gestisci posizioni'),
         backgroundColor: Colors.blueAccent,
       ),
       body: Container(

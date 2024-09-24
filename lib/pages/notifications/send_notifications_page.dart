@@ -279,7 +279,7 @@ class _AllertaPageState extends State<AllertaPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Push'),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF4D5B9F),
       ),
       body: Center(
         child: Padding(
@@ -299,11 +299,11 @@ class _AllertaPageState extends State<AllertaPage> {
                       },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
-                        backgroundColor: _isAlert ? Colors.blue : Colors.grey,
+                        backgroundColor: _isAlert ? const Color(0xFF4D5B9F) : Colors.grey,
                       ),
                       child: const Text(
                         'Allerta',
-                        style: TextStyle(fontSize: 18.0),
+                        style: TextStyle(fontSize: 18.0, color: Colors.white),
                       ),
                     ),
                     ElevatedButton(
@@ -318,7 +318,7 @@ class _AllertaPageState extends State<AllertaPage> {
                       ),
                       child: const Text(
                         'Informativa',
-                        style: TextStyle(fontSize: 18.0),
+                        style: TextStyle(fontSize: 18.0, color: Colors.white),
                       ),
                     ),
                   ],
