@@ -21,6 +21,11 @@ class _FilterPageState extends State<FilterPage> {
   }
 
   void _showFilterDialog() {
+    setState(() {
+      // Ricarica i filtri prima di mostrare il dialogo
+      _filtersFuture = FilterService().getUniqueFilters();
+    });
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
