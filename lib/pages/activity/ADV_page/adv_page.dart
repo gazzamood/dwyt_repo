@@ -12,7 +12,6 @@ class ADVPage extends StatefulWidget {
 
 class _ADVPageState extends State<ADVPage> {
   final TextEditingController _filterNameController = TextEditingController();
-  final TextEditingController _advController = TextEditingController();
   List<Map<String, String>> filters = []; // Per memorizzare i filtri esistenti
 
   @override
@@ -31,22 +30,20 @@ class _ADVPageState extends State<ADVPage> {
   // Aggiunge un nuovo filtro
   Future<void> _addFilter() async {
     String filterName = _filterNameController.text;
-    String adv = _advController.text;
 
-    if (filterName.isNotEmpty && adv.isNotEmpty) {
+    if (filterName.isNotEmpty) {
       String userId = widget.uid; // Usa l'ID dell'utente
 
-      await FilterService.addFilter(userId, filterName, adv);
+      await FilterService.addFilter(userId, filterName);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Filtro aggiunto con successo!')),
       );
 
       _filterNameController.clear();
-      _advController.clear();
       _fetchFilters(); // Ricarica i filtri dopo l'aggiunta
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Entrambi i campi devono essere compilati.')),
+        const SnackBar(content: Text('Il campo filtro deve essere compilato.')),
       );
     }
   }
@@ -75,10 +72,6 @@ class _ADVPageState extends State<ADVPage> {
               controller: _filterNameController,
               decoration: const InputDecoration(labelText: 'Filter Name'),
             ),
-            TextField(
-              controller: _advController,
-              decoration: const InputDecoration(labelText: 'ADV'),
-            ),
             const SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
@@ -89,7 +82,6 @@ class _ADVPageState extends State<ADVPage> {
                     margin: const EdgeInsets.symmetric(vertical: 8.0),
                     child: ListTile(
                       title: Text(filter['filterName'] ?? ''),
-                      subtitle: Text(filter['adv'] ?? ''),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () {

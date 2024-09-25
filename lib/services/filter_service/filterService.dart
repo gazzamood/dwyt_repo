@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FilterService {
-
   Future<List<String>> getUniqueFilters() async {
     final Set<String> uniqueFilterNames = {};
 
@@ -30,8 +29,9 @@ class FilterService {
     return uniqueFilterNames.toList();
   }
 
-  static Future<void> addFilter(String userId, String filterName, String adv) async {
-    final DocumentReference filterDoc = FirebaseFirestore.instance.collection('filter').doc(userId);
+  static Future<void> addFilter(String userId, String filterName) async {
+    final DocumentReference filterDoc =
+    FirebaseFirestore.instance.collection('filter').doc(userId);
 
     // Controlla se il documento esiste
     DocumentSnapshot snapshot = await filterDoc.get();
@@ -48,7 +48,6 @@ class FilterService {
       'filters': FieldValue.arrayUnion([
         {
           'filterName': filterName,
-          'adv': adv,
         },
       ]),
     });
@@ -74,7 +73,8 @@ class FilterService {
   }
 
   static Future<void> deleteFilter(String userId, String filterName) async {
-    final DocumentReference filterDoc = FirebaseFirestore.instance.collection('filter').doc(userId);
+    final DocumentReference filterDoc =
+    FirebaseFirestore.instance.collection('filter').doc(userId);
 
     // Recupera i dati attuali del documento per ottenere la lista di filtri
     DocumentSnapshot snapshot = await filterDoc.get();
@@ -97,14 +97,36 @@ class FilterService {
     }
   }
 
+  static Future<void> updateActivityDescription(
+      String userId, String filterName, String description) async {
+    final QuerySnapshot<Map<String, dynamic>> activitySnapshot =
+    await FirebaseFirestore.instance
+        .collection('activities')
+        .where('filterName', isEqualTo: filterName)
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    // Verifica se esiste un'attività per il filtro e l'utente specificati
+    if (activitySnapshot.docs.isNotEmpty) {
+      // Aggiorna la descrizione dell'attività trovata
+      final DocumentReference activityDoc = activitySnapshot.docs.first.reference;
+      await activityDoc.update({
+        'description': description,
+      });
+    } else {
+      // Se non esiste, puoi lanciare un errore o gestire diversamente
+      throw Exception('Nessuna attività trovata per il filtro specificato.');
+    }
+  }
+
   // users
-  static Future<List<Map<String, dynamic>>> getActivitiesByFilters(List<String> selectedFilters) async {
+  static Future<List<Map<String, dynamic>>> getActivitiesByFilters(
+      List<String> selectedFilters) async {
     List<Map<String, dynamic>> activities = [];
 
     // Fetch all documents in the 'filter' collection
-    final QuerySnapshot<Map<String, dynamic>> filterSnapshot = await FirebaseFirestore.instance
-        .collection('filter')
-        .get();
+    final QuerySnapshot<Map<String, dynamic>> filterSnapshot =
+    await FirebaseFirestore.instance.collection('filter').get();
 
     // Iterate through all the documents in the 'filter' collection
     for (var filterDoc in filterSnapshot.docs) {
@@ -116,7 +138,8 @@ class FilterService {
           String userId = filterDoc.id; // Get the userId (document ID)
 
           // Fetch activities where the document ID matches userId
-          final QuerySnapshot<Map<String, dynamic>> activitySnapshot = await FirebaseFirestore.instance
+          final QuerySnapshot<Map<String, dynamic>> activitySnapshot =
+          await FirebaseFirestore.instance
               .collection('activities') // Replace with your actual activities collection
               .where(FieldPath.documentId, isEqualTo: userId) // Check for activities with ID equal to userId
               .get();

@@ -113,7 +113,7 @@ class _FindLocationPageState extends State<FindLocationPage> {
       appBar: AppBar(
         title: const Text('Cerca Posizione'),
         centerTitle: true,
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: const Color(0xFF4D5B9F),
         elevation: 0,
       ),
       body: Container(

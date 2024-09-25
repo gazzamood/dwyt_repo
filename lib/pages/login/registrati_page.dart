@@ -123,7 +123,6 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             'filters': [
               {
                 'filterName': 'Nome del filtro', // Esempio di nome del filtro
-                'adv': '', // Campo di descrizione inizialmente vuoto
               },
             ], // Lista iniziale di filtri
           });
