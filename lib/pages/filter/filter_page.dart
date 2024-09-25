@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../../services/filter_service/filterService.dart';
+import '../profile/profilo_page.dart';
 
 class FilterPage extends StatefulWidget {
   const FilterPage({super.key});
@@ -156,6 +157,8 @@ class _FilterPageState extends State<FilterPage> {
         itemCount: _activities.length,
         itemBuilder: (context, index) {
           final activity = _activities[index];
+          final activityId = activity['id']; // Assume che 'id' contenga l'ID dell'attività
+
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
             elevation: 6,
@@ -173,6 +176,21 @@ class _FilterPageState extends State<FilterPage> {
                   activity['description'] ?? 'Descrizione attività',
                   style: const TextStyle(fontSize: 16),
                 ),
+                onTap: () {
+                  // Naviga verso la pagina del profilo dell'attività passando l'ID
+                  if (activityId != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfilePage('activities', activityId), // Passa l'ID dell'attività
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('ID attività non valido')),
+                    );
+                  }
+                },
               ),
             ),
           );

@@ -148,6 +148,7 @@ class FilterService {
           for (var activityDoc in activitySnapshot.docs) {
             final data = activityDoc.data();
             activities.add({
+              'id': activityDoc.id, // Add the activity ID
               'name': data['name'], // Assuming the activity has a 'name' field
               'description': data['description'], // Assuming the activity has a 'description' field
             });

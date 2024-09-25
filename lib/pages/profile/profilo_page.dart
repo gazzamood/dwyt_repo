@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 import '../../services/profile_service/profileService.dart';
 
 class ProfilePage extends StatefulWidget {
-  final String userRole; // Accepting userRole as a parameter
+  final String userRole; // Role: 'users' or 'activities'
+  final String profileId; // New parameter for the specific profile to display
 
-  const ProfilePage(this.userRole, {super.key});
+  const ProfilePage(this.userRole, this.profileId, {super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -15,8 +16,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin {
   TabController? tabController;
-
-  User? _user;
+  User? _currentUser;
   String _imageUrl = '';
   String _name = '';
   String _surname = '';
@@ -26,67 +26,60 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   String _type = '';
   String _description = '';
   String _contacts = '';
-
-
   String following = "0";
   String followers = "0";
   String fidelity = "0";
 
+  bool isCurrentUserProfile = false; // New: to check if the profile belongs to the current user
   List<Map<String, dynamic>> votesList = [];
 
   @override
   void initState() {
     super.initState();
     tabController = TabController(length: 2, vsync: this);
-    _user = FirebaseAuth.instance.currentUser; // Get the current user
+    _currentUser = FirebaseAuth.instance.currentUser;
 
-    // Determine which profile to fetch based on userRole
+    // Check if the profile being viewed is the current user's
+    if (_currentUser?.uid == widget.profileId) {
+      isCurrentUserProfile = true;
+    }
+
+    // Fetch the profile data based on userRole
     if (widget.userRole == 'users') {
-      _getUserProfile();
+      _getUserProfile(widget.profileId);
     } else if (widget.userRole == 'activities') {
-      _getActivityProfile();
+      _getActivityProfile(widget.profileId);
     }
   }
 
-  Future<void> _getUserProfile() async {
-    if (_user != null) {
-      // Fetch user details using ProfileService
-      var profileData = await ProfileService.getUserProfile(_user!.uid);
-      setState(() {
-        _name = profileData['name'] ?? '';
-        _surname = profileData['surname'] ?? '';
-        _birthdate = profileData['birthdate'] ?? '';
-        _addressUser = profileData['addressUser'] ?? '';
-        _phoneNumber = profileData['phoneNumber'] ?? '';
-        fidelity = profileData['fidelity']?.toString() ?? '0';
-      });
-      await _fetchVotes();
-    }
+  Future<void> _getUserProfile(String profileId) async {
+    // Fetch user details using ProfileService
+    var profileData = await ProfileService.getUserProfile(profileId);
+    setState(() {
+      _name = profileData['name'] ?? '';
+      _surname = profileData['surname'] ?? '';
+      _birthdate = profileData['birthdate'] ?? '';
+      _addressUser = profileData['addressUser'] ?? '';
+      _phoneNumber = profileData['phoneNumber'] ?? '';
+      fidelity = profileData['fidelity']?.toString() ?? '0';
+    });
+    await _fetchVotes(profileId);
   }
 
-  Future<void> _getActivityProfile() async {
-    if (_user != null) {
-      // Recupera i dettagli dell'attività usando ProfileService
-      var activityData = await ProfileService.getActivityProfile(_user!.uid);
-
-      setState(() {
-        _name = activityData['name'] ?? ''; // Usa il nome dell'attività
-        _type = activityData['type'] ?? ''; // Aggiungi il tipo dell'attività
-        _description = activityData['description'] ?? ''; // Aggiungi la descrizione
-        _addressUser = activityData['addressActivity'] ?? ''; // Indirizzo dell'attività
-        _contacts = activityData['contacts'] ?? ''; // Contatti dell'attività
-        fidelity = activityData['fidelity']?.toString() ?? '0'; // Imposta fidelity a 0
-      });
-
-      // Recupera eventuali voti associati all'attività se necessario
-      await _fetchVotes(); // Puoi implementarlo se applicabile
-    }
+  Future<void> _getActivityProfile(String profileId) async {
+    var activityData = await ProfileService.getActivityProfile(profileId);
+    setState(() {
+      _name = activityData['name'] ?? '';
+      _type = activityData['type'] ?? '';
+      _description = activityData['description'] ?? '';
+      _addressUser = activityData['addressActivity'] ?? '';
+      _contacts = activityData['contacts'] ?? '';
+      fidelity = activityData['fidelity']?.toString() ?? '0';
+    });
+    await _fetchVotes(profileId);
   }
 
-  Future<void> _fetchVotes() async {
-    if (_user == null) return;
-
-    // Fetch all documents from the 'votes' collection
+  Future<void> _fetchVotes(String profileId) async {
     QuerySnapshot voteSnapshot = await FirebaseFirestore.instance
         .collection('votes')
         .get();
@@ -99,10 +92,9 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
         }
     };
 
-    // Fetch notifications based on user ID
     QuerySnapshot notificationsSnapshot = await FirebaseFirestore.instance
         .collection('notificationsOld')
-        .where('senderId', isEqualTo: _user!.uid)
+        .where('senderId', isEqualTo: profileId)
         .get();
 
     List<Map<String, dynamic>> fetchedVotesList = [];
@@ -112,7 +104,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
 
       if (notificationVotesMap.containsKey(notificationId)) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-
         int upvotes = notificationVotesMap[notificationId]?['upvotes'] ?? 0;
         int downvotes = notificationVotesMap[notificationId]?['downvotes'] ?? 0;
 
@@ -127,13 +118,106 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     setState(() {
       votesList = fetchedVotesList;
     });
-
-    print('Final votesList: $votesList');
   }
 
   Future<void> _showEditProfileDialog() async {
-    // (Dialog code remains the same)
+    TextEditingController nameController = TextEditingController(text: _name);
+    TextEditingController surnameController = TextEditingController(text: _surname);
+    TextEditingController typeController = TextEditingController(text: _type);
+    TextEditingController descriptionController = TextEditingController(text: _description);
+    TextEditingController addressController = TextEditingController(text: _addressUser);
+    TextEditingController phoneController = TextEditingController(text: _phoneNumber);
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(isCurrentUserProfile ? "Edit Profile" : "View Profile"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.userRole == 'users') ...[
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                  ),
+                  TextField(
+                    controller: surnameController,
+                    decoration: const InputDecoration(labelText: 'Surname'),
+                  ),
+                  TextField(
+                    controller: phoneController,
+                    decoration: const InputDecoration(labelText: 'Phone Number'),
+                  ),
+                ] else if (widget.userRole == 'activities') ...[
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Activity Name'),
+                  ),
+                  TextField(
+                    controller: typeController,
+                    decoration: const InputDecoration(labelText: 'Type'),
+                  ),
+                  TextField(
+                    controller: descriptionController,
+                    decoration: const InputDecoration(labelText: 'Description'),
+                  ),
+                  TextField(
+                    controller: phoneController,
+                    decoration: const InputDecoration(labelText: 'Contacts'),
+                  ),
+                ],
+                TextField(
+                  controller: addressController,
+                  decoration: const InputDecoration(labelText: 'Address'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                // Update based on userRole
+                if (widget.userRole == 'users') {
+                  await ProfileService.updateUserProfile(
+                    widget.profileId,
+                    {
+                      'name': nameController.text,
+                      'surname': surnameController.text,
+                      'addressUser': addressController.text,
+                      'phoneNumber': phoneController.text,
+                    },
+                  );
+                } else if (widget.userRole == 'activities') {
+                  await ProfileService.updateActivityProfile(
+                    widget.profileId,
+                    {
+                      'name': nameController.text,
+                      'type': typeController.text,
+                      'description': descriptionController.text,
+                      'addressActivity': addressController.text,
+                      'contacts': phoneController.text,
+                    },
+                  );
+                }
+                Navigator.of(context).pop(); // Close dialog after updating
+                setState(() {}); // Refresh profile page
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -141,12 +225,12 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       appBar: AppBar(
         title: const Text("Profile"),
         backgroundColor: const Color(0xFF4D5B9F),
-
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: _showEditProfileDialog,
-          ),
+          if (isCurrentUserProfile) // Show edit button only if it's the current user's profile
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: _showEditProfileDialog,
+            ),
         ],
       ),
       body: Column(
@@ -165,14 +249,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _user?.email ?? '',
-                        style: const TextStyle(
-                          fontSize: 22.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
                       if (widget.userRole == 'users') ...[
                         Text(
                           "$_name $_surname",
@@ -193,7 +269,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                         ),
                       ] else if (widget.userRole == 'activities') ...[
                         Text(
-                          "$_name",
+                          _name,
                           style: const TextStyle(
                             fontSize: 18.0,
                             fontWeight: FontWeight.w400,
@@ -220,7 +296,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                         ),
                         const SizedBox(height: 10.0),
                         Text(
-                          "Contacts: $_contacts",
+                          "phoneNumber: $_contacts",
                           style: const TextStyle(
                             fontSize: 16.0,
                             fontWeight: FontWeight.w400,

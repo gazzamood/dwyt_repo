@@ -226,7 +226,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ProfilePage(userRole!), // Pass userRole directly
+                  builder: (context) => ProfilePage(userRole!, user!.uid), // Pass userRole directly
                 ),
               );
 

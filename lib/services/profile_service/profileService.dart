@@ -32,4 +32,18 @@ class ProfileService {
       'fidelity': activitySnapshot['fidelity'] ?? 0, // Default to 0 if not set
     };
   }
+
+  static Future<void> updateUserProfile(String userId, Map<String, dynamic> updatedData) async {
+  await FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .update(updatedData);
+  }
+
+  static Future<void> updateActivityProfile(String activityId, Map<String, dynamic> updatedData) async {
+  await FirebaseFirestore.instance
+      .collection('activities')
+      .doc(activityId)
+      .update(updatedData);
+  }
 }
