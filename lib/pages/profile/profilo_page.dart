@@ -126,6 +126,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     TextEditingController typeController = TextEditingController(text: _type);
     TextEditingController descriptionController = TextEditingController(text: _description);
     TextEditingController addressController = TextEditingController(text: _addressUser);
+    TextEditingController contactsController = TextEditingController(text: _contacts);
     TextEditingController phoneController = TextEditingController(text: _phoneNumber);
 
     await showDialog(
@@ -146,10 +147,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                     controller: surnameController,
                     decoration: const InputDecoration(labelText: 'Surname'),
                   ),
-                  TextField(
-                    controller: phoneController,
-                    decoration: const InputDecoration(labelText: 'Phone Number'),
-                  ),
                 ] else if (widget.userRole == 'activities') ...[
                   TextField(
                     controller: nameController,
@@ -164,7 +161,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                     decoration: const InputDecoration(labelText: 'Description'),
                   ),
                   TextField(
-                    controller: phoneController,
+                    controller: contactsController,
                     decoration: const InputDecoration(labelText: 'Contacts'),
                   ),
                 ],
@@ -203,7 +200,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                       'type': typeController.text,
                       'description': descriptionController.text,
                       'addressActivity': addressController.text,
-                      'contacts': phoneController.text,
+                      'contacts': contactsController.text,
                     },
                   );
                 }
