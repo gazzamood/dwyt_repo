@@ -306,7 +306,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   TabBar _buildTabBar() {
     return TabBar(
       controller: tabController,
-      indicatorColor: Colors.teal,
+      indicatorColor: const Color(0xFF4D5B9F),
       labelColor: Colors.black,
       labelStyle: const TextStyle(
         fontSize: 16.0,
@@ -426,7 +426,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15.0),
               gradient: LinearGradient(
-                colors: [Colors.teal.withOpacity(0.2), Colors.tealAccent.withOpacity(0.6)],
+                colors: [const Color(0xFF4D5B9F).withOpacity(0.2), const Color(0xFF4D5B9F).withOpacity(0.6)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -437,7 +437,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                 backgroundColor: Colors.white.withOpacity(0.8),
                 child: Icon(
                   rewards[index]['icon'],
-                  color: Colors.teal,
+                  color: const Color(0xFF4D5B9F),
                 ),
               ),
               title: Text(
