@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../../../services/notification_service/load_notification_service.dart';
 import '../../services/notification_service/notification_popup_service.dart';
+import '../../services/votes_service/votesService.dart';
 import '../geolocation/map_page.dart';
 
 class NotificaPage extends StatefulWidget {
@@ -24,7 +25,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
   String userId = FirebaseAuth.instance.currentUser!.uid;
   Position? userPosition;
   String locationName = 'Notifiche';
-  final NotificationPopupService _notificationPopupService = NotificationPopupService();
+  final votesService _votesService = votesService();
 
   @override
   void initState() {
@@ -118,7 +119,7 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
   }
 
   void showNotificationDialog(BuildContext context, String message, String notificationId, {bool canVote = true}) {
-    _notificationPopupService.showNotificationDialog(context, message, notificationId, canVote: canVote);
+    _votesService.showNotificationDialog(context, message, notificationId, canVote: canVote);
   }
 
   Widget buildNotificationsList(List<Map<String, dynamic>> notifications, {bool canVote = true}) {
@@ -250,7 +251,6 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
     });
   }
 
-  @override
   @override
   Widget build(BuildContext context) {
     return WillPopScope(

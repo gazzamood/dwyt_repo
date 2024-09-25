@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/profile_service/profileService.dart';
+import '../../services/votes_service/votesService.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userRole; // Role: 'users' or 'activities'
@@ -80,40 +81,8 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   }
 
   Future<void> _fetchVotes(String profileId) async {
-    QuerySnapshot voteSnapshot = await FirebaseFirestore.instance
-        .collection('votes')
-        .get();
-
-    Map<String, Map<String, int>> notificationVotesMap = {
-      for (var doc in voteSnapshot.docs)
-        doc.id: {
-          'upvotes': doc['upvotes'] as int,
-          'downvotes': doc['downvotes'] as int,
-        }
-    };
-
-    QuerySnapshot notificationsSnapshot = await FirebaseFirestore.instance
-        .collection('notificationsOld')
-        .where('senderId', isEqualTo: profileId)
-        .get();
-
-    List<Map<String, dynamic>> fetchedVotesList = [];
-
-    for (var doc in notificationsSnapshot.docs) {
-      String notificationId = doc.id;
-
-      if (notificationVotesMap.containsKey(notificationId)) {
-        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        int upvotes = notificationVotesMap[notificationId]?['upvotes'] ?? 0;
-        int downvotes = notificationVotesMap[notificationId]?['downvotes'] ?? 0;
-
-        fetchedVotesList.add({
-          'title': data['title'] ?? '',
-          'upvotes': upvotes,
-          'downvotes': downvotes,
-        });
-      }
-    }
+    // Fetch votes associated with notifications from 'notificationsOld'
+    List<Map<String, dynamic>> fetchedVotesList = await votesService.getVotes(profileId);
 
     setState(() {
       votesList = fetchedVotesList;
@@ -206,8 +175,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       },
     );
   }
-
-
 
   @override
   Widget build(BuildContext context) {
