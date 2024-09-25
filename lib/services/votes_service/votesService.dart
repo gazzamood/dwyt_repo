@@ -175,6 +175,7 @@ class votesService {
         // Add the notification and its votes to the list
         votesList.add({
           'title': notificationData['title'] ?? 'Untitled Notification',
+          'message': notificationData['message'] ?? 'no message',
           'upvotes': upvotes,
           'downvotes': downvotes,
         });
