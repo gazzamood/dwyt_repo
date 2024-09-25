@@ -62,7 +62,7 @@ class _ADVPageState extends State<ADVPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ADV Page'),
+        title: const Text('ADD Filters'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
