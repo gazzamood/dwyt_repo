@@ -12,7 +12,7 @@ class FilterPage extends StatefulWidget {
 class _FilterPageState extends State<FilterPage> {
   late Future<List<String>> _filtersFuture;
   final List<String> _selectedFilters = [];
-  List<Map<String, dynamic>> _activities = []; // Lista delle attività recuperate
+  List<Map<String, dynamic>> _activities = [];
 
   @override
   void initState() {
@@ -22,7 +22,6 @@ class _FilterPageState extends State<FilterPage> {
 
   void _showFilterDialog() {
     setState(() {
-      // Ricarica i filtri prima di mostrare il dialogo
       _filtersFuture = FilterService().getUniqueFilters();
     });
 
@@ -53,6 +52,7 @@ class _FilterPageState extends State<FilterPage> {
                         filter,
                         style: TextStyle(
                           color: isSelected ? Colors.grey : Colors.black,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),
                       trailing: isSelected
@@ -64,8 +64,8 @@ class _FilterPageState extends State<FilterPage> {
                         setState(() {
                           _selectedFilters.add(filter);
                         });
-                        Navigator.of(context).pop(); // Chiude il dialogo
-                        _fetchActivities(); // Richiama le attività filtrate
+                        Navigator.of(context).pop();
+                        _fetchActivities();
                       },
                     );
                   }).toList(),
@@ -86,17 +86,15 @@ class _FilterPageState extends State<FilterPage> {
     );
   }
 
-  // Funzione per chiamare il servizio e recuperare le attività filtrate
   Future<void> _fetchActivities() async {
     if (_selectedFilters.isNotEmpty) {
-      // Chiamata al servizio per recuperare le attività basate sui filtri selezionati
       List<Map<String, dynamic>> activities = await FilterService.getActivitiesByFilters(_selectedFilters);
       setState(() {
-        _activities = activities; // Aggiorna la lista delle attività
+        _activities = activities;
       });
     } else {
       setState(() {
-        _activities = []; // Se non ci sono filtri selezionati, svuota la lista
+        _activities = [];
       });
     }
   }
@@ -105,12 +103,13 @@ class _FilterPageState extends State<FilterPage> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Card(
+        color: const Color(0xFFF5F5F5),
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal, // Scorrimento orizzontale
+            scrollDirection: Axis.horizontal,
             child: Row(
               children: _selectedFilters.isNotEmpty
                   ? _selectedFilters.map((filter) {
@@ -123,12 +122,13 @@ class _FilterPageState extends State<FilterPage> {
                     ),
                     onDeleted: () {
                       setState(() {
-                        _selectedFilters.remove(filter); // Rimuove il filtro
-                        _fetchActivities(); // Richiama le attività filtrate in base ai filtri rimanenti
+                        _selectedFilters.remove(filter);
+                        _fetchActivities();
                       });
                     },
                     backgroundColor: const Color(0xFF4D5B9F),
                     deleteIconColor: Colors.white,
+                    elevation: 5,
                   ),
                 );
               }).toList()
@@ -140,12 +140,14 @@ class _FilterPageState extends State<FilterPage> {
     );
   }
 
-  // Widget per visualizzare le attività filtrate
   Widget _buildActivitiesList() {
     if (_activities.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(16.0),
-        child: Text('Nessuna attività trovata per i filtri selezionati.'),
+        child: Text(
+          'Nessuna attività trovata per i filtri selezionati.',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
       );
     }
 
@@ -156,13 +158,22 @@ class _FilterPageState extends State<FilterPage> {
           final activity = _activities[index];
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-            elevation: 4,
+            elevation: 6,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(15),
             ),
-            child: ListTile(
-              title: Text(activity['name'] ?? 'Nome attività'),
-              subtitle: Text(activity['description'] ?? 'Descrizione attività'),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: ListTile(
+                title: Text(
+                  activity['name'] ?? 'Nome attività',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                subtitle: Text(
+                  activity['description'] ?? 'Descrizione attività',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
             ),
           );
         },
@@ -170,7 +181,6 @@ class _FilterPageState extends State<FilterPage> {
     );
   }
 
-  // Widget modificato per aggiungere il testo e il pulsante filtro
   Widget _buildFilterButton() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -181,27 +191,28 @@ class _FilterPageState extends State<FilterPage> {
             'Seleziona un filtro per avere informazioni in tempo reale',
             style: TextStyle(
               fontSize: 18.0,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
               color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 12.0), // Spazio tra il testo e il bottone
+          const SizedBox(height: 12.0),
           Center(
             child: ElevatedButton(
               onPressed: _showFilterDialog,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent, // Colore del bottone
+                backgroundColor: const Color(0xFF4D5B9F),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20), // Bottone arrotondato
+                  borderRadius: BorderRadius.circular(25),
                 ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 40.0,
                   vertical: 15.0,
                 ),
+                elevation: 10,
               ),
               child: const Text(
                 'Seleziona Filtro',
-                style: TextStyle(fontSize: 16.0),
+                style: TextStyle(fontSize: 18.0, color: Colors.white),
               ),
             ),
           ),
@@ -223,7 +234,7 @@ class _FilterPageState extends State<FilterPage> {
             onPressed: () {
               setState(() {
                 _selectedFilters.clear();
-                _activities.clear(); // Svuota le attività
+                _activities.clear();
               });
             },
             tooltip: 'Rimuovi tutti i filtri',
@@ -233,9 +244,9 @@ class _FilterPageState extends State<FilterPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _buildFilterButton(), // Nuovo pulsante filtro
-          _buildSelectedFilters(), // Visualizza i filtri selezionati in orizzontale
-          _buildActivitiesList(),  // Visualizza la lista delle attività filtrate
+          _buildFilterButton(),
+          _buildSelectedFilters(),
+          _buildActivitiesList(),
         ],
       ),
     );
