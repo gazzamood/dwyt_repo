@@ -5,7 +5,6 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../services/notification_service/load_notification_service.dart';
-import '../../services/notification_service/notification_popup_service.dart';
 import '../../services/votes_service/votesService.dart';
 import '../geolocation/map_page.dart';
 
