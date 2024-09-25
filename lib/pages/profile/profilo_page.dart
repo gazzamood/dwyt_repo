@@ -156,14 +156,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                     controller: typeController,
                     decoration: const InputDecoration(labelText: 'Type'),
                   ),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                  ),
-                  TextField(
-                    controller: contactsController,
-                    decoration: const InputDecoration(labelText: 'Contacts'),
-                  ),
                 ],
                 TextField(
                   controller: addressController,
@@ -214,6 +206,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       },
     );
   }
+
 
 
   @override
@@ -282,28 +275,10 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                             color: Colors.grey,
                           ),
                         ),
-                        const SizedBox(height: 10.0),
-                        Text(
-                          "Description: $_description",
-                          style: const TextStyle(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 10.0),
-                        Text(
-                          "phoneNumber: $_contacts",
-                          style: const TextStyle(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.grey,
-                          ),
-                        ),
                       ],
                       const SizedBox(height: 10.0),
                       Text(
-                        " $_addressUser",
+                        "Address: $_addressUser",
                         style: const TextStyle(
                           fontSize: 16.0,
                           fontWeight: FontWeight.w400,
@@ -343,8 +318,16 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
             child: TabBarView(
               controller: tabController,
               children: [
-                _buildGridView(),
-                _buildPassFidelityView(),
+                if (widget.userRole == 'activities')
+                  _buildDescriptionView()
+                else
+                  _buildGridView(), // Votes for users
+
+                if (widget.userRole == 'users')
+                  _buildPassFidelityView(),
+
+                if (widget.userRole == 'activities')
+                  _buildGridView(), // Votes for activities
               ],
             ),
           ),
@@ -386,14 +369,17 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
         fontWeight: FontWeight.bold,
       ),
       unselectedLabelColor: Colors.black26,
-      tabs: const [
-        Tab(text: "Votes"),
-        Tab(text: "Pass Fidelity"),
+      tabs: [
+        Tab(text: widget.userRole == 'activities' ? "Description" : "Votes"),
+        if (widget.userRole == 'users')
+          const Tab(text: "Pass Fidelity"),
+        if (widget.userRole == 'activities')
+          const Tab(text: "Votes"),
       ],
     );
   }
 
-  GridView _buildGridView() {
+  GridView  _buildGridView() {
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 1,
@@ -532,6 +518,20 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDescriptionView() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Text(
+        _description.isNotEmpty ? _description : "No description available",
+        style: const TextStyle(
+          fontSize: 16.0,
+          fontWeight: FontWeight.w400,
+          color: Colors.grey,
+        ),
+      ),
     );
   }
 }

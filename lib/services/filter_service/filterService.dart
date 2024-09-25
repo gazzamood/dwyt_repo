@@ -97,28 +97,6 @@ class FilterService {
     }
   }
 
-  static Future<void> updateActivityDescription(
-      String userId, String filterName, String description) async {
-    final QuerySnapshot<Map<String, dynamic>> activitySnapshot =
-    await FirebaseFirestore.instance
-        .collection('activities')
-        .where('filterName', isEqualTo: filterName)
-        .where('userId', isEqualTo: userId)
-        .get();
-
-    // Verifica se esiste un'attività per il filtro e l'utente specificati
-    if (activitySnapshot.docs.isNotEmpty) {
-      // Aggiorna la descrizione dell'attività trovata
-      final DocumentReference activityDoc = activitySnapshot.docs.first.reference;
-      await activityDoc.update({
-        'description': description,
-      });
-    } else {
-      // Se non esiste, puoi lanciare un errore o gestire diversamente
-      throw Exception('Nessuna attività trovata per il filtro specificato.');
-    }
-  }
-
   // users
   static Future<List<Map<String, dynamic>>> getActivitiesByFilters(
       List<String> selectedFilters) async {
@@ -158,5 +136,18 @@ class FilterService {
     }
 
     return activities;
+  }
+
+  static Future<String> getActivityDescription(String userId) async {
+    // Retrieve the user's description from Firestore
+    var userDoc = await FirebaseFirestore.instance.collection('activities').doc(userId).get();
+    return userDoc.data()?['description'] ?? '';
+  }
+
+  static Future<void> updateActivityDescription(String userId, String description) async {
+    // Update the user's description in Firestore
+    await FirebaseFirestore.instance.collection('activities').doc(userId).update({
+      'description': description,
+    });
   }
 }
