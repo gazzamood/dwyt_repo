@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../services/filter_service/filterService.dart';
+import '../../../services/pdf_service/pdfService.dart';
 
 class ADVPage extends StatefulWidget {
   final String uid;
@@ -15,6 +16,7 @@ class _ADVPageState extends State<ADVPage> {
   final TextEditingController _descriptionController = TextEditingController();
   List<Map<String, String>> filters = [];
   String? userDescription;
+  String? _pdfFilePath;
 
   // Boolean variables to control the expansion state
   bool _filtersExpanded = true;
@@ -79,6 +81,23 @@ class _ADVPageState extends State<ADVPage> {
     setState(() {
       userDescription = description;
     });
+  }
+
+  Future<void> _pickPdfFile() async {
+    String? pdfFilePath = await PdfService.pickPdfFile();
+
+    if (pdfFilePath != null) {
+      setState(() {
+        _pdfFilePath = pdfFilePath;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('PDF selezionato con successo!')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessun file selezionato.')),
+      );
+    }
   }
 
   @override
@@ -235,6 +254,26 @@ class _ADVPageState extends State<ADVPage> {
                   maxLines: 3,
                 ),
                 const SizedBox(height: 20),
+
+                // Bottone per selezionare il PDF
+                ElevatedButton(
+                  onPressed: _pickPdfFile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4D5B9F), // Colore di sfondo
+                  ),
+                  child: const Text(
+                    'Allega PDF',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+
+                // Mostra il nome del file PDF selezionato
+                if (_pdfFilePath != null) ...[
+                  const SizedBox(height: 10),
+                  Text('File PDF selezionato: ${_pdfFilePath!.split('/').last}'),
+                ],
+
+                const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _updateUserDescription,
                   style: ElevatedButton.styleFrom(
@@ -242,9 +281,7 @@ class _ADVPageState extends State<ADVPage> {
                   ),
                   child: const Text(
                     'Aggiorna Descrizione',
-                    style: TextStyle(
-                      color: Colors.white, // Colore del testo impostato su bianco
-                    ),
+                    style: TextStyle(color: Colors.white), // Colore del testo impostato su bianco
                   ),
                 ),
               ],
