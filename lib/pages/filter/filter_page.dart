@@ -167,30 +167,46 @@ class _FilterPageState extends State<FilterPage> {
             ),
             child: Padding(
               padding: const EdgeInsets.all(12.0),
-              child: ListTile(
-                title: Text(
-                  activity['name'] ?? 'Nome attività',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                subtitle: Text(
-                  activity['description'] ?? 'Descrizione attività',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                onTap: () {
-                  // Naviga verso la pagina del profilo dell'attività passando l'ID
-                  if (activityId != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ProfilePage('activities', activityId), // Passa l'ID dell'attività
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Espandi la parte del titolo e descrizione
+                  Expanded(
+                    child: ListTile(
+                      title: Text(
+                        activity['name'] ?? 'Nome attività',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                       ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('ID attività non valido')),
-                    );
-                  }
-                },
+                      subtitle: Text(
+                        activity['description'] ?? 'Descrizione attività',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      onTap: () {
+                        // Naviga verso la pagina del profilo dell'attività passando l'ID
+                        if (activityId != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProfilePage('activities', activityId), // Passa l'ID dell'attività
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('ID attività non valido')),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  // Spazio per la fedeltà sulla destra
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${activity['fidelity'] ?? 'N/A'}',
+                      style: const TextStyle(fontSize: 34, color: Colors.grey),
+                    ),
+                  ),
+                ],
               ),
             ),
           );

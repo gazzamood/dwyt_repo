@@ -98,8 +98,7 @@ class FilterService {
   }
 
   // users
-  static Future<List<Map<String, dynamic>>> getActivitiesByFilters(
-      List<String> selectedFilters) async {
+  static Future<List<Map<String, dynamic>>> getActivitiesByFilters(List<String> selectedFilters) async {
     List<Map<String, dynamic>> activities = [];
 
     // Fetch all documents in the 'filter' collection
@@ -129,6 +128,7 @@ class FilterService {
               'id': activityDoc.id, // Add the activity ID
               'name': data['name'], // Assuming the activity has a 'name' field
               'description': data['description'], // Assuming the activity has a 'description' field
+              'fidelity': data['fidelity']
             });
           }
         }
