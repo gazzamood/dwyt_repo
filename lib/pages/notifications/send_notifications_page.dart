@@ -10,7 +10,9 @@ import '../../../services/notification_service/predefine_alert_service.dart';
 import '../home_page/home_page.dart';
 
 class AllertaPage extends StatefulWidget {
-  const AllertaPage({super.key});
+  final String userRole; // Role: 'users' or 'activities'
+
+  const AllertaPage(this.userRole,{super.key});
 
   @override
   State<AllertaPage> createState() => _AllertaPageState();
@@ -99,7 +101,7 @@ class _AllertaPageState extends State<AllertaPage> {
   Future<void> _sendAlert() async {
     final title = _titleController.text;
     final message = _messageController.text;
-    final radius = _radiusController.text;
+    //final radius = _radiusController.text;
     final senderId = FirebaseAuth.instance.currentUser!.uid;
 
     if (title.isEmpty || message.isEmpty) {
@@ -149,19 +151,45 @@ class _AllertaPageState extends State<AllertaPage> {
       }
     }
 
+    // Check userRole to determine from which collection to retrieve fidelity
+    String userRole = 'users'; // Puoi cambiarlo in base alla logica del tuo sistema
+    int fidelity = 0;
+
+    try {
+      // Recupero del valore di fedeltà dalla tabella corretta
+      DocumentSnapshot snapshot;
+
+      if (userRole == 'users') {
+        snapshot = await FirebaseFirestore.instance.collection('users').doc(senderId).get();
+      } else {
+        snapshot = await FirebaseFirestore.instance.collection('activities').doc(senderId).get();
+      }
+
+      if (snapshot.exists) {
+        // Se il documento esiste, prendi il valore della fedeltà
+        fidelity = snapshot.get('fidelity') ?? 0;
+      } else {
+        fidelity = 0; // Se il documento non esiste, imposta fedeltà a 0
+      }
+    } catch (e) {
+      print('Errore durante il recupero della fedeltà: $e');
+      fidelity = 0;
+    }
+
+    // Creazione dei dati della notifica, incluso il campo fidelity
     Map<String, dynamic> alertData = {
       'title': title,
       'message': message,
       'timestamp': FieldValue.serverTimestamp(),
-      'expirationTime': DateTime.now().add(const Duration(hours: 6)), // Imposta la scadenza a 24 ore
+      'expirationTime': DateTime.now().add(const Duration(hours: 6)), // Imposta la scadenza a 6 ore
       'senderId': senderId,
-      //'radius': radiusKm,
       'readBy': [],
       'type': _isAlert ? 'allerta' : 'info',
       'location': {
         'latitude': location.latitude,
         'longitude': location.longitude,
-      }
+      },
+      'fidelity': fidelity, // Aggiunta del campo fidelity
     };
 
     try {
@@ -192,7 +220,7 @@ class _AllertaPageState extends State<AllertaPage> {
 
       _titleController.clear();
       _messageController.clear();
-      _radiusController.clear();
+      //_radiusController.clear();
       setState(() {
         _currentLocation = null;
         _locationMessage = null;

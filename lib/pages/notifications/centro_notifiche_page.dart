@@ -146,6 +146,16 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Verifica se la notifica contiene il valore di fedeltà e mostralo
+                if (notification.containsKey('fidelity'))
+                  Text(
+                    notification['fidelity'].toString(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                    ),
+                  ),
+                const SizedBox(width: 10),
                 IconButton(
                   icon: const Icon(Icons.map),
                   onPressed: () {

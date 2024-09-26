@@ -48,21 +48,29 @@ class NotificationService {
     // Recupera tutte le notifiche
     QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('notifications').get();
 
-    // Filtra le notifiche che non sono state inviate dall'utente e che sono nel raggio
-    allNotifications = snapshot.docs
-        .where((doc) => doc['senderId'] != userId)
-        .where((doc) => _isUserInRange(doc, Constants.radiusInKm * 1000))
-        .map((doc) => {
-      'id': doc.id,
-      'title': doc['title'],
-      'message': doc['message'],
-      'timestamp': _formatTimestamp(doc['timestamp']),
-      'readBy': doc['readBy'] ?? [],
-      'senderId': doc['senderId'],
-      'location': doc['location'],
-      'type': doc['type'],
-    })
-        .toList();
+    // Itera su ogni notifica per filtrare e ottenere la fedeltà
+    for (var doc in snapshot.docs) {
+      if (doc['senderId'] != userId && _isUserInRange(doc, Constants.radiusInKm * 1000)) {
+        String senderId = doc['senderId'];
+
+        // Recupera il valore di fedeltà dell'utente
+        DocumentSnapshot userSnapshot = await FirebaseFirestore.instance.collection('users').doc(senderId).get();
+        int fidelity = userSnapshot.exists ? userSnapshot['fidelity'] ?? 0 : 0;
+
+        // Aggiungi la notifica alla lista con il valore di fedeltà
+        allNotifications.add({
+          'id': doc.id,
+          'title': doc['title'],
+          'message': doc['message'],
+          'timestamp': _formatTimestamp(doc['timestamp']),
+          'readBy': doc['readBy'] ?? [],
+          'senderId': senderId,
+          'location': doc['location'],
+          'type': doc['type'],
+          'fidelity': fidelity, // Aggiunto il valore di fedeltà
+        });
+      }
+    }
 
     // Ordina le notifiche per timestamp decrescente
     allNotifications.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
@@ -117,5 +125,20 @@ class NotificationService {
 
   String _formatTimestamp(Timestamp timestamp) {
     return DateFormat('dd/MM/yyyy HH:mm').format(timestamp.toDate());
+  }
+
+  Future<int> _getFidelity(String senderId) async {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(senderId).get();
+    if (userDoc.exists) {
+      return userDoc['fidelity'] ?? 0;
+    }
+
+    DocumentSnapshot activityDoc = await FirebaseFirestore.instance.collection('activities').doc(senderId).get();
+    if (activityDoc.exists) {
+      return activityDoc['fidelity'] ?? 0;
+    }
+
+    // Se l'utente o l'attività non esistono, ritorna 0 come punteggio di fidelity predefinito
+    return 0;
   }
 }

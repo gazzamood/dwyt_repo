@@ -133,8 +133,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _navigateToAllerta() {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const AllertaPage()));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => AllertaPage(userRole!)));
   }
+
 
   Future<void> _selectLocation() async {
     bool? result = await Navigator.push(context, MaterialPageRoute(builder: (context) => ManagePlacesPage(user!.uid)));
