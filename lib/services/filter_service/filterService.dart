@@ -127,7 +127,7 @@ class FilterService {
             activities.add({
               'id': activityDoc.id, // Add the activity ID
               'name': data['name'], // Assuming the activity has a 'name' field
-              'description': data['description'], // Assuming the activity has a 'description' field
+              'type': data['type'], // Assuming the activity has a 'description' field
               'fidelity': data['fidelity']
             });
           }

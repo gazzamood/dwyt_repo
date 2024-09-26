@@ -178,7 +178,7 @@ class _FilterPageState extends State<FilterPage> {
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                       subtitle: Text(
-                        activity['description'] ?? 'Descrizione attività',
+                        activity['type'] ?? 'type attività',
                         style: const TextStyle(fontSize: 16),
                       ),
                       onTap: () {
