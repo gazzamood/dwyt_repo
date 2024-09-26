@@ -4,7 +4,9 @@ import '../../services/filter_service/filterService.dart';
 import '../profile/profilo_page.dart';
 
 class FilterPage extends StatefulWidget {
-  const FilterPage({super.key});
+  final String currentLocation;
+
+  const FilterPage( this.currentLocation,{super.key});
 
   @override
   State<FilterPage> createState() => _FilterPageState();
@@ -89,7 +91,15 @@ class _FilterPageState extends State<FilterPage> {
 
   Future<void> _fetchActivities() async {
     if (_selectedFilters.isNotEmpty) {
-      List<Map<String, dynamic>> activities = await FilterService.getActivitiesByFilters(_selectedFilters);
+      List<Map<String, dynamic>> activities = await FilterService.getActivitiesByFilters(_selectedFilters, widget.currentLocation);
+
+      // Ordina le attività in base alla distanza (in ordine crescente)
+      activities.sort((a, b) {
+        double distanceA = a['distance'] != null ? a['distance'] : double.infinity;
+        double distanceB = b['distance'] != null ? b['distance'] : double.infinity;
+        return distanceA.compareTo(distanceB);
+      });
+
       setState(() {
         _activities = activities;
       });
@@ -158,6 +168,10 @@ class _FilterPageState extends State<FilterPage> {
         itemBuilder: (context, index) {
           final activity = _activities[index];
           final activityId = activity['id']; // Assume che 'id' contenga l'ID dell'attività
+          final fidelity = activity['fidelity'] ?? 'N/A';
+          final distance = activity['distance'] != null
+              ? '${activity['distance'].toStringAsFixed(2)} km'
+              : 'N/A';
 
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
@@ -178,7 +192,7 @@ class _FilterPageState extends State<FilterPage> {
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                       subtitle: Text(
-                        activity['type'] ?? 'type attività',
+                        activity['type'] ?? 'Tipo attività',
                         style: const TextStyle(fontSize: 16),
                       ),
                       onTap: () {
@@ -198,13 +212,19 @@ class _FilterPageState extends State<FilterPage> {
                       },
                     ),
                   ),
-                  // Spazio per la fedeltà sulla destra
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      '${activity['fidelity'] ?? 'N/A'}',
-                      style: const TextStyle(fontSize: 34, color: Colors.grey),
-                    ),
+                  // Spazio per la fedeltà e distanza sulla destra
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        fidelity.toString(),
+                        style: const TextStyle(fontSize: 34, color: Colors.grey),
+                      ),
+                      Text(
+                        distance,
+                        style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
                   ),
                 ],
               ),

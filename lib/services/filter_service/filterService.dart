@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geocoding/geocoding.dart';
 
 class FilterService {
   Future<List<String>> getUniqueFilters() async {
@@ -98,44 +101,74 @@ class FilterService {
   }
 
   // users
-  static Future<List<Map<String, dynamic>>> getActivitiesByFilters(List<String> selectedFilters) async {
+  static Future<List<Map<String, dynamic>>> getActivitiesByFilters(List<String> selectedFilters, String address) async {
     List<Map<String, dynamic>> activities = [];
 
-    // Fetch all documents in the 'filter' collection
-    final QuerySnapshot<Map<String, dynamic>> filterSnapshot =
-    await FirebaseFirestore.instance.collection('filter').get();
+    // Convert the address into latitude and longitude
+    try {
+      List<Location> locations = await locationFromAddress(address);
+      double currentLat = locations[0].latitude;
+      double currentLng = locations[0].longitude;
 
-    // Iterate through all the documents in the 'filter' collection
-    for (var filterDoc in filterSnapshot.docs) {
-      List<dynamic> filtersList = filterDoc.data()['filters'] ?? [];
+      // The rest of your logic to fetch activities based on the filters
+      final QuerySnapshot<Map<String, dynamic>> filterSnapshot =
+      await FirebaseFirestore.instance.collection('filter').get();
 
-      // Iterate through the filters list (which is a list of objects)
-      for (var f in filtersList) {
-        if (selectedFilters.contains(f['filterName'])) {
-          String userId = filterDoc.id; // Get the userId (document ID)
+      for (var filterDoc in filterSnapshot.docs) {
+        List<dynamic> filtersList = filterDoc.data()['filters'] ?? [];
 
-          // Fetch activities where the document ID matches userId
-          final QuerySnapshot<Map<String, dynamic>> activitySnapshot =
-          await FirebaseFirestore.instance
-              .collection('activities') // Replace with your actual activities collection
-              .where(FieldPath.documentId, isEqualTo: userId) // Check for activities with ID equal to userId
-              .get();
+        for (var f in filtersList) {
+          if (selectedFilters.contains(f['filterName'])) {
+            String userId = filterDoc.id;
 
-          // Add activities to the list
-          for (var activityDoc in activitySnapshot.docs) {
-            final data = activityDoc.data();
-            activities.add({
-              'id': activityDoc.id, // Add the activity ID
-              'name': data['name'], // Assuming the activity has a 'name' field
-              'type': data['type'], // Assuming the activity has a 'description' field
-              'fidelity': data['fidelity']
-            });
+            final QuerySnapshot<Map<String, dynamic>> activitySnapshot =
+            await FirebaseFirestore.instance
+                .collection('activities')
+                .where(FieldPath.documentId, isEqualTo: userId)
+                .get();
+
+            for (var activityDoc in activitySnapshot.docs) {
+              final data = activityDoc.data();
+              double activityLat = data['latitude'];
+              double activityLng = data['longitude'];
+
+              double distance = calculateDistance(currentLat, currentLng, activityLat, activityLng);
+
+              activities.add({
+                'id': activityDoc.id,
+                'name': data['name'],
+                'type': data['type'],
+                'fidelity': data['fidelity'],
+                'distance': distance,
+              });
+            }
           }
         }
       }
+    } catch (e) {
+      print('Error converting address to coordinates: $e');
+      return [];
     }
 
     return activities;
+  }
+
+// Haversine formula to calculate distance between two geographical points
+  static double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const double R = 6371; // Earth's radius in kilometers
+    final double dLat = _degreesToRadians(lat2 - lat1);
+    final double dLon = _degreesToRadians(lon2 - lon1);
+
+    final double a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(_degreesToRadians(lat1)) * cos(_degreesToRadians(lat2)) *
+            sin(dLon / 2) * sin(dLon / 2);
+
+    final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return R * c; // Distance in kilometers
+  }
+
+  static double _degreesToRadians(double degrees) {
+    return degrees * pi / 180;
   }
 
   static Future<String> getActivityDescription(String userId) async {

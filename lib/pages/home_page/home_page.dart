@@ -326,7 +326,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 } else {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const FilterPage()),
+                    MaterialPageRoute(builder: (context) => FilterPage(currentLocation)),
                   );
                 }
               },
