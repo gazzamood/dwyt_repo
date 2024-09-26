@@ -86,6 +86,7 @@ class votesService {
       Map<String, dynamic> voteData = voteSnapshot.exists
           ? voteSnapshot.data() as Map<String, dynamic>
           : {
+        'voteId': notificationId,
         'upvotes': 0,
         'downvotes': 0,
         'voters': <String, bool>{},

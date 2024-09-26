@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../services/fidelity_service/fidelityService.dart';
 import '../../services/profile_service/profileService.dart';
 import '../../services/votes_service/votesService.dart';
 
@@ -37,8 +38,13 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   @override
   void initState() {
     super.initState();
-    tabController = TabController(length: 2, vsync: this);
     _currentUser = FirebaseAuth.instance.currentUser;
+
+    // Set the tab controller length dynamically based on the user role
+    tabController = TabController(
+      length: widget.userRole == 'activities' ? 2 : 2, // Change this length according to your number of tabs
+      vsync: this,
+    );
 
     // Check if the profile being viewed is the current user's
     if (_currentUser?.uid == widget.profileId) {
@@ -64,7 +70,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       _phoneNumber = profileData['phoneNumber'] ?? '';
       fidelity = profileData['fidelity']?.toString() ?? '0';
     });
-    await _fetchVotes(profileId);
+    await _fetchVotes(profileId, 'users');
   }
 
   Future<void> _getActivityProfile(String profileId) async {
@@ -77,16 +83,37 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       _contacts = activityData['contacts'] ?? '';
       fidelity = activityData['fidelity']?.toString() ?? '0';
     });
-    await _fetchVotes(profileId);
+    await _fetchVotes(profileId, 'activities');
   }
 
-  Future<void> _fetchVotes(String profileId) async {
-    // Fetch votes associated with notifications from 'notificationsOld'
-    List<Map<String, dynamic>> fetchedVotesList = await votesService.getVotes(profileId);
+  Future<void> _fetchVotes(String profileId, String collection) async {
+    try {
+      // Call your method to get the votes
+      List<Map<String, dynamic>> fetchedVotes = await votesService.getVotes(profileId);
 
-    setState(() {
-      votesList = fetchedVotesList;
-    });
+      // Use setState to update the votesList after fetching data
+      setState(() {
+        votesList = fetchedVotes;
+        print('Votes fetched: ${votesList.length}'); // Debug print statement to verify votes fetching
+      });
+
+      // Optionally, you can also handle fidelity calculation here if needed
+      int currentFidelity = int.tryParse(fidelity) ?? 0;
+      int newFidelity = await FidelityService.calculateFidelity(profileId, currentFidelity, fetchedVotes);
+
+      // Update fidelity in the correct Firestore collection
+      await FirebaseFirestore.instance
+          .collection(collection)
+          .doc(profileId)
+          .update({'fidelity': newFidelity});
+
+      // Update fidelity in the state
+      setState(() {
+        fidelity = newFidelity.toString();
+      });
+    } catch (e) {
+      print('Error fetching votes: $e');
+    }
   }
 
   Future<void> _showEditProfileDialog() async {
@@ -279,8 +306,10 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
             ],
           ),
           const SizedBox(height: 30.0),
-          _buildTabBar(),
+          _buildTabBar(), // Add TabBar widget here
           const SizedBox(height: 10.0),
+
+          // Insert the new Expanded TabBarView here
           Expanded(
             child: TabBarView(
               controller: tabController,
@@ -291,9 +320,8 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                   _buildGridView(), // Votes for users
 
                 if (widget.userRole == 'users')
-                  _buildPassFidelityView(),
-
-                if (widget.userRole == 'activities')
+                  _buildPassFidelityView()
+                else
                   _buildGridView(), // Votes for activities
               ],
             ),
@@ -346,19 +374,19 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     );
   }
 
-  GridView  _buildGridView() {
+  GridView _buildGridView() {
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 1,
         mainAxisSpacing: 8.0,
         crossAxisSpacing: 8.0,
-        childAspectRatio: 3.0,
+        childAspectRatio: 4.0,
       ),
       itemCount: votesList.length,
       itemBuilder: (context, index) {
         final voteData = votesList[index];
-        int upvotes = voteData['upvotes'];
-        int downvotes = voteData['downvotes'];
+        int upvotes = voteData['upvotes'] ?? 0;
+        int downvotes = voteData['downvotes'] ?? 0;
 
         return Container(
           decoration: BoxDecoration(
@@ -370,13 +398,28 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  voteData['title'],
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      voteData['title'] ?? 'No title', // Add fallback if no title
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4.0),
+                    Text(
+                      voteData['message'] ?? 'No message', // Add fallback if no message
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.normal,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Column(
