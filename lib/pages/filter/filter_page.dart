@@ -95,8 +95,8 @@ class _FilterPageState extends State<FilterPage> {
 
       // Ordina le attività in base alla distanza (in ordine crescente)
       activities.sort((a, b) {
-        double distanceA = a['distance'] != null ? a['distance'] : double.infinity;
-        double distanceB = b['distance'] != null ? b['distance'] : double.infinity;
+        double distanceA = a['distance'] ?? double.infinity;
+        double distanceB = b['distance'] ?? double.infinity;
         return distanceA.compareTo(distanceB);
       });
 
