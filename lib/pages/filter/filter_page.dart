@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../../services/filter_service/filterService.dart';
 import '../profile/profilo_page.dart';
