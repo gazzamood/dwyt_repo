@@ -7,6 +7,7 @@ import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 
 import '../../../services/notification_service/predefine_alert_service.dart';
+import '../activity/send_adv_page/sendAdv.dart';
 import '../home_page/home_page.dart';
 
 class AllertaPage extends StatefulWidget {
@@ -438,7 +439,7 @@ class _AllertaPageState extends State<AllertaPage> {
         ),
       ),
       floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
           ElevatedButton(
             onPressed: () {
@@ -457,6 +458,28 @@ class _AllertaPageState extends State<AllertaPage> {
               style: TextStyle(fontSize: 16.0),
             ),
           ),
+          const SizedBox(width: 16.0),
+
+          // Show ADV button only if userRole is 'activities'
+          if (widget.userRole == 'activities')
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to the SendAdvPage when this button is pressed
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SendAdvPage(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(16.0),
+                backgroundColor: Colors.orange,
+              ),
+              child: const Text(
+                'ADV',
+                style: TextStyle(fontSize: 16.0),
+              ),
+            ),
           const SizedBox(width: 16.0),
           FloatingActionButton(
             onPressed: _sendAlert,

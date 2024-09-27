@@ -19,6 +19,7 @@ import '../activities/list_activity_page.dart';
 import '../activity/ADV_page/adv_page.dart';
 import '../carusel/carousel_page.dart';
 import '../filter/filter_page.dart';
+import '../follower/follower_page.dart';
 import '../geolocation/find_location_page.dart';
 import '../geolocation/map_page.dart';
 import '../login/login_page.dart';
@@ -331,6 +332,21 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 }
               },
               tooltip: 'Cerca',
+            ),
+            IconButton(
+              icon: const Text(
+                'F',
+                style: TextStyle(fontSize: 24, color: Colors.white), // F maiuscola
+              ),
+              onPressed: () {
+                if (userRole == 'users') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const FollowerPage()),
+                  );
+                }
+              },
+              tooltip: 'Followers',
             ),
             IconButton(
               icon: const Icon(Icons.send, size: 30, color: Colors.white),
