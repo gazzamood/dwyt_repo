@@ -335,7 +335,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               tooltip: 'Cerca',
             ),
             // Conditionally show the F button only if the user role is 'users'
-            if (userRole == 'users')
             IconButton(
               icon: const Icon(Icons.send, size: 30, color: Colors.white),
               onPressed: _navigateToAllerta,
