@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../class/Scroll.dart';
 import '../../services/follower_service/followerService.dart'; // Import follower service
 import '../profile/profilo_page.dart';
+import '../refreshable_page/RefreshablePage.dart';
 
 class FollowerPage extends StatefulWidget {
   const FollowerPage({super.key});
@@ -108,7 +108,7 @@ class _FollowerPageState extends State<FollowerPage> {
                   );
                 },
               )
-                  : Scroll( // Use the Scroll class to enable pull-down-to-refresh
+                  : RefreshablePage( // Use RefreshablePage to enable pull-down-to-refresh
                 onRefresh: _loadNotifications, // Call _loadNotifications to refresh
                 child: _buildNotificationCenter(), // Show notifications if no search results
               ),
