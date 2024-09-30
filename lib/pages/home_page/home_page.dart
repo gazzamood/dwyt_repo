@@ -333,21 +333,21 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               },
               tooltip: 'Cerca',
             ),
-            IconButton(
-              icon: const Text(
-                'F',
-                style: TextStyle(fontSize: 24, color: Colors.white), // F maiuscola
-              ),
-              onPressed: () {
-                if (userRole == 'users') {
+            // Conditionally show the F button only if the user role is 'users'
+            if (userRole == 'users')
+              IconButton(
+                icon: const Text(
+                  'F',
+                  style: TextStyle(fontSize: 24, color: Colors.white), // F maiuscola
+                ),
+                onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const FollowerPage()),
                   );
-                }
-              },
-              tooltip: 'Followers',
-            ),
+                },
+                tooltip: 'Followers',
+              ),
             IconButton(
               icon: const Icon(Icons.send, size: 30, color: Colors.white),
               onPressed: _navigateToAllerta,

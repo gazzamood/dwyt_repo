@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../services/adv_service/advService.dart';
+import '../../home_page/home_page.dart';
 
 class SendAdvPage extends StatefulWidget {
   const SendAdvPage({super.key});
@@ -11,13 +12,11 @@ class SendAdvPage extends StatefulWidget {
 }
 
 class _SendAdvPageState extends State<SendAdvPage> {
-  final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _userController = TextEditingController();
   final AdvService _advService = AdvService(); // Instantiate the advService
 
   void _sendNotification() async {
-    final String title = _titleController.text;
     final String description = _descriptionController.text;
     final String user = _userController.text;
 
@@ -25,20 +24,25 @@ class _SendAdvPageState extends State<SendAdvPage> {
     final User? loggedInUser = FirebaseAuth.instance.currentUser;
     final String activityId = loggedInUser?.uid ?? ''; // Ensure we have a valid user ID
 
-    if (title.isEmpty || description.isEmpty) {
+    if (description.isEmpty) {
       // Show error if required fields are empty
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Errore'),
-            content: const Text('Titolo e descrizione sono obbligatori.'),
+            content: const Text('La descrizione è obbligatoria.'),
             actions: <Widget>[
               TextButton(
                 child: const Text('OK'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+                  onPressed: () {
+                    // Navigate back to the home page (replace 'HomePage' with the actual home page widget)
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HomePage()), // Replace with your home page widget
+                          (Route<dynamic> route) => false, // This removes all the previous routes
+                    );
+                  }
               ),
             ],
           );
@@ -78,7 +82,6 @@ class _SendAdvPageState extends State<SendAdvPage> {
       );
 
       // Clear the form and show success dialog
-      _titleController.clear();
       _descriptionController.clear();
       _userController.clear();
 
@@ -91,9 +94,14 @@ class _SendAdvPageState extends State<SendAdvPage> {
             actions: <Widget>[
               TextButton(
                 child: const Text('OK'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+                  onPressed: () {
+                    // Navigate back to the home page (replace 'HomePage' with the actual home page widget)
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HomePage()), // Replace with your home page widget
+                          (Route<dynamic> route) => false, // This removes all the previous routes
+                    );
+                  }
               ),
             ],
           );
@@ -125,46 +133,62 @@ class _SendAdvPageState extends State<SendAdvPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Send ADV Notification'),
+        title: const Text('Invia Notifica ADV'),
         backgroundColor: const Color(0xFF4D5B9F),
+        elevation: 0,
       ),
-      body: Padding(
+      body: Container(
+        color: const Color(0xFFF2F2F2),
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Titolo',
-                border: OutlineInputBorder(),
+            const Text(
+              'Crea una notifica per gli utenti',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF4D5B9F),
               ),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             TextField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
+              maxLines: 5,
+              decoration: InputDecoration(
                 labelText: 'Descrizione',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                fillColor: Colors.white,
+                filled: true,
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _userController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Utente (Opzionale)',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                fillColor: Colors.white,
+                filled: true,
               ),
             ),
             const SizedBox(height: 26),
             ElevatedButton(
               onPressed: _sendNotification,
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
               ),
               child: const Text(
                 'Invia Notifica',
-                style: TextStyle(fontSize: 16.0),
+                style: TextStyle(fontSize: 18.0),
               ),
             ),
           ],
