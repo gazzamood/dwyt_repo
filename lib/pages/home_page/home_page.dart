@@ -214,6 +214,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         title: const Text('DWYT'),
         centerTitle: true,
         backgroundColor: const Color(0xFF4D5B9F),
+        elevation: 10.0,  // Aggiunge profondità tramite un'ombra
+        shadowColor: Colors.black.withOpacity(0.5),  // Colore dell'ombra
         leading: PopupMenuButton<String>(
           icon: const Icon(Icons.menu),
           onSelected: (String value) async {
@@ -295,6 +297,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       bottomNavigationBar: BottomAppBar(
         color: const Color(0xFF4D5B9F),
         shape: const CircularNotchedRectangle(),
+        elevation: 15.0,  // Aggiunge profondità tramite un'ombra
+        shadowColor: Colors.black.withOpacity(0.5),  // Colore dell'ombra
         notchMargin: 8.0,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -306,9 +310,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             ),
             IconButton(
               icon: Icon(
-                userRole == 'activities'
-                    ? Icons.announcement
-                    : Icons.search,
+                userRole == 'activities' ? Icons.announcement : Icons.search,
                 size: 30,
                 color: Colors.white,
               ),
