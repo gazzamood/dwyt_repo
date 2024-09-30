@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/fidelity_service/fidelityService.dart';
+import '../../services/follower_service/followerService.dart';
 import '../../services/profile_service/profileService.dart';
 import '../../services/votes_service/votesService.dart';
 
@@ -34,6 +35,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
 
   bool isCurrentUserProfile = false; // New: to check if the profile belongs to the current user
   List<Map<String, dynamic>> votesList = [];
+  bool _isFollowing = false;
 
   @override
   void initState() {
@@ -56,6 +58,34 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       _getUserProfile(widget.profileId);
     } else if (widget.userRole == 'activities') {
       _getActivityProfile(widget.profileId);
+    }
+
+    _fetchFollowersCount();
+    _checkIfFollowing();
+  }
+
+  Future<void> _fetchFollowersCount() async {
+    try {
+      // Get the activity document from Firestore
+      DocumentSnapshot activitySnapshot = await FirebaseFirestore.instance
+          .collection('activities')
+          .doc(widget
+          .profileId) // profileId corresponds to the activity's document ID
+          .get();
+
+      // Update the followers count in the state
+      if (activitySnapshot.exists) {
+        setState(() {
+          followers = activitySnapshot['followers'].toString();
+        });
+      } else {
+        // If the activity document doesn't exist, set followers to "0"
+        setState(() {
+          followers = "0";
+        });
+      }
+    } catch (e) {
+      print('Error fetching followers count: $e');
     }
   }
 
@@ -203,6 +233,30 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     );
   }
 
+  Future<void> _checkIfFollowing() async {
+    try {
+      // Get the follower document for the current user
+      DocumentSnapshot followerSnapshot = await FirebaseFirestore.instance
+          .collection('followers')
+          .doc(_currentUser!.uid) // Assuming _currentUser is the logged-in user
+          .get();
+
+      if (followerSnapshot.exists) {
+        List<dynamic> activityIds = followerSnapshot['activityIds'] ?? [];
+
+        // Check if the current activityId is in the activityIds list
+        if (activityIds.contains(widget.profileId)) {
+          setState(() {
+            _isFollowing = true;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error checking follow status: $e');
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -298,11 +352,26 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              if (widget.userRole == 'users')
-                _buildStatColumn(following, "Following"),
+              if (widget.userRole == 'users') _buildStatColumn(following, "Following"),
               _buildStatColumn(fidelity, "Fidelity"),
               if (widget.userRole == 'activities')
-                _buildStatColumn(followers, "Followers"),
+                Row(
+                  children: [
+                    _buildStatColumn(followers, "Followers"),
+                    const SizedBox(width: 10), // Add some spacing
+                    ElevatedButton(
+                      onPressed: _toggleFollow, // Call the method to toggle follow/unfollow
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4D5B9F), // Button color
+                        foregroundColor: Colors.white, // Text color (white)
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                      ),
+                      child: Text(_isFollowing ? 'SMETTI' : 'SEGUI'), // Change text based on follow status
+                    )
+                  ],
+                ),
             ],
           ),
           const SizedBox(height: 30.0),
@@ -543,5 +612,39 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
         ),
       ),
     );
+  }
+
+  Future<void> _toggleFollow() async {
+    try {
+      await FollowerService.followActivity(
+          _currentUser!.uid, widget.profileId);
+
+      // Get updated followers count from Firestore after follow/unfollow action
+      DocumentSnapshot activitySnapshot = await FirebaseFirestore.instance
+          .collection('activities')
+          .doc(widget.profileId)
+          .get();
+
+      // Update the followers count in the state
+      setState(() {
+        followers = activitySnapshot['followers']
+            .toString(); // Update UI with the new followers count
+        _isFollowing = !_isFollowing; // Toggle the follow state
+      });
+
+      // Show appropriate message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isFollowing
+              ? 'You are now following this activity'
+              : 'You have unfollowed this activity'),
+        ),
+      );
+    } catch (e) {
+      print('Error toggling follow: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error toggling follow status')),
+      );
+    }
   }
 }

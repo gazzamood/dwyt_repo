@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../services/follower_service/followerService.dart';  // Importa il servizio di follower
+import '../../class/Scroll.dart';
+import '../../services/follower_service/followerService.dart'; // Import follower service
+import '../profile/profilo_page.dart';
 
 class FollowerPage extends StatefulWidget {
   const FollowerPage({super.key});
@@ -10,25 +12,34 @@ class FollowerPage extends StatefulWidget {
 
 class _FollowerPageState extends State<FollowerPage> {
   String searchQuery = '';
-  List<String> searchResults = [];
-  List<Map<String, dynamic>> notifications = []; // Lista per le notifiche 'adv'
-  final FollowerService _followerService = FollowerService(); // Istanza del servizio
+  List<Map<String, dynamic>> searchResults = [];
+  List<Map<String, dynamic>> notifications = [];
+  final FollowerService _followerService = FollowerService();
 
   @override
   void initState() {
     super.initState();
-    _loadNotifications(); // Carica le notifiche al caricamento della pagina
+    _loadNotifications(); // Load notifications on page load
   }
 
-  // Funzione per caricare le notifiche dalla tabella 'notificationActivity'
+  // Function to load notifications from the 'notificationActivity' table
   Future<void> _loadNotifications() async {
     try {
-      List<Map<String, dynamic>> advNotifications = await _followerService.getAdvNotifications();
-      setState(() {
-        notifications = advNotifications;
-      });
+      String userId = _followerService.getCurrentUserId();
+      List<String> activityIds = await _followerService.getUserFollowingActivities(userId);
+
+      if (activityIds.isNotEmpty) {
+        List<Map<String, dynamic>> advNotifications = await _followerService.getNotificationsForActivities(activityIds);
+        setState(() {
+          notifications = advNotifications;
+        });
+      } else {
+        setState(() {
+          notifications = [];
+        });
+      }
     } catch (e) {
-      print('Errore durante il caricamento delle notifiche: $e');
+      print('Error loading notifications: $e');
     }
   }
 
@@ -39,44 +50,79 @@ class _FollowerPageState extends State<FollowerPage> {
         title: const Text('Follower Page'),
         backgroundColor: const Color(0xFF4D5B9F),
       ),
-      body: Column(
-        children: [
-          // Search bar in alto
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              onChanged: (value) {
-                setState(() {
-                  searchQuery = value;
-                });
-                _performSearch(value); // Richiama la funzione di ricerca
-              },
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Cerca follower...',
-                border: OutlineInputBorder(),
+      body: GestureDetector(
+        onTap: () {
+          // Hide search results and return to the notification center when tapping outside the search field
+          setState(() {
+            searchQuery = '';
+            searchResults = [];
+          });
+        },
+        behavior: HitTestBehavior.translucent, // This ensures taps outside are detected
+        child: Column(
+          children: [
+            // Search bar at the top
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value;
+                  });
+                  _performSearch(value); // Call the search function
+                },
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  hintText: 'Search follower...',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
+            const SizedBox(height: 10),
 
-          // Visualizzazione notifiche 'adv'
-          Expanded(
-            child: Card(
-              margin: const EdgeInsets.symmetric(horizontal: 10),
-              elevation: 4,
-              child: _buildNotificationCenter(),
+            // Display search results or notifications
+            Expanded(
+              child: searchResults.isNotEmpty
+                  ? ListView.builder(
+                itemCount: searchResults.length,
+                itemBuilder: (context, index) {
+                  var activity = searchResults[index];
+                  final activityId = activity['id']; // Ensure 'id' contains the activity ID
+                  return ListTile(
+                    leading: const Icon(Icons.business),
+                    title: Text(activity['name'] ?? 'Name not available'),
+                    onTap: () {
+                      if (activityId != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProfilePage('activities', activityId),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Invalid activity ID')),
+                        );
+                      }
+                    },
+                  );
+                },
+              )
+                  : Scroll( // Use the Scroll class to enable pull-down-to-refresh
+                onRefresh: _loadNotifications, // Call _loadNotifications to refresh
+                child: _buildNotificationCenter(), // Show notifications if no search results
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // Funzione per chiamare il servizio di ricerca
+  // Function to call the search service
   void _performSearch(String query) async {
     if (query.isNotEmpty) {
-      List<String> results = await _followerService.searchActivitiesByName(query);
+      List<Map<String, dynamic>> results = await _followerService.searchActivitiesByName(query);
       setState(() {
         searchResults = results;
       });
@@ -87,11 +133,11 @@ class _FollowerPageState extends State<FollowerPage> {
     }
   }
 
-  // Widget per visualizzare il centro notifiche con le notifiche 'adv'
+  // Widget to display the notification center with 'adv' notifications
   Widget _buildNotificationCenter() {
     if (notifications.isEmpty) {
       return const Center(
-        child: Text('Nessuna notifica trovata'),
+        child: Text('No notifications found'),
       );
     }
 
@@ -101,11 +147,10 @@ class _FollowerPageState extends State<FollowerPage> {
         var notification = notifications[index];
         return ListTile(
           leading: const Icon(Icons.announcement),
-          title: Text(notification['title'] ?? 'Titolo non disponibile'),
-          subtitle: Text(notification['description'] ?? 'Messaggio non disponibile'),
+          title: Text(notification['nameActivity'] ?? 'Activity name not available'), // Display activity name
+          subtitle: Text(notification['description'] ?? 'Message not available'),
           onTap: () {
-            // Azione al clic sulla notifica
-            print('Notifica selezionata: ${notification['title']}');
+            print('Selected notification: ${notification['nameActivity']}');
           },
         );
       },

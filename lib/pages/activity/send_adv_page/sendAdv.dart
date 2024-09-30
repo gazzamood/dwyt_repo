@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../services/adv_service/advService.dart';
@@ -19,6 +20,10 @@ class _SendAdvPageState extends State<SendAdvPage> {
     final String title = _titleController.text;
     final String description = _descriptionController.text;
     final String user = _userController.text;
+
+    // Get the logged-in user's ID as the activityId
+    final User? loggedInUser = FirebaseAuth.instance.currentUser;
+    final String activityId = loggedInUser?.uid ?? ''; // Ensure we have a valid user ID
 
     if (title.isEmpty || description.isEmpty) {
       // Show error if required fields are empty
@@ -42,10 +47,32 @@ class _SendAdvPageState extends State<SendAdvPage> {
       return;
     }
 
+    if (activityId.isEmpty) {
+      // Handle the case where the user is not logged in
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Errore'),
+            content: const Text('Utente non loggato. Impossibile inviare la notifica.'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
     // Call the advService to handle the notification logic
     try {
       await _advService.createNotificationActivity(
-        title: title,
+        activityId: activityId, // Assign the logged-in user's ID as activityId
         description: description,
         user: user.isNotEmpty ? user : null, // Pass user only if not empty
       );
