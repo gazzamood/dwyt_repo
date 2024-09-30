@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../services/follower_service/followerService.dart'; // Import follower service
+import '../filter/filter_page.dart';
 import '../profile/profilo_page.dart';
 import '../refreshable_page/RefreshablePage.dart';
 
 class FollowerPage extends StatefulWidget {
-  const FollowerPage({super.key});
+  final String currentLocation;
+
+  const FollowerPage({super.key, required this.currentLocation});
 
   @override
   State<FollowerPage> createState() => _FollowerPageState();
@@ -52,42 +55,63 @@ class _FollowerPageState extends State<FollowerPage> {
       ),
       body: GestureDetector(
         onTap: () {
-          // Hide search results and return to the notification center when tapping outside the search field
+          // Nascondi i risultati di ricerca e ritorna al centro notifiche quando si tocca fuori dal campo di ricerca
           setState(() {
             searchQuery = '';
             searchResults = [];
           });
         },
-        behavior: HitTestBehavior.translucent, // This ensures taps outside are detected
+        behavior: HitTestBehavior.translucent, // Questo assicura che i tocchi esterni siano rilevati
         child: Column(
           children: [
-            // Search bar at the top
+            // Barra di ricerca e pulsante filtro nella stessa riga
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                onChanged: (value) {
-                  setState(() {
-                    searchQuery = value;
-                  });
-                  _performSearch(value); // Call the search function
-                },
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  hintText: 'Search follower...',
-                  border: OutlineInputBorder(),
-                ),
+              child: Row(
+                children: [
+                  // Campo di ricerca
+                  Expanded(
+                    child: TextField(
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value;
+                        });
+                        _performSearch(value); // Chiama la funzione di ricerca
+                      },
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.search),
+                        hintText: 'Search follower...',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Pulsante filtro
+                  IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: () {
+                      // Naviga alla FilterPage quando si preme il pulsante filtro
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FilterPage(widget.currentLocation), // Usare widget.currentLocation
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 10),
 
-            // Display search results or notifications
+            // Mostra i risultati di ricerca o notifiche
             Expanded(
               child: searchResults.isNotEmpty
                   ? ListView.builder(
                 itemCount: searchResults.length,
                 itemBuilder: (context, index) {
                   var activity = searchResults[index];
-                  final activityId = activity['id']; // Ensure 'id' contains the activity ID
+                  final activityId = activity['id']; // Assicurati che 'id' contenga l'ID dell'attività
                   return ListTile(
                     leading: const Icon(Icons.business),
                     title: Text(activity['name'] ?? 'Name not available'),
@@ -108,9 +132,9 @@ class _FollowerPageState extends State<FollowerPage> {
                   );
                 },
               )
-                  : RefreshablePage( // Use RefreshablePage to enable pull-down-to-refresh
-                onRefresh: _loadNotifications, // Call _loadNotifications to refresh
-                child: _buildNotificationCenter(), // Show notifications if no search results
+                  : RefreshablePage( // Usa RefreshablePage per abilitare il pull-down-to-refresh
+                onRefresh: _loadNotifications, // Chiama _loadNotifications per aggiornare
+                child: _buildNotificationCenter(), // Mostra le notifiche se non ci sono risultati di ricerca
               ),
             ),
           ],

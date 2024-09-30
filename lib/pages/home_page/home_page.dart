@@ -325,9 +325,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     MaterialPageRoute(builder: (context) => ADVPage(user!.uid)),
                   );
                 } else {
+                  // Passa 'currentLocation' a FollowerPage per entrambi i ruoli
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FilterPage(currentLocation)),
+                    MaterialPageRoute(builder: (context) => FollowerPage(currentLocation: currentLocation)),
                   );
                 }
               },
@@ -335,19 +336,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             ),
             // Conditionally show the F button only if the user role is 'users'
             if (userRole == 'users')
-              IconButton(
-                icon: const Text(
-                  'F',
-                  style: TextStyle(fontSize: 24, color: Colors.white), // F maiuscola
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const FollowerPage()),
-                  );
-                },
-                tooltip: 'Followers',
-              ),
             IconButton(
               icon: const Icon(Icons.send, size: 30, color: Colors.white),
               onPressed: _navigateToAllerta,
