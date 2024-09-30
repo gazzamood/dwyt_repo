@@ -61,14 +61,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     updateMenuTitle();
 
     _getUserRole();
-
-    // Controlla i permessi della posizione e ottieni la posizione dell'utente
     LocationService().checkPermission().then((_) => _getUserPosition());
     _controller = AnimationController(duration: const Duration(seconds: 2), vsync: this);
 
-    // Sposta le notifiche scadute
     _notificationOldService.moveExpiredNotifications();
-
     _loadPlaces();
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshData());
   }
@@ -89,7 +85,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       userRole = await RoleService().getUserRole(user!.uid);
       if (mounted) {
         setState(() {
-          // Puoi usare userRole per modificare il comportamento dell'interfaccia
+          // Using userRole to modify UI behavior
         });
       }
     }
@@ -112,7 +108,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       userPosition = await LocationService().getCurrentPosition();
       if (userPosition != null) {
         String? locationName = await LocationService().getLocationName(userPosition!);
-        await _placesUpdateService.updateFirstPlaceInList(userPosition!, locationName!); // Aggiorna la posizione
+        await _placesUpdateService.updateFirstPlaceInList(userPosition!, locationName!);
         if (mounted) {
           setState(() {
             currentLocation = locationName ?? 'Posizione sconosciuta';
@@ -136,7 +132,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void _navigateToAllerta() {
     Navigator.push(context, MaterialPageRoute(builder: (context) => AllertaPage(userRole!)));
   }
-
 
   Future<void> _selectLocation() async {
     bool? result = await Navigator.push(context, MaterialPageRoute(builder: (context) => ManagePlacesPage(user!.uid)));
@@ -228,10 +223,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ProfilePage(userRole!, user!.uid), // Pass userRole directly
+                  builder: (context) => ProfilePage(userRole!, user!.uid),
                 ),
               );
-
             }
           },
           itemBuilder: (BuildContext context) {
@@ -313,8 +307,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             IconButton(
               icon: Icon(
                 userRole == 'activities'
-                    ? Icons.announcement  // Icona ADV per 'activities'
-                    : Icons.search,        // Icona search per gli altri ruoli
+                    ? Icons.announcement
+                    : Icons.search,
                 size: 30,
                 color: Colors.white,
               ),
@@ -325,7 +319,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     MaterialPageRoute(builder: (context) => ADVPage(user!.uid)),
                   );
                 } else {
-                  // Passa 'currentLocation' a FollowerPage per entrambi i ruoli
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => FollowerPage(currentLocation: currentLocation)),
@@ -334,7 +327,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               },
               tooltip: 'Cerca',
             ),
-            // Conditionally show the F button only if the user role is 'users'
             IconButton(
               icon: const Icon(Icons.send, size: 30, color: Colors.white),
               onPressed: _navigateToAllerta,
