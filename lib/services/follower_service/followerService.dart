@@ -48,51 +48,92 @@ class FollowerService {
     return notifications;
   }
 
+// Metodo per seguire o smettere di seguire un'attività
   static Future<void> followActivity(String userId, String activityId) async {
     try {
-      // Reference to the followers document for the user
+      // Reference al documento del follower per l'utente
       DocumentReference followerDocRef = FirebaseFirestore.instance.collection('followers').doc(userId);
       DocumentSnapshot followerSnapshot = await followerDocRef.get();
 
-      // If the user does not have any followers data yet, create a new document
+      // Se l'utente non segue ancora nessuna attività, crea un nuovo documento
       if (!followerSnapshot.exists) {
-        // User is not following any activity, so create the document with the new activity
+        // L'utente non sta seguendo nessuna attività, quindi crea il documento con la nuova attività
         await followerDocRef.set({
-          'activityIds': [activityId], // Add the activityId to the list
+          'activityIds': [activityId], // Aggiungi l'activityId alla lista
           'timestamp': FieldValue.serverTimestamp(),
         });
 
-        // Increment followers count for the activity
+        // Incrementa il conteggio dei follower per l'attività
         await _incrementFollowers(activityId);
+
+        // Aggiorna la lista di attività seguite nel documento dell'utente
+        await _addActivityToFollowing(userId, activityId);
+
         print("User followed the activity.");
       } else {
-        // The user already has a followers document, let's check if they are following the activity
+        // L'utente ha già un documento di follower, controlla se sta già seguendo l'attività
         List<dynamic> activityIds = followerSnapshot['activityIds'] ?? [];
 
         if (activityIds.contains(activityId)) {
-          // User is already following the activity, so unfollow it (remove from the list)
+          // L'utente sta già seguendo l'attività, quindi smette di seguirla (rimuovi dalla lista)
           activityIds.remove(activityId);
           await followerDocRef.update({
             'activityIds': activityIds,
           });
 
-          // Decrement followers count for the activity
+          // Decrementa il conteggio dei follower per l'attività
           await _decrementFollowers(activityId);
+
+          // Rimuovi l'attività dalla lista di attività seguite dell'utente
+          await _removeActivityFromFollowing(userId, activityId);
+
           print("User unfollowed the activity.");
         } else {
-          // User is not following the activity, so add it to the list
+          // L'utente non sta seguendo l'attività, quindi aggiungila alla lista
           activityIds.add(activityId);
           await followerDocRef.update({
             'activityIds': activityIds,
           });
 
-          // Increment followers count for the activity
+          // Incrementa il conteggio dei follower per l'attività
           await _incrementFollowers(activityId);
+
+          // Aggiungi l'attività alla lista di attività seguite dell'utente
+          await _addActivityToFollowing(userId, activityId);
+
           print("User followed the activity.");
         }
       }
     } catch (e) {
       throw Exception('Error toggling follow/unfollow: $e');
+    }
+  }
+
+// Metodo per aggiungere un'attività alla lista di following dell'utente
+  static Future<void> _addActivityToFollowing(String userId, String activityId) async {
+    try {
+      DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userId);
+      await userRef.update({
+        'following': FieldValue.arrayUnion([activityId]), // Aggiungi activityId alla lista di following
+      });
+      print("Activity $activityId added to following list for user: $userId");
+    } catch (e) {
+      print('Error adding activity to following list: $e');
+      throw Exception('Error adding activity to following list: $e');
+    }
+  }
+
+// Metodo per rimuovere un'attività dalla lista di following dell'utente
+  static Future<void> _removeActivityFromFollowing(String userId, String activityId) async {
+    try {
+      DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userId);
+      await userRef.update({
+        'following': FieldValue.arrayRemove([activityId]), // Rimuovi activityId dalla lista di following
+      });
+      print("Activity $activityId removed from following list for user: $userId");
+    } catch (e) {
+      print('Error removing activity from following list: $e');
+      throw Exception('Error removing activity from following list: $e');
     }
   }
 
@@ -163,5 +204,4 @@ class FollowerService {
     }
     return [];
   }
-
 }

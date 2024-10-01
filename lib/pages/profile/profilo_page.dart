@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dwyt_test/pages/profile/passFidelity_page/PassFidelityPage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -29,7 +30,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   String _type = '';
   String _description = '';
   String _contacts = '';
-  String following = "0";
+  String following = "0"; // Updated following count
   String followers = "0";
   String fidelity = "0";
 
@@ -62,6 +63,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
 
     _fetchFollowersCount();
     _checkIfFollowing();
+    _fetchFollowingCount(); // Fetch following count on profile load
   }
 
   Future<void> _fetchFollowersCount() async {
@@ -86,6 +88,28 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       }
     } catch (e) {
       print('Error fetching followers count: $e');
+    }
+  }
+
+  Future<void> _fetchFollowingCount() async {
+    try {
+      // Ottieni il documento dell'utente per recuperare la lista 'following'
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser?.uid)
+          .get();
+
+      if (userSnapshot.exists) {
+        // Estrai la lista di ID delle attività seguite
+        List<dynamic> followingList = userSnapshot['following'] ?? [];
+
+        // Aggiorna lo stato con il numero totale di attività seguite
+        setState(() {
+          following = followingList.length.toString(); // Mostra il totale degli ID nella lista
+        });
+      }
+    } catch (e) {
+      print('Error fetching following count: $e');
     }
   }
 
@@ -146,91 +170,41 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     }
   }
 
-  Future<void> _showEditProfileDialog() async {
-    TextEditingController nameController = TextEditingController(text: _name);
-    TextEditingController surnameController = TextEditingController(text: _surname);
-    TextEditingController typeController = TextEditingController(text: _type);
-    TextEditingController descriptionController = TextEditingController(text: _description);
-    TextEditingController addressController = TextEditingController(text: _addressUser);
-    TextEditingController contactsController = TextEditingController(text: _contacts);
-    TextEditingController phoneController = TextEditingController(text: _phoneNumber);
+  Future<void> _toggleFollow() async {
+    try {
+      await FollowerService.followActivity(
+          _currentUser!.uid, widget.profileId);
 
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(isCurrentUserProfile ? "Edit Profile" : "View Profile"),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.userRole == 'users') ...[
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Name'),
-                  ),
-                  TextField(
-                    controller: surnameController,
-                    decoration: const InputDecoration(labelText: 'Surname'),
-                  ),
-                ] else if (widget.userRole == 'activities') ...[
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Activity Name'),
-                  ),
-                  TextField(
-                    controller: typeController,
-                    decoration: const InputDecoration(labelText: 'Type'),
-                  ),
-                ],
-                TextField(
-                  controller: addressController,
-                  decoration: const InputDecoration(labelText: 'Address'),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-              },
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () async {
-                // Update based on userRole
-                if (widget.userRole == 'users') {
-                  await ProfileService.updateUserProfile(
-                    widget.profileId,
-                    {
-                      'name': nameController.text,
-                      'surname': surnameController.text,
-                      'addressUser': addressController.text,
-                      'phoneNumber': phoneController.text,
-                    },
-                  );
-                } else if (widget.userRole == 'activities') {
-                  await ProfileService.updateActivityProfile(
-                    widget.profileId,
-                    {
-                      'name': nameController.text,
-                      'type': typeController.text,
-                      'description': descriptionController.text,
-                      'addressActivity': addressController.text,
-                      'contacts': contactsController.text,
-                    },
-                  );
-                }
-                Navigator.of(context).pop(); // Close dialog after updating
-                setState(() {}); // Refresh profile page
-              },
-              child: const Text("Save"),
-            ),
-          ],
-        );
-      },
-    );
+      // Get updated followers count from Firestore after follow/unfollow action
+      DocumentSnapshot activitySnapshot = await FirebaseFirestore.instance
+          .collection('activities')
+          .doc(widget.profileId)
+          .get();
+
+      // Update the followers count in the state
+      setState(() {
+        followers = activitySnapshot['followers']
+            .toString(); // Update UI with the new followers count
+        _isFollowing = !_isFollowing; // Toggle the follow state
+      });
+
+      // Update following count for the current user
+      _fetchFollowingCount(); // Fetch and update following count in the UI
+
+      // Show appropriate message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isFollowing
+              ? 'You are now following this activity'
+              : 'You have unfollowed this activity'),
+        ),
+      );
+    } catch (e) {
+      print('Error toggling follow: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error toggling follow status')),
+      );
+    }
   }
 
   Future<void> _checkIfFollowing() async {
@@ -255,7 +229,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       print('Error checking follow status: $e');
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -389,7 +362,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                   _buildGridView(), // Votes for users
 
                 if (widget.userRole == 'users')
-                  _buildPassFidelityView()
+                  const PassFidelityPage() // Usa la nuova pagina per Pass Fidelity
                 else
                   _buildGridView(), // Votes for activities
               ],
@@ -536,70 +509,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     );
   }
 
-  List<Map<String, dynamic>> _getPassFidelityRewards() {
-    List<Map<String, dynamic>> rewards = [];
-    for (int i = 0; i <= 100; i += 10) {
-      rewards.add({
-        'points': '$i points',
-        'reward': 'Reward for $i points',
-        'icon': Icons.stars,
-      });
-    }
-    return rewards;
-  }
-
-  Widget _buildPassFidelityView() {
-    List<Map<String, dynamic>> rewards = _getPassFidelityRewards();
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(10.0),
-      itemCount: rewards.length,
-      itemBuilder: (context, index) {
-        return Card(
-          elevation: 4.0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.0),
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15.0),
-              gradient: LinearGradient(
-                colors: [const Color(0xFF4D5B9F).withOpacity(0.2), const Color(0xFF4D5B9F).withOpacity(0.6)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
-              leading: CircleAvatar(
-                backgroundColor: Colors.white.withOpacity(0.8),
-                child: Icon(
-                  rewards[index]['icon'],
-                  color: const Color(0xFF4D5B9F),
-                ),
-              ),
-              title: Text(
-                rewards[index]['points'],
-                style: const TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              subtitle: Text(
-                rewards[index]['reward'],
-                style: const TextStyle(
-                  fontSize: 14.0,
-                  color: Colors.white70,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildDescriptionView() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -614,37 +523,90 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     );
   }
 
-  Future<void> _toggleFollow() async {
-    try {
-      await FollowerService.followActivity(
-          _currentUser!.uid, widget.profileId);
+  Future<void> _showEditProfileDialog() async {
+    TextEditingController nameController = TextEditingController(text: _name);
+    TextEditingController surnameController = TextEditingController(text: _surname);
+    TextEditingController typeController = TextEditingController(text: _type);
+    TextEditingController descriptionController = TextEditingController(text: _description);
+    TextEditingController addressController = TextEditingController(text: _addressUser);
+    TextEditingController contactsController = TextEditingController(text: _contacts);
+    TextEditingController phoneController = TextEditingController(text: _phoneNumber);
 
-      // Get updated followers count from Firestore after follow/unfollow action
-      DocumentSnapshot activitySnapshot = await FirebaseFirestore.instance
-          .collection('activities')
-          .doc(widget.profileId)
-          .get();
-
-      // Update the followers count in the state
-      setState(() {
-        followers = activitySnapshot['followers']
-            .toString(); // Update UI with the new followers count
-        _isFollowing = !_isFollowing; // Toggle the follow state
-      });
-
-      // Show appropriate message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isFollowing
-              ? 'You are now following this activity'
-              : 'You have unfollowed this activity'),
-        ),
-      );
-    } catch (e) {
-      print('Error toggling follow: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error toggling follow status')),
-      );
-    }
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(isCurrentUserProfile ? "Edit Profile" : "View Profile"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.userRole == 'users') ...[
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                  ),
+                  TextField(
+                    controller: surnameController,
+                    decoration: const InputDecoration(labelText: 'Surname'),
+                  ),
+                ] else if (widget.userRole == 'activities') ...[
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Activity Name'),
+                  ),
+                  TextField(
+                    controller: typeController,
+                    decoration: const InputDecoration(labelText: 'Type'),
+                  ),
+                ],
+                TextField(
+                  controller: addressController,
+                  decoration: const InputDecoration(labelText: 'Address'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                // Update based on userRole
+                if (widget.userRole == 'users') {
+                  await ProfileService.updateUserProfile(
+                    widget.profileId,
+                    {
+                      'name': nameController.text,
+                      'surname': surnameController.text,
+                      'addressUser': addressController.text,
+                      'phoneNumber': phoneController.text,
+                    },
+                  );
+                } else if (widget.userRole == 'activities') {
+                  await ProfileService.updateActivityProfile(
+                    widget.profileId,
+                    {
+                      'name': nameController.text,
+                      'type': typeController.text,
+                      'description': descriptionController.text,
+                      'addressActivity': addressController.text,
+                      'contacts': contactsController.text,
+                    },
+                  );
+                }
+                Navigator.of(context).pop(); // Close dialog after updating
+                setState(() {}); // Refresh profile page
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

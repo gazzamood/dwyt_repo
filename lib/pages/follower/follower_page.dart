@@ -80,7 +80,7 @@ class _FollowerPageState extends State<FollowerPage> {
                       },
                       decoration: const InputDecoration(
                         prefixIcon: Icon(Icons.search),
-                        hintText: 'Search follower...',
+                        hintText: 'Search activity...',
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -169,12 +169,25 @@ class _FollowerPageState extends State<FollowerPage> {
       itemCount: notifications.length,
       itemBuilder: (context, index) {
         var notification = notifications[index];
+        final activityId = notification['activityId']; // Assicurati che l'ID dell'attività sia presente nella notifica
+
         return ListTile(
           leading: const Icon(Icons.announcement),
           title: Text(notification['nameActivity'] ?? 'Activity name not available'), // Display activity name
           subtitle: Text(notification['description'] ?? 'Message not available'),
           onTap: () {
-            print('Selected notification: ${notification['nameActivity']}');
+            if (activityId != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfilePage('activities', activityId), // Naviga a ProfilePage con l'activityId
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Invalid activity ID')),
+              );
+            }
           },
         );
       },
