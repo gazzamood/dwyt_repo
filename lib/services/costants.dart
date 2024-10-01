@@ -19,8 +19,8 @@ class Constants {
   static const int apiTimeout = 30000; // in millisecondi
 
   // Testi statici dell'applicazione
-  static const String appName = "My Awesome App";
-  static const String welcomeMessage = "Benvenuto nella nostra applicazione!";
+  static const String appName = "DWYT";
+  static const String welcomeMessage = "Benvenuto in DWYT!";
 
   // Colori (puoi usare il formato esadecimale per i colori)
   static const int primaryColor = 0xFF2196F3;
