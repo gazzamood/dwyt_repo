@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../../services/notification_service/load_notification_service.dart';
 import '../../services/votes_service/votesService.dart';
 import '../geolocation/map_page.dart';
+import '../refreshable_page/RefreshablePage.dart';
 
 class NotificaPage extends StatefulWidget {
   final Position? userPosition;
@@ -286,8 +287,14 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  buildNotificationsList(allNotifications),
-                  buildNotificationsList(sentNotifications, canVote: false), // Le notifiche inviate non possono essere votate
+                  RefreshablePage(
+                    onRefresh: _loadNotifications, // Metodo di refresh
+                    child: buildNotificationsList(allNotifications),
+                  ),
+                  RefreshablePage(
+                    onRefresh: _loadNotifications, // Metodo di refresh
+                    child: buildNotificationsList(sentNotifications, canVote: false), // Le notifiche inviate non possono essere votate
+                  ),
                 ],
               ),
             ),
