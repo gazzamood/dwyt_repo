@@ -1,6 +1,6 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,11 +9,12 @@ import 'package:geolocator/geolocator.dart';
 import '../../../class/Activity.dart';
 import '../../../class/Notification.dart' as not;
 import '../activities/list_activity_page.dart';
-import 'details_page.dart';
+import '../profile/profilo_page.dart';
+import 'details_page.dart'; // Importa la ProfilePage
 
 class MapPage extends StatefulWidget {
   final Activity? initialActivity;
-  final Map<String, dynamic>? initialNotification; // Add this line
+  final Map<String, dynamic>? initialNotification;
 
   const MapPage({super.key, this.initialActivity, this.initialNotification});
 
@@ -36,7 +37,6 @@ class _MapPageState extends State<MapPage> {
     super.initState();
     _initializeFirebase();
   }
-
 
   Future<void> _initializeFirebase() async {
     await Firebase.initializeApp();
@@ -162,7 +162,7 @@ class _MapPageState extends State<MapPage> {
       _selectedActivity = activity;
       _selectedNotification = null; // Deselect notification
     });
-    _navigateToDetails();
+    _navigateToProfilePage(activity.id); // Navigate to ProfilePage
   }
 
   void _onMarkerTappedNotification(not.Notification notification) {
@@ -180,6 +180,18 @@ class _MapPageState extends State<MapPage> {
       zoom: 15.0,
     );
     controller.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+  }
+
+  void _navigateToProfilePage(String activityId) {
+    // Navigate to the ProfilePage and pass the activityId
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProfilePage(
+          'activities', // Specify the userRole as 'activities'
+          activityId, // Pass the activityId
+        ),
+      ),
+    );
   }
 
   void _navigateToDetails() {
