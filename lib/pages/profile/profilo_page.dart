@@ -299,7 +299,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                       ],
                       const SizedBox(height: 10.0),
                       Text(
-                        "Address: $_addressUser",
+                        "$_addressUser",
                         style: const TextStyle(
                           fontSize: 16.0,
                           fontWeight: FontWeight.w400,
@@ -308,7 +308,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                       ),
                       const SizedBox(height: 10.0),
                       Text(
-                        " $_phoneNumber",
+                        " $_contacts",
                         style: const TextStyle(
                           fontSize: 16.0,
                           fontWeight: FontWeight.w400,
@@ -558,6 +558,10 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                   TextField(
                     controller: typeController,
                     decoration: const InputDecoration(labelText: 'Type'),
+                  ),
+                  TextField(
+                    controller: contactsController,
+                    decoration: const InputDecoration(labelText: 'Contacts'),
                   ),
                 ],
                 TextField(
