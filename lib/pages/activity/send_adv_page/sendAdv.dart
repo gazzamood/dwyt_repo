@@ -144,7 +144,7 @@ class _SendAdvPageState extends State<SendAdvPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text(
-              'Crea una notifica per gli utenti',
+              'Crea una notifica per i followers',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -158,18 +158,6 @@ class _SendAdvPageState extends State<SendAdvPage> {
               maxLines: 5,
               decoration: InputDecoration(
                 labelText: 'Descrizione',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                fillColor: Colors.white,
-                filled: true,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _userController,
-              decoration: InputDecoration(
-                labelText: 'Utente (Opzionale)',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
