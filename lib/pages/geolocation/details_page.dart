@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../../class/Activity.dart';
 import '../../../class/Notification.dart' as not;
 
@@ -15,7 +14,10 @@ class DetailsPage extends StatelessWidget {
       return 'Unknown';
     }
     try {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(notification!.senderId).get();
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(notification!.senderId)
+          .get();
       return userDoc.data()?['name'] ?? 'Unknown';
     } catch (e) {
       return 'Unknown';
@@ -27,112 +29,160 @@ class DetailsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(activity?.name ?? 'Notification Details'),
+        backgroundColor: const Color(0xFF4D5B9F),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            if (activity != null) ...[
-              Text(
-                activity!.name,
-                style: Theme.of(context).textTheme.displayLarge,
-              ),
-              const SizedBox(height: 8.0),
-              Text(
-                'Tipo: ${activity!.type}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16.0),
-              Text(
-                'Orari Apertura: ${activity!.openingHours}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8.0),
-              Text(
-                'Indirizzo: ${activity!.addressActivity}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16.0),
-              if (activity!.contatti != null) ...[
-                Text(
-                  'Contatti:',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 8.0),
-                Text(
-                  activity!.contatti!,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-              const SizedBox(height: 16.0),
-              if (activity!.description != null) ...[
-                Text(
-                  'Descrizione:',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 8.0),
-                Text(
-                  activity!.description!,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ],
-            if (notification != null) ...[
-              Text(
-                'Notification Details',
-                style: Theme.of(context).textTheme.displayLarge,
-              ),
-              const SizedBox(height: 8.0),
-              Text(
-                'Title: ${notification!.title}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16.0),
-              Text(
-                'Message: ${notification!.message}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8.0),
-              Text(
-                'Radius(km): ${notification!.radius}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8.0),
-              FutureBuilder<String>(
-                future: _getSenderName(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
-                  }
-                  if (snapshot.hasError) {
-                    return const Text('Error fetching sender name');
-                  }
-                  return Text(
-                    'Sent by: ${snapshot.data}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  );
-                },
-              ),
-              const SizedBox(height: 16.0),
-              Row(
+        child: Center(
+          child: Card(
+            elevation: 5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15.0),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.thumb_up),
-                    onPressed: () {
-                      // Handle thumbs up action
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.thumb_down),
-                    onPressed: () {
-                      // Handle thumbs down action
-                    },
-                  ),
+                  if (activity != null) ...[
+                    Text(
+                      activity!.name,
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF4D5B9F),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Type: ${activity!.type}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Opening Hours: ${activity!.openingHours}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Address: ${activity!.addressActivity}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    if (activity!.contatti != null)
+                      Text(
+                        'Contacts: ${activity!.contatti}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+                    if (activity!.description != null)
+                      Text(
+                        activity!.description!,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    const SizedBox(height: 16.0),
+                  ],
+                  if (notification != null) ...[
+                    Text(
+                      'Notification Details',
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF4D5B9F),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Title: ${notification!.title}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Message: ${notification!.message}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Radius: ${notification!.radius} km',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    FutureBuilder<String>(
+                      future: _getSenderName(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const CircularProgressIndicator();
+                        }
+                        if (snapshot.hasError) {
+                          return const Text('Error fetching sender name');
+                        }
+                        return Text(
+                          'Sent by: ${snapshot.data}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black54,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.thumb_up,
+                            color: Colors.green,
+                            size: 32,
+                          ),
+                          onPressed: () {
+                            // Handle thumbs up action
+                          },
+                        ),
+                        const SizedBox(width: 30),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.thumb_down,
+                            color: Colors.red,
+                            size: 32,
+                          ),
+                          onPressed: () {
+                            // Handle thumbs down action
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
-            ],
-          ],
+            ),
+          ),
         ),
       ),
     );

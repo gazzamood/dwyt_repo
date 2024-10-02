@@ -10,7 +10,6 @@ import '../../../class/Activity.dart';
 import '../../../class/Notification.dart' as not;
 import '../activities/list_activity_page.dart';
 import '../profile/profilo_page.dart';
-import 'details_page.dart'; // Importa la ProfilePage
 
 class MapPage extends StatefulWidget {
   final Activity? initialActivity;
@@ -170,7 +169,7 @@ class _MapPageState extends State<MapPage> {
       _selectedNotification = notification;
       _selectedActivity = null; // Deselect activity
     });
-    _navigateToDetails();
+    // You can implement navigation for notification details if necessary
   }
 
   Future<void> _moveToActivity(Activity activity) async {
@@ -189,17 +188,6 @@ class _MapPageState extends State<MapPage> {
         builder: (context) => ProfilePage(
           'activities', // Specify the userRole as 'activities'
           activityId, // Pass the activityId
-        ),
-      ),
-    );
-  }
-
-  void _navigateToDetails() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => DetailsPage(
-          activity: _selectedActivity,
-          notification: _selectedNotification,
         ),
       ),
     );
