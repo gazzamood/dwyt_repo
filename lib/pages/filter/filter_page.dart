@@ -6,7 +6,7 @@ import '../profile/profilo_page.dart';
 class FilterPage extends StatefulWidget {
   final String currentLocation;
 
-  const FilterPage( this.currentLocation,{super.key});
+  const FilterPage(this.currentLocation, {super.key});
 
   @override
   State<FilterPage> createState() => _FilterPageState();
@@ -98,7 +98,9 @@ class _FilterPageState extends State<FilterPage> {
         }
       }
 
-      List<Map<String, dynamic>> activities = await FilterService.getActivitiesByFilters(_selectedFilters, widget.currentLocation);
+      List<Map<String, dynamic>> activities =
+      await FilterService.getActivitiesByFilters(
+          _selectedFilters, widget.currentLocation);
 
       // Ordina le attività in base alla distanza (in ordine crescente)
       activities.sort((a, b) {
@@ -196,7 +198,8 @@ class _FilterPageState extends State<FilterPage> {
                     child: ListTile(
                       title: Text(
                         activity['name'] ?? 'Nome attività',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                       subtitle: Text(
                         activity['type'] ?? 'Tipo attività',
@@ -208,12 +211,14 @@ class _FilterPageState extends State<FilterPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ProfilePage('activities', activityId), // Passa l'ID dell'attività
+                              builder: (context) =>
+                                  ProfilePage('activities', activityId), // Passa l'ID dell'attività
                             ),
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('ID attività non valido')),
+                            const SnackBar(
+                                content: Text('ID attività non valido')),
                           );
                         }
                       },
@@ -225,11 +230,13 @@ class _FilterPageState extends State<FilterPage> {
                     children: [
                       Text(
                         fidelity.toString(),
-                        style: const TextStyle(fontSize: 34, color: Colors.grey),
+                        style: const TextStyle(
+                            fontSize: 34, color: Colors.grey),
                       ),
                       Text(
                         distance,
-                        style: const TextStyle(fontSize: 16, color: Colors.grey),
+                        style: const TextStyle(
+                            fontSize: 16, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -245,37 +252,35 @@ class _FilterPageState extends State<FilterPage> {
   Widget _buildFilterButton() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text(
-            'Seleziona un filtro per avere informazioni in tempo reale',
+            'Filtra per interesse:',
             style: TextStyle(
               fontSize: 18.0,
               fontWeight: FontWeight.w500,
               color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 12.0),
-          Center(
-            child: ElevatedButton(
-              onPressed: _showFilterDialog,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4D5B9F),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40.0,
-                  vertical: 15.0,
-                ),
-                elevation: 10,
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.add, size: 30),
+                color: const Color(0xFF4D5B9F),
+                onPressed: _showFilterDialog,
               ),
-              child: const Text(
-                'Seleziona Filtro',
-                style: TextStyle(fontSize: 18.0, color: Colors.white),
+              IconButton(
+                icon: const Icon(Icons.delete, size: 30),
+                color: Colors.red,
+                onPressed: () {
+                  setState(() {
+                    _selectedFilters.clear(); // Rimuove tutti i filtri
+                    _fetchActivities(); // Aggiorna le attività senza filtri
+                  });
+                },
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -285,23 +290,6 @@ class _FilterPageState extends State<FilterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Filtri'),
-        backgroundColor: const Color(0xFF4D5B9F),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.clear_all),
-            onPressed: () {
-              setState(() {
-                _selectedFilters.clear();
-                _activities.clear();
-              });
-            },
-            tooltip: 'Rimuovi tutti i filtri',
-          ),
-        ],
-      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
