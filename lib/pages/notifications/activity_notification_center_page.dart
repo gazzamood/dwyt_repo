@@ -1,9 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Per la formattazione del timestamp
 import '../../services/follower_service/followerService.dart';
 import '../profile/profilo_page.dart';
 import '../refreshable_page/RefreshablePage.dart';
-import 'package:intl/intl.dart'; // Per formattare la data e l'ora
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import per il tipo Timestamp di Firebase
 
 class ActivityNotificationCenterPage extends StatefulWidget {
   const ActivityNotificationCenterPage({super.key});
@@ -15,6 +15,7 @@ class ActivityNotificationCenterPage extends StatefulWidget {
 class _ActivityNotificationCenterPageState extends State<ActivityNotificationCenterPage> {
   List<Map<String, dynamic>> notifications = [];
   final FollowerService _followerService = FollowerService();
+  int unreadNotificationCount = 0; // Contatore delle notifiche non lette
 
   @override
   void initState() {
@@ -44,18 +45,9 @@ class _ActivityNotificationCenterPageState extends State<ActivityNotificationCen
   }
 
   // Funzione per formattare il timestamp
-  String _formatTimestamp(dynamic timestamp) {
-    if (timestamp is Timestamp) {
-      // Se il timestamp è di tipo Timestamp di Firebase, converti in DateTime
-      final DateTime dateTime = timestamp.toDate();
-      return DateFormat('dd MMM yyyy, HH:mm').format(dateTime);
-    } else if (timestamp is DateTime) {
-      // Se il timestamp è già un DateTime, formattalo direttamente
-      return DateFormat('dd MMM yyyy, HH:mm').format(timestamp);
-    } else {
-      // Se non è un tipo gestito, ritorna una stringa di fallback
-      return 'No timestamp available';
-    }
+  String _formatTimestamp(Timestamp timestamp) {
+    DateTime dateTime = timestamp.toDate(); // Converte il Timestamp in DateTime
+    return DateFormat('dd MMM yyyy, HH:mm').format(dateTime); // Formatta il timestamp
   }
 
   @override
@@ -89,7 +81,7 @@ class _ActivityNotificationCenterPageState extends State<ActivityNotificationCen
         final description = notification['description'] ?? 'Message not available';
         final timestamp = notification['timestamp'] != null
             ? _formatTimestamp(notification['timestamp'])
-            : 'No timestamp available';
+            : 'No timestamp available'; // Verifica se il timestamp esiste
 
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
@@ -115,7 +107,7 @@ class _ActivityNotificationCenterPageState extends State<ActivityNotificationCen
                 ),
                 const SizedBox(height: 8.0),
                 Text(
-                  timestamp,
+                  timestamp, // Visualizza il timestamp formattato
                   style: const TextStyle(fontSize: 12.0, color: Colors.grey),
                 ),
               ],
