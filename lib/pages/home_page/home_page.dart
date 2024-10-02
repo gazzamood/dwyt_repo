@@ -24,6 +24,7 @@ import '../follower/follower_page.dart';
 import '../geolocation/find_location_page.dart';
 import '../geolocation/map_page.dart';
 import '../login/login_page.dart';
+import '../notifications/activity_notification_center_page.dart';
 import '../notifications/centro_notifiche_page.dart';
 import '../notifications/send_notifications_page.dart';
 import '../places/manage_places_page.dart';
@@ -342,6 +343,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               },
               tooltip: 'Cerca',
             ),
+            if (userRole == 'users') // Condizione per mostrare l'icona solo agli utenti 'users'
+              IconButton(
+                icon: const Icon(Icons.notifications, size: 30, color: Colors.white),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ActivityNotificationCenter(),
+                    ),
+                  );
+                },
+                tooltip: 'Notifiche Attività',
+              ),
             IconButton(
               icon: const Icon(Icons.send, size: 30, color: Colors.white),
               onPressed: _navigateToAllerta,
