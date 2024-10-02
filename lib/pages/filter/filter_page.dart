@@ -161,11 +161,21 @@ class _FilterPageState extends State<FilterPage> {
   }
 
   Widget _buildActivitiesList() {
-    if (_activities.isEmpty) {
+    if (_selectedFilters.isNotEmpty && _activities.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(16.0),
         child: Text(
           'Nessuna attività trovata per i filtri selezionati.',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+      );
+    }
+
+    if (_activities.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'Seleziona uno o più filtri per visualizzare le attività.',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
       );
