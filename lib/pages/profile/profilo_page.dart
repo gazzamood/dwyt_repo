@@ -236,13 +236,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       appBar: AppBar(
         title: const Text("Profile"),
         backgroundColor: const Color(0xFF4D5B9F),
-        actions: [
-          if (isCurrentUserProfile) // Show edit button only if it's the current user's profile
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: _showEditProfileDialog,
-            ),
-        ],
       ),
       body: Column(
         children: [
@@ -516,97 +509,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
           color: Colors.grey,
         ),
       ),
-    );
-  }
-
-  Future<void> _showEditProfileDialog() async {
-    TextEditingController nameController = TextEditingController(text: _name);
-    TextEditingController surnameController = TextEditingController(text: _surname);
-    TextEditingController typeController = TextEditingController(text: _type);
-    TextEditingController descriptionController = TextEditingController(text: _description);
-    TextEditingController addressController = TextEditingController(text: _addressUser);
-    TextEditingController contactsController = TextEditingController(text: _contacts);
-    TextEditingController phoneController = TextEditingController(text: _phoneNumber);
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(isCurrentUserProfile ? "Edit Profile" : "View Profile"),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.userRole == 'users') ...[
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Name'),
-                  ),
-                  TextField(
-                    controller: surnameController,
-                    decoration: const InputDecoration(labelText: 'Surname'),
-                  ),
-                ] else if (widget.userRole == 'activities') ...[
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Activity Name'),
-                  ),
-                  TextField(
-                    controller: typeController,
-                    decoration: const InputDecoration(labelText: 'Type'),
-                  ),
-                  TextField(
-                    controller: contactsController,
-                    decoration: const InputDecoration(labelText: 'Contacts'),
-                  ),
-                ],
-                TextField(
-                  controller: addressController,
-                  decoration: const InputDecoration(labelText: 'Address'),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-              },
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () async {
-                // Update based on userRole
-                if (widget.userRole == 'users') {
-                  await ProfileService.updateUserProfile(
-                    widget.profileId,
-                    {
-                      'name': nameController.text,
-                      'surname': surnameController.text,
-                      'addressUser': addressController.text,
-                      'phoneNumber': phoneController.text,
-                    },
-                  );
-                } else if (widget.userRole == 'activities') {
-                  await ProfileService.updateActivityProfile(
-                    widget.profileId,
-                    {
-                      'name': nameController.text,
-                      'type': typeController.text,
-                      'description': descriptionController.text,
-                      'addressActivity': addressController.text,
-                      'contacts': contactsController.text,
-                    },
-                  );
-                }
-                Navigator.of(context).pop(); // Close dialog after updating
-                setState(() {}); // Refresh profile page
-              },
-              child: const Text("Save"),
-            ),
-          ],
-        );
-      },
     );
   }
 }
