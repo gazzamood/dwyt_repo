@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/adapters.dart';
 import '../../services/filter_service/filterService.dart';
 import '../profile/profilo_page.dart';
 
@@ -90,6 +91,13 @@ class _FilterPageState extends State<FilterPage> {
 
   Future<void> _fetchActivities() async {
     if (_selectedFilters.isNotEmpty) {
+      var filtersBox = Hive.box<String>('activeFilters');
+      for (var filter in _selectedFilters) {
+        if (!filtersBox.containsKey(filter)) {
+          filtersBox.put(filter, filter); // Salva il filtro nel box Hive
+        }
+      }
+
       List<Map<String, dynamic>> activities = await FilterService.getActivitiesByFilters(_selectedFilters, widget.currentLocation);
 
       // Ordina le attività in base alla distanza (in ordine crescente)

@@ -18,6 +18,7 @@ import '../../services/role_service/roleService.dart';
 import '../activities/list_activity_page.dart';
 import '../activity/ADV_page/adv_page.dart';
 import '../carusel/carousel_page.dart';
+import '../filter/active_filters_page.dart';
 import '../filter/filter_page.dart';
 import '../follower/follower_page.dart';
 import '../geolocation/find_location_page.dart';
@@ -250,6 +251,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           },
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_alt),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ActiveFiltersPage(),
+                ),
+              );
+            },
+            tooltip: 'Mostra Filtri Attivi',
+          ),
           IconButton(
             icon: const Icon(Icons.add_location),
             onPressed: _selectLocation,

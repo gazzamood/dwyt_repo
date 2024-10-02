@@ -5,6 +5,7 @@ import 'package:dwyt_test/services/firebase_service/auth.dart';
 import 'package:flutter/material.dart';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'firebase_options.dart';
 
 void main() async{
@@ -12,6 +13,8 @@ void main() async{
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await Hive.initFlutter();
+  await Hive.openBox<String>('activeFilters');
   runApp(const MyApp());
 }
 
