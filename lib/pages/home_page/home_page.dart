@@ -350,7 +350,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ActivityNotificationCenter(),
+                      builder: (context) => ActivityNotificationCenterPage(),
                     ),
                   );
                 },
