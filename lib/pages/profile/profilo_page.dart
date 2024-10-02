@@ -328,22 +328,18 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
               if (widget.userRole == 'users') _buildStatColumn(following, "Following"),
               _buildStatColumn(fidelity, "Fidelity"),
               if (widget.userRole == 'activities')
-                Row(
-                  children: [
-                    _buildStatColumn(followers, "Followers"),
-                    const SizedBox(width: 10), // Add some spacing
-                    ElevatedButton(
-                      onPressed: _toggleFollow, // Call the method to toggle follow/unfollow
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4D5B9F), // Button color
-                        foregroundColor: Colors.white, // Text color (white)
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0),
-                        ),
-                      ),
-                      child: Text(_isFollowing ? 'SMETTI' : 'SEGUI'), // Change text based on follow status
-                    )
-                  ],
+                _buildStatColumn(followers, "Followers"),
+              if (_currentUser != null && _currentUser!.uid != widget.profileId && widget.userRole == 'activities') // Mostra il pulsante solo se l'utente loggato è diverso dal profilo visualizzato e il profilo appartiene a un'attività
+                ElevatedButton(
+                  onPressed: _toggleFollow, // Chiama il metodo per seguire/smettere di seguire
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4D5B9F), // Colore del pulsante
+                    foregroundColor: Colors.white, // Colore del testo (bianco)
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15.0),
+                    ),
+                  ),
+                  child: Text(_isFollowing ? 'UNFOLLOW' : 'FOLLOW'), // Testo dinamico in base allo stato di follow
                 ),
             ],
           ),
