@@ -26,7 +26,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   String _surname = '';
   String _birthdate = '';
   String _addressUser = '';
-  String _phoneNumber = '';
+  //String _phoneNumber = '';
   String _type = '';
   String _description = '';
   String _contacts = '';
@@ -121,7 +121,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       _surname = profileData['surname'] ?? '';
       _birthdate = profileData['birthdate'] ?? '';
       _addressUser = profileData['addressUser'] ?? '';
-      _phoneNumber = profileData['phoneNumber'] ?? '';
+      //_phoneNumber = profileData['phoneNumber'] ?? '';
       fidelity = profileData['fidelity']?.toString() ?? '0';
     });
     await _fetchVotes(profileId, 'users');
@@ -290,15 +290,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                           ),
                         ),
                       ],
-                      const SizedBox(height: 10.0),
-                      Text(
-                        "$_addressUser",
-                        style: const TextStyle(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.grey,
-                        ),
-                      ),
                       const SizedBox(height: 10.0),
                       Text(
                         " $_contacts",

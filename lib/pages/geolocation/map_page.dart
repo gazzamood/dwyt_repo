@@ -222,6 +222,7 @@ class _MapPageState extends State<MapPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Map'),
+        backgroundColor: const Color(0xFF4D5B9F), // Set the color of the AppBar
         actions: [
           IconButton(
             icon: const Icon(Icons.list),

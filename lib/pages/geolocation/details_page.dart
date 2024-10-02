@@ -79,9 +79,9 @@ class DetailsPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    if (activity!.contatti != null)
+                    if (activity!.contacts != null)
                       Text(
-                        'Contacts: ${activity!.contatti}',
+                        'Contacts: ${activity!.contacts}',
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.black54,

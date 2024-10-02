@@ -8,7 +8,7 @@ class Activity {
   final String type;
   final String openingHours;
   final String addressActivity;
-  final String? contatti;
+  final String? contacts;
   final String? description;
 
   Activity({
@@ -19,7 +19,7 @@ class Activity {
     required this.type,
     required this.openingHours,
     required this.addressActivity,
-    this.contatti,
+    this.contacts,
     this.description,
   });
 
@@ -33,7 +33,7 @@ class Activity {
       type: data['type'] ?? '',
       openingHours: data['openingHours'] ?? '',
       addressActivity: data['addressActivity'] ?? '',
-      contatti: data['contatti'],
+      contacts: data['contacts'],
       description: data['description'],
     );
   }

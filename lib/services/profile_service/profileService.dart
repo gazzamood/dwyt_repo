@@ -12,7 +12,7 @@ class ProfileService {
       'surname': userSnapshot['surname'] ?? '',
       'birthdate': userSnapshot['birthdate'] ?? '',
       'addressUser': userSnapshot['addressUser'] ?? '',
-      'phoneNumber': userSnapshot['phoneNumber'] ?? '',
+      //'phoneNumber': userSnapshot['phoneNumber'] ?? '',
       'fidelity': userSnapshot['fidelity']?.toString() ?? '0',
     };
   }
