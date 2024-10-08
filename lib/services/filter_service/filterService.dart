@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geocoding/geocoding.dart';
 
 class FilterService {
+
   Future<List<String>> getUniqueFilters() async {
     final Set<String> uniqueFilterNames = {};
 
@@ -30,6 +31,22 @@ class FilterService {
 
     // Convert Set to List
     return uniqueFilterNames.toList();
+  }
+
+  Future<List<String>> getUniqueActivityTypes() async {
+    final Set<String> uniqueActivityTypes = {};
+
+    final QuerySnapshot<Map<String, dynamic>> snapshot =
+    await FirebaseFirestore.instance.collection('activities').get();
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      if (data != null && data.containsKey('type')) {
+        uniqueActivityTypes.add(data['type']);
+      }
+    }
+
+    return uniqueActivityTypes.toList();
   }
 
   static Future<void> addFilter(String userId, String filterName) async {
@@ -182,5 +199,51 @@ class FilterService {
     await FirebaseFirestore.instance.collection('activities').doc(userId).update({
       'description': description,
     });
+  }
+
+  Future<bool> isActivityType(String filter) async {
+    // Check if the filter exists as an activity type in the database
+    final QuerySnapshot<Map<String, dynamic>> snapshot =
+    await FirebaseFirestore.instance.collection('activities').where('type', isEqualTo: filter).get();
+
+    return snapshot.docs.isNotEmpty;
+  }
+
+  static Future<List<Map<String, dynamic>>> getActivitiesByType(String selectedType, String address) async {
+    List<Map<String, dynamic>> activities = [];
+
+    // Convert the address into latitude and longitude
+    try {
+      List<Location> locations = await locationFromAddress(address);
+      double currentLat = locations[0].latitude;
+      double currentLng = locations[0].longitude;
+
+      // Fetch activities of the given type from Firestore
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore.instance
+          .collection('activities')
+          .where('type', isEqualTo: selectedType)
+          .get();
+
+      for (var activityDoc in snapshot.docs) {
+        final data = activityDoc.data();
+        double activityLat = data['latitude'];
+        double activityLng = data['longitude'];
+
+        double distance = calculateDistance(currentLat, currentLng, activityLat, activityLng);
+
+        activities.add({
+          'id': activityDoc.id,
+          'name': data['name'],
+          'type': data['type'],
+          'fidelity': data['fidelity'],
+          'distance': distance,
+        });
+      }
+    } catch (e) {
+      print('Error converting address to coordinates: $e');
+      return [];
+    }
+
+    return activities;
   }
 }

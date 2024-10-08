@@ -24,66 +24,227 @@ class _FilterPageState extends State<FilterPage> {
   }
 
   void _showFilterDialog() {
-    setState(() {
-      _filtersFuture = FilterService().getUniqueFilters();
-    });
+    String searchQuery = ''; // Variabile per il testo di ricerca
+    Future<List<String>>? filtersFuture; // Carica i filtri solo quando necessario
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Filtri di Ricerca'),
-          content: FutureBuilder<List<String>>(
-            future: _filtersFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (snapshot.hasError) {
-                return Center(child: Text('Errore: ${snapshot.error}'));
-              }
-
-              final filters = snapshot.data ?? [];
-              return SingleChildScrollView(
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Filtri di Ricerca'),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8, // Larghezza 80% dello schermo
+                height: MediaQuery.of(context).size.height * 0.4, // Altezza dimezzata
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: filters.map((filter) {
-                    final isSelected = _selectedFilters.contains(filter);
-                    return ListTile(
-                      title: Text(
-                        filter,
-                        style: TextStyle(
-                          color: isSelected ? Colors.grey : Colors.black,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        ),
+                  children: [
+                    // Campo di testo per la ricerca dei filtri
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Cerca filtri',
+                        prefixIcon: Icon(Icons.search),
                       ),
-                      trailing: isSelected
-                          ? const Icon(Icons.check, color: Colors.green)
-                          : null,
-                      onTap: isSelected
-                          ? null
-                          : () {
+                      onChanged: (value) {
                         setState(() {
-                          _selectedFilters.add(filter);
+                          searchQuery = value.toLowerCase();
+                          if (searchQuery.isNotEmpty) {
+                            // Carica i filtri solo se l'utente ha inserito del testo
+                            filtersFuture = FilterService().getUniqueFilters();
+                          } else {
+                            // Se il campo di ricerca è vuoto, resetta i risultati
+                            filtersFuture = null;
+                          }
                         });
-                        Navigator.of(context).pop();
-                        _fetchActivities();
                       },
-                    );
-                  }).toList(),
+                    ),
+                    const SizedBox(height: 16.0),
+                    Expanded(
+                      child: filtersFuture == null
+                          ? const Center(
+                        child: Text('Inserisci del testo per cercare filtri'),
+                      )
+                          : FutureBuilder<List<String>>(
+                        future: filtersFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          }
+
+                          if (snapshot.hasError) {
+                            return Center(
+                                child: Text('Errore: ${snapshot.error}'));
+                          }
+
+                          final filters = snapshot.data
+                              ?.where((filter) => filter
+                              .toLowerCase()
+                              .contains(searchQuery))
+                              .toList() ??
+                              []; // Filtra i risultati in base al testo di ricerca
+
+                          return SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: filters.map((filter) {
+                                final isSelected =
+                                _selectedFilters.contains(filter);
+                                return ListTile(
+                                  title: Text(
+                                    filter,
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.grey
+                                          : Colors.black,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                    ),
+                                  ),
+                                  trailing: isSelected
+                                      ? const Icon(Icons.check,
+                                      color: Colors.green)
+                                      : null,
+                                  onTap: isSelected
+                                      ? null
+                                      : () {
+                                    setState(() {
+                                      _selectedFilters.add(filter);
+                                    });
+                                    Navigator.of(context).pop();
+                                    _fetchActivities();
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Annulla'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Annulla'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showTypeFilterDialog() {
+    String searchQuery = ''; // Variable for the search text
+    Future<List<String>>? typeFuture; // Load the types only when necessary
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Filtra per Tipologia'),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Text field for searching types
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Cerca tipologia',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value.toLowerCase();
+                          if (searchQuery.isNotEmpty) {
+                            // Load the types only if the user has entered text
+                            typeFuture = FilterService().getUniqueActivityTypes();
+                          } else {
+                            // Reset results if the search field is empty
+                            typeFuture = null;
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
+                    Expanded(
+                      child: typeFuture == null
+                          ? const Center(
+                        child: Text('Inserisci del testo per cercare tipologie'),
+                      )
+                          : FutureBuilder<List<String>>(
+                        future: typeFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+
+                          if (snapshot.hasError) {
+                            return Center(child: Text('Errore: ${snapshot.error}'));
+                          }
+
+                          final types = snapshot.data
+                              ?.where((type) => type.toLowerCase().contains(searchQuery))
+                              .toList() ??
+                              [];
+
+                          return SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: types.map((type) {
+                                final isSelected = _selectedFilters.contains(type);
+                                return ListTile(
+                                  title: Text(
+                                    type,
+                                    style: TextStyle(
+                                      color: isSelected ? Colors.grey : Colors.black,
+                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                    ),
+                                  ),
+                                  trailing: isSelected
+                                      ? const Icon(Icons.check, color: Colors.green)
+                                      : null,
+                                  onTap: isSelected
+                                      ? null
+                                      : () {
+                                    setState(() {
+                                      _selectedFilters.add(type);
+                                    });
+                                    Navigator.of(context).pop();
+                                    _fetchActivities();
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Annulla'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -94,15 +255,27 @@ class _FilterPageState extends State<FilterPage> {
       var filtersBox = Hive.box<String>('activeFilters');
       for (var filter in _selectedFilters) {
         if (!filtersBox.containsKey(filter)) {
-          filtersBox.put(filter, filter); // Salva il filtro nel box Hive
+          filtersBox.put(filter, filter); // Save the filter in the Hive box
         }
       }
 
-      List<Map<String, dynamic>> activities =
-      await FilterService.getActivitiesByFilters(
-          _selectedFilters, widget.currentLocation);
+      List<Map<String, dynamic>> activities = [];
 
-      // Ordina le attività in base alla distanza (in ordine crescente)
+      // Fetch activities based on the selected filters (interest filters and type filters)
+      for (var filter in _selectedFilters) {
+        // Check if the filter is a type or an interest and call the appropriate method
+        if (await FilterService().isActivityType(filter)) {
+          // Fetch activities filtered by type
+          var typeActivities = await FilterService.getActivitiesByType(filter, widget.currentLocation);
+          activities.addAll(typeActivities);
+        } else {
+          // Fetch activities filtered by interest
+          var interestActivities = await FilterService.getActivitiesByFilters([filter], widget.currentLocation);
+          activities.addAll(interestActivities);
+        }
+      }
+
+      // Sort activities based on distance (ascending order)
       activities.sort((a, b) {
         double distanceA = a['distance'] ?? double.infinity;
         double distanceB = b['distance'] ?? double.infinity;
@@ -297,6 +470,44 @@ class _FilterPageState extends State<FilterPage> {
     );
   }
 
+  Widget _buildTypeFilterButton() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Filtra per tipologia:',
+            style: TextStyle(
+              fontSize: 18.0,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+          ),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.add, size: 30),
+                color: const Color(0xFF4D5B9F),
+                onPressed: _showTypeFilterDialog,
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, size: 30),
+                color: Colors.red,
+                onPressed: () {
+                  setState(() {
+                    _selectedFilters.clear(); // Clears all filters
+                    _fetchActivities(); // Refreshes activities without filters
+                  });
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -304,6 +515,7 @@ class _FilterPageState extends State<FilterPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _buildFilterButton(),
+          _buildTypeFilterButton(),
           _buildSelectedFilters(),
           _buildActivitiesList(),
         ],
