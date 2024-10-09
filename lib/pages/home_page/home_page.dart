@@ -194,14 +194,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _refreshData() async {
     await _loadPlaces();
     await _getUserPosition();
-    if (placesList.isNotEmpty) {
+
+    // Verifica che la lista dei luoghi non sia vuota e che il widget sia ancora montato
+    if (placesList.isNotEmpty && mounted) {
       setState(() {
         _currentCarouselIndex = 0;
       });
+
       Position firstPosition = convertLatLongToPosition(
         placesList[0].latitude,
         placesList[0].longitude,
       );
+
+      // Controlla se _notificaPageKey.currentState non è nullo prima di accedere alle sue proprietà
       if (_notificaPageKey.currentState != null) {
         _notificaPageKey.currentState!.userPosition = firstPosition;
         _notificaPageKey.currentState!.loadNotifications();

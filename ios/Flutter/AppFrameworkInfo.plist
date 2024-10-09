@@ -22,5 +22,11 @@
   <string>1.0</string>
   <key>MinimumOSVersion</key>
   <string>12.0</string>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>Your photo library usage description</string>
+  <key>NSCameraUsageDescription</key>
+  <string>Your camera usage description</string>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Your microphone usage description</string>
 </dict>
 </plist>
