@@ -3,10 +3,12 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart';
 
 import '../../../services/notification_service/predefine_alert_service.dart';
+import '../../services/notification_service/PhotoService.dart';
 import '../activity/send_adv_page/sendAdv.dart';
 import '../home_page/home_page.dart';
 
@@ -24,10 +26,15 @@ class _AllertaPageState extends State<AllertaPage> {
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _radiusController = TextEditingController(text: '1');
   final AlertService _alertService = AlertService();
+  final PhotoService _photoService = PhotoService();
 
   loc.LocationData? _currentLocation;
   String? _locationMessage;
   bool _isAlert = true; // Variabile di stato per il tipo di messaggio (true = allerta, false = info)
+  XFile? _selectedPhoto;
+  String? _photoUrl;
+  String? _uploadStatusMessage;
+
 
 
   Future<void> _getLocation() async {
@@ -99,14 +106,69 @@ class _AllertaPageState extends State<AllertaPage> {
     return await location.getLocation();
   }
 
+  Future<void> _attachPhoto() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Allega Foto'),
+          content: const Text('Vuoi scattare una foto o scegliere dalla galleria?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                final photo = await _photoService.takePhoto();
+                if (photo != null) {
+                  final uploadedUrl = await _photoService.uploadPhoto(photo);
+                  if (uploadedUrl != null) {
+                    setState(() {
+                      _selectedPhoto = photo;
+                      _photoUrl = uploadedUrl;
+                      _uploadStatusMessage = 'Foto caricata con successo. Nome file: ${photo.name}';
+                    });
+                  } else {
+                    print('Upload failed: Unable to get the photo URL.');
+                  }
+                } else {
+                  print('Photo capture failed.');
+                }
+              },
+              child: const Text('Scatta Foto'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                final photo = await _photoService.pickPhotoFromGallery();
+                if (photo != null) {
+                  final uploadedUrl = await _photoService.uploadPhoto(photo);
+                  if (uploadedUrl != null) {
+                    setState(() {
+                      _selectedPhoto = photo;
+                      _photoUrl = uploadedUrl;
+                      _uploadStatusMessage = 'Foto caricata con successo. Nome file: ${photo.name}';
+                    });
+                  } else {
+                    print('Upload failed: Unable to get the photo URL.');
+                  }
+                } else {
+                  print('Photo selection from gallery failed.');
+                }
+              },
+              child: const Text('Scegli dalla Galleria'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _sendAlert() async {
     final title = _titleController.text;
     final message = _messageController.text;
-    //final radius = _radiusController.text;
     final senderId = FirebaseAuth.instance.currentUser!.uid;
 
     if (title.isEmpty || message.isEmpty) {
-      // Mostra un popup di errore se il titolo o il messaggio è vuoto
+      // Show error dialog if title or message is empty
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -125,6 +187,31 @@ class _AllertaPageState extends State<AllertaPage> {
         },
       );
       return;
+    }
+
+    // Upload the photo to Firebase Storage if there is one and it has not already been uploaded
+    if (_selectedPhoto != null && _photoUrl == null) {
+      _photoUrl = await _photoService.uploadPhoto(_selectedPhoto!);
+      if (_photoUrl == null) {
+        // If the photo upload fails, show an error and continue without the photo
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Errore'),
+              content: const Text('Errore durante il caricamento della foto. Il messaggio verrà inviato senza la foto.'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
     }
 
     loc.LocationData? location = _currentLocation;
@@ -152,37 +239,29 @@ class _AllertaPageState extends State<AllertaPage> {
       }
     }
 
-    // Check userRole to determine from which collection to retrieve fidelity
-    String userRole = 'users'; // Puoi cambiarlo in base alla logica del tuo sistema
     int fidelity = 0;
 
     try {
-      // Recupero del valore di fedeltà dalla tabella corretta
       DocumentSnapshot snapshot;
-
-      if (userRole == 'users') {
+      if (widget.userRole == 'users') {
         snapshot = await FirebaseFirestore.instance.collection('users').doc(senderId).get();
       } else {
         snapshot = await FirebaseFirestore.instance.collection('activities').doc(senderId).get();
       }
 
       if (snapshot.exists) {
-        // Se il documento esiste, prendi il valore della fedeltà
         fidelity = snapshot.get('fidelity') ?? 0;
-      } else {
-        fidelity = 0; // Se il documento non esiste, imposta fedeltà a 0
       }
     } catch (e) {
       print('Errore durante il recupero della fedeltà: $e');
       fidelity = 0;
     }
 
-    // Creazione dei dati della notifica, incluso il campo fidelity
     Map<String, dynamic> alertData = {
       'title': title,
       'message': message,
       'timestamp': FieldValue.serverTimestamp(),
-      'expirationTime': DateTime.now().add(const Duration(hours: 6)), // Imposta la scadenza a 6 ore
+      'expirationTime': DateTime.now().add(const Duration(hours: 6)),
       'senderId': senderId,
       'readBy': [],
       'type': _isAlert ? 'allerta' : 'info',
@@ -190,7 +269,8 @@ class _AllertaPageState extends State<AllertaPage> {
         'latitude': location.latitude,
         'longitude': location.longitude,
       },
-      'fidelity': fidelity, // Aggiunta del campo fidelity
+      'fidelity': fidelity,
+      'photo': _photoUrl ?? '', // This will include the photo URL if present, otherwise it will be an empty string
     };
 
     try {
@@ -221,16 +301,17 @@ class _AllertaPageState extends State<AllertaPage> {
 
       _titleController.clear();
       _messageController.clear();
-      //_radiusController.clear();
       setState(() {
         _currentLocation = null;
         _locationMessage = null;
+        _selectedPhoto = null;
+        _photoUrl = null;
+        _uploadStatusMessage = null;
       });
 
       await alertRef.update({
         'readBy': FieldValue.arrayUnion([senderId]),
       });
-
     } catch (e) {
       print('Errore durante l\'invio dell\'allerta: $e');
       showDialog(
@@ -430,6 +511,38 @@ class _AllertaPageState extends State<AllertaPage> {
                         style: TextStyle(fontSize: 18.0),
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 16.0), // Spacer
+                Column(
+                  children: <Widget>[
+                    ElevatedButton(
+                      onPressed: _attachPhoto,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+                      ),
+                      child: const Text(
+                        'Allega Foto',
+                        style: TextStyle(fontSize: 18.0),
+                      ),
+                    ),
+                    if (_uploadStatusMessage != null) // Check if there is a message to display
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          _uploadStatusMessage!,
+                          style: const TextStyle(color: Colors.green, fontSize: 16.0),
+                        ),
+                      ),
+                    if (_selectedPhoto != null) // Check if a photo is attached
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          'Nome file allegato: ${_selectedPhoto!.name}', // Display the file name
+                          style: const TextStyle(color: Colors.black, fontSize: 16.0),
+                        ),
+                      ),
+                    const SizedBox(height: 16.0), // Add more spacing after the message
                   ],
                 ),
                 const SizedBox(height: 16.0), // Aggiungi spazio finale per separazione dal fondo
