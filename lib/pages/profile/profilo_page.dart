@@ -309,8 +309,10 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              if (widget.userRole == 'users') _buildStatColumn(following, "Following"),
-              _buildStatColumn(fidelity, "Fidelity"),
+              if (widget.userRole == 'users')
+                _buildStatColumn(following, "Following"),
+              if (widget.userRole == 'users')
+                _buildStatColumn(fidelity, "Fidelity"),
               if (widget.userRole == 'activities')
                 _buildStatColumn(followers, "Followers"),
               if (_currentUser != null && _currentUser!.uid != widget.profileId && widget.userRole == 'activities') // Mostra il pulsante solo se l'utente loggato è diverso dal profilo visualizzato e il profilo appartiene a un'attività
