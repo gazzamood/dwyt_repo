@@ -19,17 +19,19 @@ class ProfileService {
 
   static Future<Map<String, dynamic>> getActivityProfile(String userId) async {
     DocumentSnapshot activitySnapshot = await FirebaseFirestore.instance
-        .collection('activities') // Adjust the collection name as needed
+        .collection('activities')
         .doc(userId)
         .get();
 
     return {
       'name': activitySnapshot['name'] ?? '',
-      'type': activitySnapshot['type'] ?? '', // Include activity type if needed
+      'type': activitySnapshot['type'] ?? '',
       'description': activitySnapshot['description'] ?? '',
       'contacts': activitySnapshot['contacts'] ?? '',
       'addressActivity': activitySnapshot['addressActivity'] ?? '',
-      'fidelity': activitySnapshot['fidelity'] ?? 0, // Default to 0 if not set
+      'latitude': activitySnapshot['latitude'] ?? 0.0, // Add latitude
+      'longitude': activitySnapshot['longitude'] ?? 0.0, // Add longitude
+      'fidelity': activitySnapshot['fidelity'] ?? 0,
     };
   }
 

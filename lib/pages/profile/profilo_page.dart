@@ -3,10 +3,12 @@ import 'package:dwyt_test/pages/profile/passFidelity_page/PassFidelityPage.dart'
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../class/Activity.dart';
 import '../../services/fidelity_service/fidelityService.dart';
 import '../../services/follower_service/followerService.dart';
 import '../../services/profile_service/profileService.dart';
 import '../../services/votes_service/votesService.dart';
+import '../geolocation/map_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userRole; // Role: 'users' or 'activities'
@@ -33,6 +35,9 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   String following = "0"; // Updated following count
   String followers = "0";
   String fidelity = "0";
+  double _latitude = 0.0;
+  double _longitude = 0.0;
+
 
   bool isCurrentUserProfile = false; // New: to check if the profile belongs to the current user
   List<Map<String, dynamic>> votesList = [];
@@ -136,6 +141,8 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       _addressUser = activityData['addressActivity'] ?? '';
       _contacts = activityData['contacts'] ?? '';
       fidelity = activityData['fidelity']?.toString() ?? '0';
+      _latitude = activityData['latitude'] ?? 0.0;
+      _longitude = activityData['longitude'] ?? 0.0;
     });
     await _fetchVotes(profileId, 'activities');
   }
@@ -494,13 +501,53 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   Widget _buildDescriptionView() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Text(
-        _description.isNotEmpty ? _description : "No description available",
-        style: const TextStyle(
-          fontSize: 16.0,
-          fontWeight: FontWeight.w400,
-          color: Colors.grey,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () {
+              // Naviga alla pagina della mappa e mostra la posizione dell'attività
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => MapPage(
+                    initialActivity: Activity(
+                      id: widget.profileId,
+                      name: _name,
+                      type: _type, // Add the required 'type' parameter
+                      addressActivity: _addressUser, // Add the 'addressActivity' parameter using the address you already have
+                      latitude: _latitude,
+                      longitude: _longitude,
+                    )
+                  ),
+                ),
+              );
+            },
+            child: const Row(
+              children: [
+                Icon(Icons.map, color: Colors.blue),
+                SizedBox(width: 5.0),
+                Text(
+                  "Siamo qui",
+                  style: TextStyle(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10.0),
+          Text(
+            _description.isNotEmpty ? _description : "No description available",
+            style: const TextStyle(
+              fontSize: 16.0,
+              fontWeight: FontWeight.w400,
+              color: Colors.grey,
+            ),
+          ),
+        ],
       ),
     );
   }
