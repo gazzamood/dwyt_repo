@@ -8,6 +8,7 @@ class Notification {
   final String title;
   final String message;
   final String senderId;
+  final String photo;
 
   Notification({
     required this.id,
@@ -17,6 +18,7 @@ class Notification {
     required this.title,
     required this.message,
     required this.senderId,
+    required this.photo,
   });
 
   factory Notification.fromFirestore(DocumentSnapshot doc) {
@@ -31,6 +33,7 @@ class Notification {
       title: data['title']?.toString() ?? "",
       message: data['message']?.toString() ?? "",
       senderId: data['senderId']?.toString() ?? "",
+      photo: data['photo']?.toString() ?? "",
     );
   }
 }
