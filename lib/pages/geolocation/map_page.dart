@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../class/Activity.dart';
 import '../../../class/Notification.dart' as not;
+import '../../services/map_service/MapService.dart';
 import '../activities/list_activity_page.dart';
 import '../profile/profilo_page.dart';
 
@@ -23,6 +24,7 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   final Completer<GoogleMapController> _controller = Completer<GoogleMapController>();
+  final MapService _mapService = MapService();
 
   final Set<Marker> _markers = {};
   final Set<Circle> _circles = {}; // Set to store circles
@@ -141,7 +143,13 @@ class _MapPageState extends State<MapPage> {
                 title: 'Notification',
                 snippet: 'Message: ${notification.message}',
                 onTap: () {
-                  _onMarkerTappedNotification(notification);
+                  // Utilizza il metodo showNotificationDialog di MapService
+                  _mapService.showNotificationDialog(
+                    context,
+                    notification.message,
+                    notification.id,
+                    canVote: true,
+                  );
                 },
               ),
             );
