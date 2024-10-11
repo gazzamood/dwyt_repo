@@ -136,72 +136,95 @@ class NotificaPageState extends State<NotificaPage> with SingleTickerProviderSta
       itemCount: notifications.length,
       itemBuilder: (context, index) {
         var notification = notifications[index];
-        return Container(
-          color: notification['readBy'].contains(userId) ? Colors.grey[300] : Colors.white,
-          child: ListTile(
-            leading: notification['type'] == 'allerta'
-                ? const Icon(Icons.warning, color: Colors.red)
-                : const Icon(Icons.info, color: Colors.blue),
-            title: Text(notification['title']),
-            subtitle: Text(notification['timestamp']),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Verifica se la notifica contiene il valore di fedeltà e mostralo
-                if (notification.containsKey('fidelity'))
-                  Text(
-                    notification['fidelity'].toString(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24,
-                    ),
-                  ),
-                const SizedBox(width: 10),
-                IconButton(
-                  icon: const Icon(Icons.map),
-                  onPressed: () {
-                    // Vai alla pagina della mappa e mostra la posizione della notifica
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => MapPage(
-                          initialActivity: null, // Nessuna attività specifica
-                          initialNotification: notification, // Passa la notifica selezionata
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15.0),
+            ),
+            elevation: 5,
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(16.0),
+              leading: notification['type'] == 'allerta'
+                  ? const Icon(Icons.warning, color: Colors.red)
+                  : const Icon(Icons.info, color: Colors.blue),
+              title: Text(
+                notification['title'],
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              subtitle: Text(
+                notification['timestamp'],
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 14,
+                ),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (notification.containsKey('fidelity'))
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Text(
+                        notification['fidelity'].toString(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Colors.green,
                         ),
                       ),
-                    );
-                  },
-                ),
-                if (canVote)
+                    ),
                   IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () async {
-                      bool? confirm = await _showDeleteConfirmationDialog(context);
-                      if (confirm == true) {
-                        await _deleteNotification(notification['id']);
-                      }
+                    icon: const Icon(Icons.map, color: Colors.blue),
+                    onPressed: () {
+                      // Vai alla pagina della mappa e mostra la posizione della notifica
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => MapPage(
+                            initialActivity: null, // Nessuna attività specifica
+                            initialNotification: notification, // Passa la notifica selezionata
+                          ),
+                        ),
+                      );
                     },
                   ),
-              ],
-            ),
-            onTap: () async {
-              String message = notification['message'];
-              if (notification.containsKey('location')) {
-                double latitude = notification['location']['latitude'];
-                double longitude = notification['location']['longitude'];
+                  if (canVote)
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () async {
+                        bool? confirm = await _showDeleteConfirmationDialog(context);
+                        if (confirm == true) {
+                          await _deleteNotification(notification['id']);
+                        }
+                      },
+                    ),
+                ],
+              ),
+              onTap: () async {
+                String message = notification['message'];
+                if (notification.containsKey('location')) {
+                  double latitude = notification['location']['latitude'];
+                  double longitude = notification['location']['longitude'];
 
-                try {
-                  List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
-                  Placemark place = placemarks[0];
-                  String address = '${place.street}, ${place.locality}, ${place.country}';
-                  message += '\nPosizione: $address';
-                } catch (e) {
-                  message += '\nPosizione: Lat: $latitude, Lon: $longitude';
+                  try {
+                    List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+                    Placemark place = placemarks[0];
+                    String address = '${place.street}, ${place.locality}, ${place.country}';
+                    message += '\nPosizione: $address';
+                  } catch (e) {
+                    message += '\nPosizione: Lat: $latitude, Lon: $longitude';
+                  }
                 }
-              }
 
-              markNotificationAsRead(notification['id']);
-              showNotificationDialog(context, message, notification['id'], canVote: canVote);
-            },
+                markNotificationAsRead(notification['id']);
+                showNotificationDialog(context, message, notification['id'], canVote: canVote);
+              },
+            ),
           ),
         );
       },

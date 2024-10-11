@@ -283,31 +283,41 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.white, Colors.white],
+            colors: [Color(0xFFE3F2FD), Colors.white],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            CarouselPage(
-              placesList: placesList,
-              currentIndex: _currentCarouselIndex,
-              onPageChanged: _onCarouselPageChanged,
+            const SizedBox(height: 10), // Aggiunta di spaziatura in cima
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: CarouselPage(
+                placesList: placesList,
+                currentIndex: _currentCarouselIndex,
+                onPageChanged: _onCarouselPageChanged,
+              ),
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: Card(
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-                elevation: 4,
-                child: NotificaPage(
-                  key: _notificaPageKey,
-                  userPosition: placesList.isNotEmpty
-                      ? convertLatLongToPosition(
-                    placesList[_currentCarouselIndex].latitude,
-                    placesList[_currentCarouselIndex].longitude,
-                  )
-                      : null,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Card(
+                  elevation: 5,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  child: NotificaPage(
+                    key: _notificaPageKey,
+                    userPosition: placesList.isNotEmpty
+                        ? convertLatLongToPosition(
+                      placesList[_currentCarouselIndex].latitude,
+                      placesList[_currentCarouselIndex].longitude,
+                    )
+                        : null,
+                  ),
                 ),
               ),
             ),
@@ -320,54 +330,57 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         elevation: 15.0,  // Aggiunge profondità tramite un'ombra
         shadowColor: Colors.black.withOpacity(0.5),  // Colore dell'ombra
         notchMargin: 8.0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            IconButton(
-              icon: const Icon(Icons.map, size: 30, color: Colors.white),
-              onPressed: _navigateToMap,
-              tooltip: 'Mappa',
-            ),
-            IconButton(
-              icon: Icon(
-                userRole == 'activities' ? Icons.announcement : Icons.search,
-                size: 30,
-                color: Colors.white,
-              ),
-              onPressed: () {
-                if (userRole == 'activities') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ADVPage(user!.uid)),
-                  );
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => FollowerPage(currentLocation: currentLocation)),
-                  );
-                }
-              },
-              tooltip: 'Cerca',
-            ),
-            if (userRole == 'users') // Condizione per mostrare l'icona solo agli utenti 'users'
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0), // Migliora la spaziatura verticale
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
               IconButton(
-                icon: const Icon(Icons.notifications, size: 30, color: Colors.white),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ActivityNotificationCenterPage(),
-                    ),
-                  );
-                },
-                tooltip: 'Notifiche Attività',
+                icon: const Icon(Icons.map, size: 30, color: Colors.white),
+                onPressed: _navigateToMap,
+                tooltip: 'Mappa',
               ),
-            IconButton(
-              icon: const Icon(Icons.send, size: 30, color: Colors.white),
-              onPressed: _navigateToAllerta,
-              tooltip: 'Allerta',
-            ),
-          ],
+              IconButton(
+                icon: Icon(
+                  userRole == 'activities' ? Icons.announcement : Icons.search,
+                  size: 30,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  if (userRole == 'activities') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ADVPage(user!.uid)),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => FollowerPage(currentLocation: currentLocation)),
+                    );
+                  }
+                },
+                tooltip: 'Cerca',
+              ),
+              if (userRole == 'users') // Condizione per mostrare l'icona solo agli utenti 'users'
+                IconButton(
+                  icon: const Icon(Icons.notifications, size: 30, color: Colors.white),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ActivityNotificationCenterPage(),
+                      ),
+                    );
+                  },
+                  tooltip: 'Notifiche Attività',
+                ),
+              IconButton(
+                icon: const Icon(Icons.send, size: 30, color: Colors.white),
+                onPressed: _navigateToAllerta,
+                tooltip: 'Allerta',
+              ),
+            ],
+          ),
         ),
       ),
     );
