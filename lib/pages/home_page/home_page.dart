@@ -148,9 +148,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _loadPlaces() async {
     if (user != null) {
       List<Place> fetchedPlaces = await _carouselService.getPlacesList(user!.uid);
-      setState(() {
-        placesList = fetchedPlaces;
-      });
+      if (mounted) {
+        setState(() {
+          placesList = fetchedPlaces;
+        });
+      }
     }
   }
 
@@ -195,7 +197,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     await _loadPlaces();
     await _getUserPosition();
 
-    // Verifica che la lista dei luoghi non sia vuota e che il widget sia ancora montato
+    // Ensure that the widget is still mounted before calling setState
     if (placesList.isNotEmpty && mounted) {
       setState(() {
         _currentCarouselIndex = 0;
@@ -206,7 +208,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         placesList[0].longitude,
       );
 
-      // Controlla se _notificaPageKey.currentState non è nullo prima di accedere alle sue proprietà
       if (_notificaPageKey.currentState != null) {
         _notificaPageKey.currentState!.userPosition = firstPosition;
         _notificaPageKey.currentState!.loadNotifications();

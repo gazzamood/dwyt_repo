@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
@@ -31,30 +32,25 @@ class PhotoService {
   /// Uploads the selected photo to Firebase Storage and returns the download URL.
   Future<String?> uploadPhoto(XFile photo) async {
     try {
-      // Create a File object from the XFile path
-      final File imageFile = File(photo.path);
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        print('Errore: Utente non autenticato. Effettua l\'accesso prima di caricare il file.');
+        return null;
+      }
 
-      // Check if the file exists at the specified path
+      final File imageFile = File(photo.path);
       if (!imageFile.existsSync()) {
         print('File does not exist at the specified path.');
         return null;
       }
 
-      // Generate a unique file name based on the current timestamp
       final String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-
-      // Reference to the location in Firebase Storage where the file will be uploaded
       final Reference storageRef = FirebaseStorage.instance.ref().child('uploads/$fileName');
 
-      // Start the upload task
       final UploadTask uploadTask = storageRef.putFile(imageFile);
-
-      // Wait for the upload to complete and get the TaskSnapshot
       final TaskSnapshot snapshot = await uploadTask.whenComplete(() => null);
 
-      // Get the download URL of the uploaded image
       final String downloadUrl = await snapshot.ref.getDownloadURL();
-
       print('Photo uploaded successfully. Download URL: $downloadUrl');
       return downloadUrl;
     } catch (e) {
