@@ -359,8 +359,8 @@ class _FilterPageState extends State<FilterPage> {
         itemCount: _activities.length,
         itemBuilder: (context, index) {
           final activity = _activities[index];
-          final activityId = activity['id']; // Assume che 'id' contenga l'ID dell'attività
-          final fidelity = activity['fidelity'] ?? 'N/A';
+          final activityId = activity['id']; // Assume that 'id' contains the activity's ID
+          final followerCount = activity['followers'] ?? 'N/A'; // Display the number of followers
           final distance = activity['distance'] != null
               ? '${activity['distance'].toStringAsFixed(2)} km'
               : 'N/A';
@@ -376,7 +376,7 @@ class _FilterPageState extends State<FilterPage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Espandi la parte del titolo e descrizione
+                  // Expanding the part for title and description
                   Expanded(
                     child: ListTile(
                       title: Text(
@@ -389,13 +389,13 @@ class _FilterPageState extends State<FilterPage> {
                         style: const TextStyle(fontSize: 16),
                       ),
                       onTap: () {
-                        // Naviga verso la pagina del profilo dell'attività passando l'ID
+                        // Navigate to the activity profile page passing the activity ID
                         if (activityId != null) {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  ProfilePage('activities', activityId), // Passa l'ID dell'attività
+                                  ProfilePage('activities', activityId), // Pass the activity ID
                             ),
                           );
                         } else {
@@ -407,14 +407,14 @@ class _FilterPageState extends State<FilterPage> {
                       },
                     ),
                   ),
-                  // Spazio per la fedeltà e distanza sulla destra
+                  // Space for followers count and distance on the right
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        fidelity.toString(),
+                        '$followerCount',
                         style: const TextStyle(
-                            fontSize: 34, color: Colors.grey),
+                            fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                       Text(
                         distance,

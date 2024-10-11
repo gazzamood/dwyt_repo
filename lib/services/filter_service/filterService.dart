@@ -155,7 +155,7 @@ class FilterService {
                 'id': activityDoc.id,
                 'name': data['name'],
                 'type': data['type'],
-                'fidelity': data['fidelity'],
+                'followers': data['followers'],
                 'distance': distance,
               });
             }
@@ -235,7 +235,7 @@ class FilterService {
           'id': activityDoc.id,
           'name': data['name'],
           'type': data['type'],
-          'fidelity': data['fidelity'],
+          'followers': data['followers'],
           'distance': distance,
         });
       }
