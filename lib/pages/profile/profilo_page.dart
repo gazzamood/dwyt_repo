@@ -500,51 +500,74 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
 
   Widget _buildDescriptionView() {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Margini laterali leggeri
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
-            onTap: () {
-              // Naviga alla pagina della mappa e mostra la posizione dell'attività
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => MapPage(
-                    initialActivity: Activity(
-                      id: widget.profileId,
-                      name: _name,
-                      type: _type, // Add the required 'type' parameter
-                      addressActivity: _addressUser, // Add the 'addressActivity' parameter using the address you already have
-                      latitude: _latitude,
-                      longitude: _longitude,
-                    )
+          SizedBox(
+            width: double.infinity, // Imposta il pulsante per occupare tutta la larghezza
+            child: ElevatedButton(
+              onPressed: () {
+                // Naviga alla pagina della mappa e mostra la posizione dell'attività
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => MapPage(
+                      initialActivity: Activity(
+                        id: widget.profileId,
+                        name: _name,
+                        type: _type, // Parametro obbligatorio 'type'
+                        addressActivity: _addressUser, // Indirizzo dell'attività
+                        latitude: _latitude,
+                        longitude: _longitude,
+                      ),
+                    ),
                   ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue, // Colore di sfondo del pulsante
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0), // Bordi arrotondati
                 ),
-              );
-            },
-            child: const Row(
-              children: [
-                Icon(Icons.map, color: Colors.blue),
-                SizedBox(width: 5.0),
-                Text(
-                  "Siamo qui",
-                  style: TextStyle(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
-                    decoration: TextDecoration.underline,
-                  ),
+                padding: const EdgeInsets.symmetric(vertical: 14.0),
+              ),
+              child: const Text(
+                "Siamo qui",
+                style: TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white, // Colore del testo
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20.0),
+          Container(
+            width: double.infinity, // Imposta il contenitore per occupare tutta la larghezza
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10.0), // Bordi arrotondati per il contenitore
+              border: Border.all(
+                color: Colors.grey.shade300, // Colore del bordo
+                width: 1.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3), // Ombra leggera
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3), // Posizione dell'ombra
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 10.0),
-          Text(
-            _description.isNotEmpty ? _description : "No description available",
-            style: const TextStyle(
-              fontSize: 16.0,
-              fontWeight: FontWeight.w400,
-              color: Colors.grey,
+            child: Text(
+              _description.isNotEmpty ? _description : "No description available",
+              style: const TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.w400,
+                color: Colors.grey,
+              ),
             ),
           ),
         ],
