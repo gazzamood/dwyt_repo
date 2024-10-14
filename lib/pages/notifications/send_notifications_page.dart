@@ -124,7 +124,7 @@ class _AllertaPageState extends State<AllertaPage> {
                     setState(() {
                       _selectedPhoto = photo;
                       _photoUrl = uploadedUrl;
-                      _uploadStatusMessage = 'Foto caricata con successo. Nome file: ${photo.name}';
+                      _uploadStatusMessage = 'Foto caricata con successo.';
                     });
                   } else {
                     print('Upload failed: Unable to get the photo URL.');
@@ -145,7 +145,7 @@ class _AllertaPageState extends State<AllertaPage> {
                     setState(() {
                       _selectedPhoto = photo;
                       _photoUrl = uploadedUrl;
-                      _uploadStatusMessage = 'Foto caricata con successo. Nome file: ${photo.name}';
+                      _uploadStatusMessage = 'Foto caricata con successo.';
                     });
                   } else {
                     print('Upload failed: Unable to get the photo URL.');
