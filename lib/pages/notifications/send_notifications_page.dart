@@ -535,11 +535,11 @@ class _AllertaPageState extends State<AllertaPage> {
                         ),
                       ),
                     if (_selectedPhoto != null) // Check if a photo is attached
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8.0),
                         child: Text(
-                          'Nome file allegato: ${_selectedPhoto!.name}', // Display the file name
-                          style: const TextStyle(color: Colors.black, fontSize: 16.0),
+                          'Foto caricata con successo.', // Show only a success message
+                          style: TextStyle(color: Colors.black, fontSize: 16.0),
                         ),
                       ),
                     const SizedBox(height: 16.0), // Add more spacing after the message
