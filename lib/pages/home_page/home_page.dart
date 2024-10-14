@@ -257,7 +257,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             ];
           },
         ),
-        actions: [
+        actions: [/*
           IconButton(
             icon: const Icon(Icons.filter_alt),
             onPressed: () {
@@ -269,7 +269,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               );
             },
             tooltip: 'Mostra Filtri Attivi',
-          ),
+          ),*/
           IconButton(
             icon: const Icon(Icons.add_location),
             onPressed: _selectLocation,
