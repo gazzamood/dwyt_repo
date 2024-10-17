@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dwyt_test/pages/follower/follower_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -201,14 +202,6 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  void _navigateToCercaAttivita() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const CercaAttivitaPage(),
-      ),
-    );
-  }
-
   void _clearSelectedActivity() {
     setState(() {
       _selectedActivity = null;
@@ -231,12 +224,6 @@ class _MapPageState extends State<MapPage> {
       appBar: AppBar(
         title: const Text('Map'),
         backgroundColor: const Color(0xFF4D5B9F), // Set the color of the AppBar
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.list),
-            onPressed: _navigateToCercaAttivita,
-          ),
-        ],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
