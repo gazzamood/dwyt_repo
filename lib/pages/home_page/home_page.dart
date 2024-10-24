@@ -283,7 +283,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFE3F2FD), Colors.white],
+            colors: [Colors.white, Color(0xFFB9B9B9)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
