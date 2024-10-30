@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +35,8 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
   final TextEditingController _addressActivity = TextEditingController();
 
   bool _isUtente = true; // To select between user or activity registration
+  Timer? _debounce;
+  List<String> _suggestions = [];
 
   void switchToUtente() {
     setState(() {
@@ -44,6 +48,56 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
     setState(() {
       _isUtente = false;
     });
+  }
+
+  // Funzione per la ricerca dell'indirizzo con debounce
+  void _onAddressChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      _fetchAddressSuggestions(query);
+    });
+  }
+
+  Future<void> _fetchAddressSuggestions(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _suggestions = [];
+      });
+      return;
+    }
+
+    try {
+      List<Location> locations = await locationFromAddress(query);
+      if (locations.isNotEmpty) {
+        List<Placemark> placemarks = await placemarkFromCoordinates(
+          locations[0].latitude,
+          locations[0].longitude,
+        );
+
+        List<String> suggestions = placemarks
+            .map((place) => '${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}')
+            .toList();
+
+        if (mounted) {
+          setState(() {
+            _suggestions = suggestions;
+          });
+        }
+      }
+    } catch (e) {
+      print("Errore durante il recupero dei suggerimenti di indirizzo: $e");
+      setState(() {
+        _suggestions = [];
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _addressUser.dispose();
+    _addressActivity.dispose();
+    super.dispose();
   }
 
   Future<void> registerUserOrAttivita() async {
@@ -380,6 +434,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
         const SizedBox(height: 20),
         TextFormField(
           controller: _addressUser,
+          onChanged: _onAddressChanged, // Usa il debounce per suggerimenti in tempo reale
           decoration: InputDecoration(
             hintText: "Address",
             border: OutlineInputBorder(
@@ -396,6 +451,19 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             return null;
           },
         ),
+        // Mostra i suggerimenti sotto il campo indirizzo
+        if (_suggestions.isNotEmpty)
+          ..._suggestions.map((suggestion) {
+            return ListTile(
+              title: Text(suggestion),
+              onTap: () {
+                setState(() {
+                  _addressUser.text = suggestion;
+                  _suggestions = [];
+                });
+              },
+            );
+          }).toList(),
         const SizedBox(height: 20),
         TextFormField(
           controller: _phoneNumber,
@@ -415,6 +483,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             return null;
           },
         ),
+        const SizedBox(height: 40)
       ],
     );
   }
@@ -501,6 +570,7 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
         const SizedBox(height: 20),
         TextFormField(
           controller: _addressActivity,
+          onChanged: _onAddressChanged,  // Usa il debounce per il campo _addressActivity
           decoration: InputDecoration(
             hintText: "Address",
             border: OutlineInputBorder(
@@ -517,6 +587,18 @@ class _LoginRegistratiPageState extends State<LoginRegistratiPage> {
             return null;
           },
         ),
+        if (_suggestions.isNotEmpty) ..._suggestions.map((suggestion) {
+          return ListTile(
+            title: Text(suggestion),
+            onTap: () {
+              setState(() {
+                _addressActivity.text = suggestion;
+                _suggestions = [];
+              });
+            },
+          );
+        }).toList(),
+        const SizedBox(height: 40)
       ],
     );
   }
