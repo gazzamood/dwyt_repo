@@ -354,7 +354,7 @@ class _FilterPageState extends State<FilterPage> {
       );
     }
 
-    return Expanded(
+    return Expanded( // Use Expanded here
       child: ListView.builder(
         itemCount: _activities.length,
         itemBuilder: (context, index) {
@@ -511,14 +511,16 @@ class _FilterPageState extends State<FilterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          _buildFilterButton(),
-          _buildTypeFilterButton(),
-          _buildSelectedFilters(),
-          _buildActivitiesList(),
-        ],
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            _buildFilterButton(),
+            _buildTypeFilterButton(),
+            _buildSelectedFilters(),
+            _buildActivitiesList(),
+          ],
+        ),
       ),
     );
   }
