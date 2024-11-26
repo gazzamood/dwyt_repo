@@ -12,12 +12,11 @@ class CercaAttivitaPage extends StatefulWidget {
 }
 
 class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
-  late TextEditingController _searchController;
-  late Stream<QuerySnapshot> _activitiesStream;
   late Future<List<String>> _activityTypesFuture;
-
   String? _selectedType;
   String _searchText = '';
+  late TextEditingController _searchController;
+  late Stream<QuerySnapshot> _activitiesStream;
 
   @override
   void initState() {
@@ -42,7 +41,7 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
       if (_searchText.isNotEmpty) {
         filteredQuery = filteredQuery
             .where('name', isGreaterThanOrEqualTo: _searchText)
-            .where('name', isLessThanOrEqualTo: _searchText + '\uf8ff');
+            .where('name', isLessThanOrEqualTo: '$_searchText\uf8ff');
       }
 
       if (_selectedType != null) {
@@ -61,14 +60,12 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
         .get();
 
     final types = <String>{};
-
     for (var doc in querySnapshot.docs) {
       final type = doc.get('type') as String?;
       if (type != null) {
         types.add(type);
       }
     }
-
     return types.toList();
   }
 
@@ -85,40 +82,6 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
       _selectedType = null;
       _activitiesStream = _getActivitiesStream();
     });
-  }
-
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Cerca attività...',
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: _applyFilters,
-                ),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchText = value;
-                });
-              },
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              _showFilterDialog();
-            },
-          ),
-        ],
-      ),
-    );
   }
 
   void _showFilterDialog() {
@@ -158,7 +121,7 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
               );
             }
 
-            final activityTypes = snapshot.data!;
+            final activityTypes = snapshot.data ?? [];
 
             return AlertDialog(
               title: const Text('Filtri di Ricerca'),
@@ -166,47 +129,21 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Filter by Name
-                    TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'Nome attività',
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _searchText = value;
-                        });
-                      },
-                      controller: TextEditingController(text: _searchText),
-                    ),
-                    const SizedBox(height: 8.0),
-
                     // Filter by Type
                     DropdownButtonFormField<String>(
                       value: _selectedType,
-                      hint: const Text('Seleziona tipo'),
+                      hint: const Text('Seleziona tipo di attività'),
                       onChanged: (value) {
                         setState(() {
                           _selectedType = value;
                         });
                       },
-                      items: activityTypes
-                          .map<DropdownMenuItem<String>>((String value) {
+                      items: activityTypes.map<DropdownMenuItem<String>>((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),
                         );
                       }).toList(),
-                    ),
-                    const SizedBox(height: 8.0),
-
-                    // Filter by Position
-                    TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'Raggio(km)',
-                      ),
-                      onChanged: (value) {
-                        // Optionally process position filter
-                      },
                     ),
                   ],
                 ),
@@ -240,13 +177,45 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
     );
   }
 
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Cerca attività...',
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: _applyFilters,
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchText = value;
+                });
+              },
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: _showFilterDialog,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActivityList(QuerySnapshot snapshot) {
     return Expanded(
       child: ListView.builder(
         itemCount: snapshot.docs.length,
         itemBuilder: (context, index) {
           var doc = snapshot.docs[index];
-          final activity = Activity.fromFirestore(doc);  // Convert to Activity
+          final activity = Activity.fromFirestore(doc); // Convert to Activity
           return ListTile(
             title: Text(activity.name),
             subtitle: Text(activity.type),
@@ -256,20 +225,13 @@ class _CercaAttivitaPageState extends State<CercaAttivitaPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => MapPage(
-                      initialActivity: activity,
-                    ),
+                    builder: (context) => MapPage(initialActivity: activity),
                   ),
                 );
               },
             ),
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => DetailsPage(activity: activity),
-                ),
-              );
+
             },
           );
         },
